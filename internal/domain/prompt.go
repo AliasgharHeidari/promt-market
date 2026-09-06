@@ -2,18 +2,22 @@ package domain
 
 import (
 	"time"
+	"github.com/lib/pq"  // ✅ اضافه کن
 )
 
 type Prompt struct {
 	ID           string    `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	SellerID     string    `json:"seller_id" gorm:"not null;index"`
 	
+	// Relationship
+	Seller       User      `json:"seller" gorm:"foreignKey:SellerID"`
+	
 	// Basic info
 	Title        string    `json:"title" gorm:"not null;size:255"`
 	Description  string    `json:"description" gorm:"type:text"`
 	Category     string    `json:"category" gorm:"index;size:100"`
 	SubCategory  string    `json:"sub_category" gorm:"size:100"`
-	Tags         []string  `json:"tags" gorm:"type:text[]"`
+	Tags         pq.StringArray `json:"tags" gorm:"type:text[]"`  // ✅ تغییر
 	
 	// Content
 	Content      string    `json:"content" gorm:"type:text;not null"`
@@ -22,7 +26,7 @@ type Prompt struct {
 	
 	// Media
 	CoverImage   string    `json:"cover_image" gorm:"size:500"`
-	Images       []string  `json:"images" gorm:"type:text[]"`
+	Images       pq.StringArray `json:"images" gorm:"type:text[]"`  // ✅ تغییر
 	
 	// Pricing
 	Price        int64     `json:"price" gorm:"not null;index"`
@@ -44,7 +48,7 @@ type Prompt struct {
 	Slug         string    `json:"slug" gorm:"unique;index;size:255"`
 	MetaTitle    string    `json:"meta_title" gorm:"size:60"`
 	MetaDescription string `json:"meta_description" gorm:"size:160"`
-	MetaKeywords []string  `json:"meta_keywords" gorm:"type:text[]"`
+	MetaKeywords pq.StringArray `json:"meta_keywords" gorm:"type:text[]"`  // ✅ تغییر
 	
 	// Timestamps
 	CreatedAt    time.Time `json:"created_at"`

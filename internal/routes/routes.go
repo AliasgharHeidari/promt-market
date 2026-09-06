@@ -1,4 +1,3 @@
-// internal/routes/routes.go (updated)
 package routes
 
 import (
@@ -34,16 +33,30 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 		})
 	})
 
-	// Auth routes (public)
+	// ========== AUTH ROUTES (Public) ==========
 	authHandler := handler.NewAuthHandler(db)
 	auth := api.Group("/auth")
 	auth.Post("/register", authHandler.Register)
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/refresh", authHandler.RefreshToken)
 
-	// Protected routes
+	// ========== PROMPT ROUTES (Public) ==========
+	promptHandler := handler.NewPromptHandler(db)
+	prompts := api.Group("/prompts")
+	prompts.Get("/", promptHandler.GetAllPrompts)
+	prompts.Get("/search", promptHandler.SearchPrompts)
+	prompts.Get("/categories", promptHandler.GetCategories)
+	prompts.Get("/:slug", promptHandler.GetPromptBySlug)
+
+	// ========== PROTECTED ROUTES ==========
 	protected := api.Group("/", middleware.JWTProtected())
+
+	// User profile
 	protected.Get("/profile", authHandler.GetProfile)
 
-	// ... rest of routes
+	// Prompt management (Seller only)
+	protected.Post("/prompts", promptHandler.CreatePrompt)
+	protected.Put("/prompts/:id", promptHandler.UpdatePrompt)
+	protected.Delete("/prompts/:id", promptHandler.DeletePrompt)
+	protected.Get("/my-prompts", promptHandler.GetMyPrompts)
 }
