@@ -24,13 +24,13 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Connect to PostgreSQL - ✅ درست شد
+	// Connect to PostgreSQL
 	db, err := database.Connect(cfg.GetDSN(), cfg.DB.MaxConns)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// 🔥 AUTO MIGRATE - Creates tables automatically
+	// Auto migrate
 	if err := autoMigrate(db); err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
@@ -50,19 +50,24 @@ func main() {
 		Prefork:      cfg.App.Env == "production",
 	})
 
+	//  CORS Middleware 
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:5500, http://127.0.0.1:5500, http://localhost:3000, http://127.0.0.1:3000", // ✅ مشخص کردن دامنه‌ها
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-CSRF-Token",
+		ExposeHeaders:    "Content-Length, Content-Type",
+		AllowCredentials: true,
+	}))
+
 	// Global middlewares
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
 		Format: "[${time}] ${status} - ${method} ${path} ${latency}\n",
 	}))
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
-	}))
 
 	// Setup routes
 	routes.SetupRoutes(app, db, redisClient)
+	routes.SetupAdminRoutes(app, db, redisClient)
 
 	// Start server
 	go func() {
@@ -89,12 +94,12 @@ func main() {
 func autoMigrate(db *gorm.DB) error {
 	log.Println("🔄 Running auto migration...")
 
-	// Add all models here
 	if err := db.AutoMigrate(
 		&domain.User{},
 		&domain.Prompt{},
 		&domain.Order{},
 		&domain.Review{},
+		&domain.AdminLog{},
 	); err != nil {
 		return err
 	}

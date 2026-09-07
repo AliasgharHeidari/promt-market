@@ -145,6 +145,7 @@ func (h *PromptHandler) DeletePrompt(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	promptID := c.Params("id")
 
+	// ✅ Ownership check for regular users
 	if err := h.service.Delete(c.Context(), promptID, userID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -211,5 +212,27 @@ func (h *PromptHandler) GetCategories(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"data": categories,
+	})
+}
+
+
+// GetPromptByID returns a prompt by ID (for admin review)
+func (h *PromptHandler) GetPromptByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	prompt, err := h.service.GetByID(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	if prompt == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Prompt not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": prompt,
 	})
 }

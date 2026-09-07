@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت · Prompt Market</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================
+                   CSS VARIABLES (تم دارک/روشن)
+                   ============================================ */
+        :root {
+            --bg-primary: #f1f5f9;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-hover: #f8fafc;
+            --bg-input: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: #e9edf2;
+            --shadow-color: rgba(0, 0, 0, 0.04);
+            --shadow-hover: rgba(0, 0, 0, 0.08);
+            --badge-bg: #f1f5f9;
+            --header-bg: #ffffff;
+            --tabs-bg: #ffffff;
+            --modal-bg: #ffffff;
+            --toast-bg: #0f172a;
+            --scrollbar-track: #f1f5f9;
+            --scrollbar-thumb: #cbd5e1;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-hover: #2d3a4f;
+            --bg-input: #2d3a4f;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #334155;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --shadow-hover: rgba(0, 0, 0, 0.3);
+            --badge-bg: #2d3a4f;
+            --header-bg: #1e293b;
+            --tabs-bg: #1e293b;
+            --modal-bg: #1e293b;
+            --toast-bg: #2d3a4f;
+            --scrollbar-track: #1e293b;
+            --scrollbar-thumb: #475569;
+        }
+
+        /* ============================================
+                   RESET & BASE
+                   ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 1rem;
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* ============================================
+                   HEADER
+                   ============================================ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: var(--header-bg);
+            padding: 0.8rem 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .header .badge {
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 0.6rem;
+            padding: 0.1rem 0.7rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        [data-theme="dark"] .header .badge {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .header .user-info .email {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .theme-toggle {
+            background: var(--badge-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.6rem;
+            padding: 0.3rem 0.8rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            transition: 0.15s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn-logout {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: none;
+            padding: 0.3rem 1.2rem;
+            border-radius: 0.6rem;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: 0.15s;
+        }
+        .btn-logout:hover {
+            background: #fecaca;
+        }
+        [data-theme="dark"] .btn-logout {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        [data-theme="dark"] .btn-logout:hover {
+            background: #991b1b;
+        }
+
+        /* ============================================
+                   STATS GRID
+                   ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: 0.8rem;
+            border: 1px solid var(--border-color);
+            transition: 0.15s;
+            box-shadow: 0 1px 3px var(--shadow-color);
+        }
+
+        .stat-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .stat-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-top: 0.2rem;
+            color: var(--text-primary);
+        }
+
+        .stat-card .sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        /* ============================================
+                   TABS
+                   ============================================ */
+        .tabs {
+            display: flex;
+            gap: 0.2rem;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            background: var(--tabs-bg);
+            padding: 0.3rem;
+            border-radius: 0.8rem;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.6rem;
+            font-weight: 500;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: 0.15s;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .tab-btn.active {
+            background: #0f172a;
+            color: white;
+        }
+
+        [data-theme="dark"] .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* ============================================
+                   CARDS
+                   ============================================ */
+        .card {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px var(--shadow-color);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-header h3 {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .card-header .actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* ============================================
+                   TABLE
+                   ============================================ */
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        th {
+            text-align: right;
+            padding: 0.6rem 0.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            color: var(--text-primary);
+        }
+
+        tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        /* ============================================
+                   BADGES
+                   ============================================ */
+        .badge-status {
+            display: inline-block;
+            padding: 0.1rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+
+        .badge-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-status.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-status.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .badge-status.deleted {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .badge-status.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-status.inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .badge-status.admin {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .badge-status.user {
+            background: #e9edf2;
+            color: #475569;
+        }
+        .badge-status.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-status.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        [data-theme="dark"] .badge-status.pending {
+            background: #78350f;
+            color: #fbbf24;
+        }
+        [data-theme="dark"] .badge-status.approved {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        [data-theme="dark"] .badge-status.rejected {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        [data-theme="dark"] .badge-status.deleted {
+            background: #334155;
+            color: #94a3b8;
+        }
+        [data-theme="dark"] .badge-status.active {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        [data-theme="dark"] .badge-status.inactive {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        [data-theme="dark"] .badge-status.admin {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+        [data-theme="dark"] .badge-status.user {
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        /* ============================================
+                   BUTTONS
+                   ============================================ */
+        .btn-sm {
+            padding: 0.2rem 0.7rem;
+            border: none;
+            border-radius: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.1s;
+            white-space: nowrap;
+        }
+
+        .btn-sm.approve {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .btn-sm.approve:hover {
+            background: #a7f3d0;
+        }
+
+        .btn-sm.reject {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .btn-sm.reject:hover {
+            background: #fecaca;
+        }
+
+        .btn-sm.toggle {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-sm.toggle:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-sm.view {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .btn-sm.view:hover {
+            background: #bfdbfe;
+        }
+
+        .btn-sm.delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .btn-sm.delete:hover {
+            background: #fecaca;
+        }
+
+        .btn-sm.edit {
+            background: #e9edf2;
+            color: #1e293b;
+        }
+        .btn-sm.edit:hover {
+            background: #d1d9e6;
+        }
+
+        [data-theme="dark"] .btn-sm.toggle {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        [data-theme="dark"] .btn-sm.toggle:hover {
+            background: #475569;
+        }
+        [data-theme="dark"] .btn-sm.view {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+        [data-theme="dark"] .btn-sm.view:hover {
+            background: #1e40af;
+        }
+        [data-theme="dark"] .btn-sm.delete {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        [data-theme="dark"] .btn-sm.delete:hover {
+            background: #991b1b;
+        }
+        [data-theme="dark"] .btn-sm.approve {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        [data-theme="dark"] .btn-sm.approve:hover {
+            background: #065f46;
+        }
+        [data-theme="dark"] .btn-sm.reject {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        [data-theme="dark"] .btn-sm.reject:hover {
+            background: #991b1b;
+        }
+
+        /* ============================================
+                   EMPTY STATE
+                   ============================================ */
+        .empty {
+            color: var(--text-muted);
+            padding: 1.5rem 0;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        /* ============================================
+                   TOAST
+                   ============================================ */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 0.7rem 1.5rem;
+            border-radius: 0.6rem;
+            background: var(--toast-bg);
+            color: white;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(1rem);
+            transition: 0.25s;
+            pointer-events: none;
+            z-index: 9999;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .toast.success {
+            background: #065f46;
+        }
+        .toast.error {
+            background: #991b1b;
+        }
+        .toast.info {
+            background: #1d4ed8;
+        }
+
+        /* ============================================
+                   MODAL
+                   ============================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 1rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--modal-bg);
+            border-radius: 1.5rem;
+            max-width: 750px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .modal .close {
+            position: sticky;
+            top: 0;
+            float: left;
+            background: var(--badge-bg);
+            border: 1px solid var(--border-color);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 999px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 1;
+            color: var(--text-secondary);
+        }
+        .modal .close:hover {
+            background: var(--bg-hover);
+        }
+
+        .modal h2 {
+            margin-bottom: 0.3rem;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+        }
+
+        .modal .meta {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .modal .meta span {
+            background: var(--badge-bg);
+            padding: 0.15rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal .section {
+            margin-bottom: 0.8rem;
+        }
+
+        .modal .section label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            display: block;
+            margin-bottom: 0.2rem;
+            color: var(--text-secondary);
+        }
+
+        .modal .section .content {
+            background: var(--bg-hover);
+            padding: 0.7rem 1rem;
+            border-radius: 0.6rem;
+            border: 1px solid var(--border-color);
+            white-space: pre-wrap;
+            font-size: 0.8rem;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'Inter', monospace;
+            color: var(--text-primary);
+        }
+
+        .modal .actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .modal .actions .btn {
+            padding: 0.5rem 1.8rem;
+            border: none;
+            border-radius: 0.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.15s;
+        }
+
+        .modal .actions .btn-approve {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .modal .actions .btn-approve:hover {
+            background: #a7f3d0;
+        }
+        .modal .actions .btn-reject {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .modal .actions .btn-reject:hover {
+            background: #fecaca;
+        }
+        .modal .actions .btn-close-modal {
+            background: var(--badge-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .modal .actions .btn-close-modal:hover {
+            background: var(--bg-hover);
+        }
+
+        [data-theme="dark"] .modal .actions .btn-approve {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        [data-theme="dark"] .modal .actions .btn-approve:hover {
+            background: #065f46;
+        }
+        [data-theme="dark"] .modal .actions .btn-reject {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        [data-theme="dark"] .modal .actions .btn-reject:hover {
+            background: #991b1b;
+        }
+
+        /* ============================================
+                   LOGIN OVERLAY
+                   ============================================ */
+        .login-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(4px);
+        }
+
+        .login-overlay.show {
+            display: flex;
+        }
+
+        .login-box {
+            background: var(--modal-bg);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .login-box h2 {
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .login-box p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.6rem;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: border 0.3s, background 0.3s;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .login-box .btn {
+            width: 100%;
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 0.7rem;
+            border-radius: 0.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: 0.15s;
+        }
+        .login-box .btn:hover {
+            background: #1e293b;
+        }
+        [data-theme="dark"] .login-box .btn {
+            background: #3b82f6;
+        }
+        [data-theme="dark"] .login-box .btn:hover {
+            background: #2563eb;
+        }
+
+        .login-box .error {
+            color: #dc2626;
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            display: none;
+        }
+
+        /* ============================================
+                   SEARCH & FILTERS
+                   ============================================ */
+        .search-bar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-bar input,
+        .search-bar select {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: border 0.3s, background 0.3s;
+        }
+
+        .search-bar input:focus,
+        .search-bar select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        /* ============================================
+                   RESPONSIVE
+                   ============================================ */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0.8rem 1rem;
+            }
+
+            .header .user-info {
+                flex-wrap: wrap;
+            }
+
+            .header-actions {
+                flex-wrap: wrap;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .modal {
+                padding: 1rem;
+                margin: 0.5rem;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+
+            .tab-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+                white-space: nowrap;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            table {
+                font-size: 0.7rem;
+            }
+
+            th,
+            td {
+                padding: 0.3rem 0.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-bar {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .search-bar input,
+            .search-bar select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================
+    LOGIN OVERLAY
+    ========================================== -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h2>🔐 ورود به پنل مدیریت</h2>
+            <p>برای دسترسی به پنل ادمین وارد شوید</p>
+            <input type="email" id="loginEmail" placeholder="ایمیل ادمین" value="admin@promptmarket.com">
+            <input type="password" id="loginPassword" placeholder="رمز عبور" value="SuperSecurePassword123!">
+            <div class="error" id="loginError">❌ ایمیل یا رمز عبور اشتباه است</div>
+            <button class="btn" onclick="adminLogin()">ورود به پنل</button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+    MODAL (مشاهده پرامپت)
+    ========================================== -->
+    <div class="modal-overlay" id="promptModal">
+        <div class="modal">
+            <button class="close" onclick="closeModal()">✕</button>
+            <h2 id="modalTitle">عنوان پرامپت</h2>
+            <div class="meta">
+                <span id="modalCategory">📁 دسته‌بندی</span>
+                <span id="modalPrice">💰 قیمت</span>
+                <span id="modalSeller">👤 فروشنده</span>
+                <span id="modalDifficulty">📊 سطح</span>
+                <span id="modalLanguage">🌐 زبان</span>
+                <span id="modalStatus">📌 وضعیت</span>
+            </div>
+            <div class="section">
+                <label>📝 توضیحات</label>
+                <div class="content" id="modalDescription"></div>
+            </div>
+            <div class="section">
+                <label>📄 محتوای پرامپت</label>
+                <div class="content" id="modalContent"></div>
+            </div>
+            <div class="section" id="demoSection">
+                <label>🎯 خروجی نمونه</label>
+                <div class="content" id="modalDemo"></div>
+            </div>
+            <div class="section" id="instructionsSection">
+                <label>📖 راهنمای استفاده</label>
+                <div class="content" id="modalInstructions"></div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-approve" id="modalApproveBtn" onclick="modalApprove()">✅ تایید</button>
+                <button class="btn btn-reject" id="modalRejectBtn" onclick="modalReject()">❌ رد</button>
+                <button class="btn btn-close-modal" onclick="closeModal()">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+    MAIN CONTAINER
+    ========================================== -->
+    <div class="container">
+
+        <!-- HEADER -->
+        <header class="header">
+            <h1>
+                ⚙️ پنل مدیریت
+                <span class="badge">v3.0</span>
+            </h1>
+            <div class="user-info">
+                <span>👤 <span class="email" id="adminEmail">—</span></span>
+                <span style="background:var(--badge-bg);padding:0.15rem 0.8rem;border-radius:999px;font-size:0.7rem;font-weight:500;border:1px solid var(--border-color);">ادمین</span>
+                <div class="header-actions">
+                    <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
+                    <button class="btn-logout" onclick="logout()">🚪 خروج</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- STATS -->
+        <section class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="label">👥 کاربران</div>
+                <div class="value" id="statUsers">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">📄 پرامپت‌ها</div>
+                <div class="value" id="statPrompts">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">🛒 سفارشات</div>
+                <div class="value" id="statOrders">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">💰 درآمد کل</div>
+                <div class="value" id="statRevenue">—</div>
+                <div class="sub">تومان</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">⏳ در انتظار تایید</div>
+                <div class="value" id="statPending">—</div>
+            </div>
+        </section>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="tabUsers">👥 کاربران</button>
+            <button class="tab-btn" data-tab="tabPrompts">📄 پرامپت‌ها</button>
+            <button class="tab-btn" data-tab="tabOrders">🛒 سفارشات</button>
+            <button class="tab-btn" data-tab="tabLogs">📋 لاگ‌ها</button>
+        </div>
+
+        <!-- ==========================================
+        TAB: USERS
+        ========================================== -->
+        <div class="tab-pane active" id="tabUsers">
+            <div class="card">
+                <div class="card-header">
+                    <h3>👥 مدیریت کاربران</h3>
+                    <div class="actions">
+                        <button class="btn-sm toggle" onclick="loadUsers()">🔄 بارگذاری</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ایمیل</th>
+                                <th>نام</th>
+                                <th>نقش</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                    <span style="font-size:0.75rem;color:var(--text-muted);" id="usersPagination"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+        TAB: PROMPTS
+        ========================================== -->
+        <div class="tab-pane" id="tabPrompts">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📄 مدیریت پرامپت‌ها</h3>
+                    <div class="actions">
+                        <select id="promptFilterStatus" onchange="loadPendingPrompts()" style="padding:0.3rem 0.6rem;border-radius:0.4rem;border:1px solid var(--border-color);font-size:0.75rem;background:var(--bg-input);color:var(--text-primary);">
+                            <option value="pending">در انتظار</option>
+                            <option value="approved">تایید شده</option>
+                            <option value="rejected">رد شده</option>
+                            <option value="deleted">حذف شده</option>
+                            <option value="all">همه</option>
+                        </select>
+                        <button class="btn-sm toggle" onclick="loadPendingPrompts()">🔄 بارگذاری</button>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.8rem;">
+                    برای بررسی کامل، روی دکمه <strong>🔍 بررسی</strong> کلیک کنید
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>عنوان</th>
+                                <th>فروشنده</th>
+                                <th>قیمت</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promptsTableBody">
+                            <tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                    <span style="font-size:0.75rem;color:var(--text-muted);" id="promptsPagination"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+        TAB: ORDERS
+        ========================================== -->
+        <div class="tab-pane" id="tabOrders">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🛒 مدیریت سفارشات</h3>
+                    <div class="actions">
+                        <button class="btn-sm toggle" onclick="loadOrders()">🔄 بارگذاری</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>شناسه</th>
+                                <th>خریدار</th>
+                                <th>پرامپت</th>
+                                <th>مبلغ</th>
+                                <th>وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                    <span style="font-size:0.75rem;color:var(--text-muted);" id="ordersPagination"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+        TAB: LOGS
+        ========================================== -->
+        <div class="tab-pane" id="tabLogs">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 لاگ عملیات ادمین</h3>
+                    <div class="actions">
+                        <button class="btn-sm toggle" onclick="loadLogs()">🔄 بارگذاری</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>زمان</th>
+                                <th>عملیات</th>
+                                <th>هدف</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr><td colspan="4" class="empty">⏳ در حال بارگذاری...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                    <span style="font-size:0.75rem;color:var(--text-muted);" id="logsPagination"></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ==========================================
+    JAVASCRIPT
+    ========================================== -->
+    <script>
+        // ════════════════════════════════════════════
+        //  THEME
+        // ════════════════════════════════════════════
+        function getPreferredTheme() {
+            return localStorage.getItem('theme') || 'light';
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            const current = getPreferredTheme();
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        }
+
+        // ════════════════════════════════════════════
+        //  STATE
+        // ════════════════════════════════════════════
+        let accessToken = localStorage.getItem('adminAccessToken') || '';
+        let adminEmail = '';
+        let currentPromptId = null;
+
+        const API_BASE = 'http://localhost:8080/api/v1';
+
+        // ════════════════════════════════════════════
+        //  TOAST
+        // ════════════════════════════════════════════
+        function toast(msg, type = '') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast ' + type;
+            el.classList.add('show');
+            clearTimeout(el._hide);
+            el._hide = setTimeout(() => el.classList.remove('show'), 3500);
+        }
+
+        // ════════════════════════════════════════════
+        //  HELPERS
+        // ════════════════════════════════════════════
+        function getHeaders(extra) {
+            const h = { 'Content-Type': 'application/json', ...extra };
+            if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+            return h;
+        }
+
+        function apiCall(method, path, body) {
+            const url = API_BASE + path;
+            const opts = { method, headers: getHeaders() };
+            if (body) opts.body = JSON.stringify(body);
+            return fetch(url, opts).then(async r => {
+                const text = await r.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (r.status === 403) {
+                        localStorage.removeItem('adminAccessToken');
+                        accessToken = '';
+                        document.getElementById('loginOverlay').classList.add('show');
+                        toast('❌ دسترسی ادمین ندارید یا توکن منقضی شده', 'error');
+                    }
+                    return { status: r.status, data };
+                } catch {
+                    return { status: r.status, data: { error: text || 'Unknown error' } };
+                }
+            });
+        }
+
+        // ════════════════════════════════════════════
+        //  LOGIN / LOGOUT
+        // ════════════════════════════════════════════
+        function adminLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+
+            errorEl.style.display = 'none';
+
+            fetch(API_BASE + '/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.data?.tokens?.access_token) {
+                        accessToken = d.data.tokens.access_token;
+                        localStorage.setItem('adminAccessToken', accessToken);
+                        document.getElementById('loginOverlay').classList.remove('show');
+                        init();
+                    } else {
+                        errorEl.style.display = 'block';
+                        errorEl.textContent = '❌ ' + (d.error || 'خطا در ورود');
+                    }
+                })
+                .catch(() => {
+                    errorEl.style.display = 'block';
+                    errorEl.textContent = '❌ خطا در ارتباط با سرور';
+                });
+        }
+
+        function logout() {
+            localStorage.removeItem('adminAccessToken');
+            accessToken = '';
+            document.getElementById('loginOverlay').classList.add('show');
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        // ════════════════════════════════════════════
+        //  MODAL
+        // ════════════════════════════════════════════
+        function openModal(prompt) {
+            currentPromptId = prompt.id;
+
+            document.getElementById('modalTitle').textContent = prompt.title || 'بدون عنوان';
+            document.getElementById('modalCategory').textContent = '📁 ' + (prompt.category || 'دسته‌بندی نشده');
+            document.getElementById('modalPrice').textContent = '💰 ' + (prompt.price ? prompt.price.toLocaleString() : '0') +
+                ' تومان';
+            document.getElementById('modalSeller').textContent = '👤 ' + (prompt.Seller?.full_name || prompt.seller
+                ?.full_name || 'نامشخص');
+            document.getElementById('modalDifficulty').textContent = '📊 ' + (prompt.difficulty || '—');
+            document.getElementById('modalLanguage').textContent = '🌐 ' + (prompt.language || '—');
+            document.getElementById('modalStatus').textContent = '📌 ' + (prompt.status || '—');
+
+            document.getElementById('modalDescription').textContent = prompt.description || 'توضیحی وجود ندارد';
+            document.getElementById('modalContent').textContent = prompt.content || 'محتوایی وجود ندارد';
+            document.getElementById('modalDemo').textContent = prompt.demo_output || 'خروجی نمونه‌ای ثبت نشده';
+            document.getElementById('modalInstructions').textContent = prompt.instructions || 'راهنمایی ثبت نشده';
+
+            const isPending = prompt.status === 'pending';
+            document.getElementById('modalApproveBtn').style.display = isPending ? 'inline-block' : 'none';
+            document.getElementById('modalRejectBtn').style.display = isPending ? 'inline-block' : 'none';
+
+            document.getElementById('promptModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('promptModal').classList.remove('show');
+            currentPromptId = null;
+        }
+
+        function modalApprove() {
+            if (currentPromptId) {
+                approvePrompt(currentPromptId);
+                closeModal();
+            }
+        }
+
+        function modalReject() {
+            if (currentPromptId) {
+                rejectPrompt(currentPromptId);
+                closeModal();
+            }
+        }
+
+        document.getElementById('promptModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ════════════════════════════════════════════
+        //  LOAD DATA
+        // ════════════════════════════════════════════
+
+        function loadAdminProfile() {
+            if (!accessToken) return;
+            apiCall('GET', '/profile').then(({ status, data }) => {
+                if (data.data?.email) {
+                    adminEmail = data.data.email;
+                    document.getElementById('adminEmail').textContent = adminEmail;
+                }
+            });
+        }
+
+        function loadStats() {
+            if (!accessToken) return;
+            apiCall('GET', '/admin/stats').then(({ status, data }) => {
+                if (data.data) {
+                    document.getElementById('statUsers').textContent = data.data.total_users ?? '—';
+                    document.getElementById('statPrompts').textContent = data.data.total_prompts ?? '—';
+                    document.getElementById('statOrders').textContent = data.data.total_orders ?? '—';
+                    document.getElementById('statRevenue').textContent = (data.data.total_revenue ?? 0).toLocaleString();
+                    document.getElementById('statPending').textContent = data.data.total_pending ?? '—';
+                }
+            });
+        }
+
+        // ── USERS ──
+        let usersPage = 1;
+
+        function loadUsers(page = 1) {
+            usersPage = page;
+            if (!accessToken) return;
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>';
+            apiCall('GET', `/admin/users?page=${page}&limit=10`).then(({ status, data }) => {
+                if (data.data) renderUsers(data.data, data.pagination);
+                else if (data.error) tbody.innerHTML = `<tr><td colspan="5" class="empty">❌ ${data.error}</td></tr>`;
+            });
+        }
+
+        function renderUsers(users, pagination) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">📭 کاربری یافت نشد</td></tr>';
+                return;
+            }
+            let html = '';
+            users.forEach(u => {
+                const statusClass = u.is_active ? 'active' : 'inactive';
+                const statusLabel = u.is_active ? 'فعال' : 'غیرفعال';
+                html += `<tr>
+                        <td>${u.email || '—'}</td>
+                        <td>${u.full_name || '—'}</td>
+                        <td><span class="badge-status ${u.role}">${u.role || 'user'}</span></td>
+                        <td><span class="badge-status ${statusClass}">${statusLabel}</span></td>
+                        <td>
+                            <button class="btn-sm toggle" onclick="toggleUser('${u.id}', ${!u.is_active})">
+                                ${u.is_active ? '⛔ غیرفعال' : '✅ فعال'}
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html;
+            if (pagination) {
+                document.getElementById('usersPagination').textContent =
+                    `صفحه ${pagination.page} از ${pagination.pages} · مجموع ${pagination.total}`;
+            }
+        }
+
+        function toggleUser(userId, newStatus) {
+            if (!accessToken || !confirm('تغییر وضعیت کاربر؟')) return;
+            apiCall('PUT', `/admin/users/${userId}/status`, { is_active: newStatus })
+                .then(({ status, data }) => {
+                    if (status === 200) {
+                        toast('✅ وضعیت کاربر تغییر کرد', 'success');
+                        loadUsers(usersPage);
+                    } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+                });
+        }
+
+// ── PROMPTS ──
+let promptsPage = 1;
+
+function loadPendingPrompts(page = 1) {
+    promptsPage = page;
+    if (!accessToken) return;
+
+    const statusFilter = document.getElementById('promptFilterStatus').value;
+
+    const tbody = document.getElementById('promptsTableBody');
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>';
+
+    // ✅ اصلاح شده
+    let url = '';
+    if (statusFilter === 'all') {
+        url = `/admin/prompts/all?page=${page}&limit=10`;
+    } else {
+        url = `/admin/prompts/${statusFilter}?page=${page}&limit=10`;
+    }
+
+    apiCall('GET', url).then(({ status, data }) => {
+        if (data.data) renderPrompts(data.data, data.pagination);
+        else if (data.error) tbody.innerHTML = `<tr><td colspan="5" class="empty">❌ ${data.error}</td></tr>`;
+    });
+}
+
+        function renderPrompts(prompts, pagination) {
+            const tbody = document.getElementById('promptsTableBody');
+            if (!prompts || prompts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">📭 پرامپتی یافت نشد</td></tr>';
+                return;
+            }
+            let html = '';
+            prompts.forEach(p => {
+                const sellerName = p.Seller?.full_name || p.seller?.full_name || 'نامشخص';
+                const isPending = p.status === 'pending';
+                const isDeleted = p.status === 'deleted';
+                html += `<tr>
+                        <td><strong>${p.title || 'بدون عنوان'}</strong></td>
+                        <td>${sellerName}</td>
+                        <td>${p.price ? p.price.toLocaleString() : '—'} تومان</td>
+                        <td><span class="badge-status ${p.status}">${p.status || '—'}</span></td>
+                        <td>
+                            ${!isDeleted ? `<button class="btn-sm view" onclick="viewPrompt('${p.id}')">🔍 بررسی</button>` : ''}
+                            ${isPending ? `
+                                <button class="btn-sm approve" onclick="approvePrompt('${p.id}')">✅ تایید</button>
+                                <button class="btn-sm reject" onclick="rejectPrompt('${p.id}')">❌ رد</button>
+                            ` : ''}
+                            ${!isDeleted ? `<button class="btn-sm delete" onclick="deletePrompt('${p.id}')">🗑️</button>` : ''}
+                        </td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html;
+            if (pagination) {
+                document.getElementById('promptsPagination').textContent =
+                    `صفحه ${pagination.page} از ${pagination.pages} · مجموع ${pagination.total}`;
+            }
+        }
+
+        function viewPrompt(promptId) {
+            if (!accessToken) return;
+            apiCall('GET', `/prompts/id/${promptId}`).then(({ status, data }) => {
+                if (data.data) {
+                    openModal(data.data);
+                } else {
+                    toast('❌ خطا در دریافت پرامپت: ' + (data.error || 'نامشخص'), 'error');
+                }
+            });
+        }
+
+        function approvePrompt(id) {
+            if (!accessToken || !confirm('تایید این پرامپت؟')) return;
+            apiCall('PUT', `/admin/prompts/${id}/approve`).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('✅ پرامپت تایید شد', 'success');
+                    loadPendingPrompts(promptsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        function rejectPrompt(id) {
+            if (!accessToken || !confirm('رد این پرامپت؟')) return;
+            apiCall('PUT', `/admin/prompts/${id}/reject`).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('✅ پرامپت رد شد', 'success');
+                    loadPendingPrompts(promptsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        // ── DELETE PROMPT (Admin only) ──
+        function deletePrompt(id) {
+            if (!accessToken || !confirm('حذف این پرامپت؟')) return;
+
+            // ✅ مسیر درست: /api/v1/admin/prompts/:id
+            apiCall('DELETE', `/admin/prompts/${id}`).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('🗑️ پرامپت حذف شد', 'info');
+                    loadPendingPrompts(promptsPage);
+                    loadStats();
+                } else {
+                    toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+                }
+            });
+        }
+
+        // ── ORDERS ──
+        let ordersPage = 1;
+
+        function loadOrders(page = 1) {
+            ordersPage = page;
+            if (!accessToken) return;
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>';
+            apiCall('GET', `/admin/orders?page=${page}&limit=10`).then(({ status, data }) => {
+                if (data.data) renderOrders(data.data, data.pagination);
+                else if (data.error) tbody.innerHTML = `<tr><td colspan="5" class="empty">❌ ${data.error}</td></tr>`;
+            });
+        }
+
+        function renderOrders(orders, pagination) {
+            const tbody = document.getElementById('ordersTableBody');
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">📭 سفارشی یافت نشد</td></tr>';
+                return;
+            }
+            let html = '';
+            orders.forEach(o => {
+                html += `<tr>
+                        <td style="font-size:0.7rem;">${o.id?.slice(0,8) || '—'}</td>
+                        <td>${o.Buyer?.email || o.buyer?.email || '—'}</td>
+                        <td>${o.Prompt?.title || o.prompt?.title || '—'}</td>
+                        <td>${o.amount ? o.amount.toLocaleString() : '—'} تومان</td>
+                        <td><span class="badge-status ${o.status}">${o.status || '—'}</span></td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html;
+            if (pagination) {
+                document.getElementById('ordersPagination').textContent =
+                    `صفحه ${pagination.page} از ${pagination.pages} · مجموع ${pagination.total}`;
+            }
+        }
+
+        // ── LOGS ──
+        let logsPage = 1;
+
+        function loadLogs(page = 1) {
+            logsPage = page;
+            if (!accessToken) return;
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">⏳ در حال بارگذاری...</td></tr>';
+            apiCall('GET', `/admin/logs?page=${page}&limit=20`).then(({ status, data }) => {
+                if (data.data) renderLogs(data.data, data.pagination);
+                else if (data.error) tbody.innerHTML = `<tr><td colspan="4" class="empty">❌ ${data.error}</td></tr>`;
+            });
+        }
+
+        function renderLogs(logs, pagination) {
+            const tbody = document.getElementById('logsTableBody');
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty">📭 لاگی وجود ندارد</td></tr>';
+                return;
+            }
+            let html = '';
+            logs.forEach(l => {
+                const time = l.created_at ? new Date(l.created_at).toLocaleString('fa-IR') : '—';
+                html += `<tr>
+                        <td style="font-size:0.7rem;">${time}</td>
+                        <td>${l.action || '—'}</td>
+                        <td>${l.target_type || '—'} ${l.target_id ? '#'+l.target_id.slice(0,8) : ''}</td>
+                        <td style="font-size:0.7rem;">${l.ip || '—'}</td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html;
+            if (pagination) {
+                document.getElementById('logsPagination').textContent =
+                    `صفحه ${pagination.page} از ${pagination.pages} · مجموع ${pagination.total}`;
+            }
+        }
+
+        // ════════════════════════════════════════════
+        //  TABS
+        // ════════════════════════════════════════════
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const target = this.dataset.tab;
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                document.getElementById(target).classList.add('active');
+
+                if (target === 'tabUsers') loadUsers();
+                if (target === 'tabPrompts') loadPendingPrompts();
+                if (target === 'tabOrders') loadOrders();
+                if (target === 'tabLogs') loadLogs();
+            });
+        });
+
+        // ════════════════════════════════════════════
+        //  INIT
+        // ════════════════════════════════════════════
+        function init() {
+            // Theme
+            const theme = getPreferredTheme();
+            setTheme(theme);
+
+            accessToken = localStorage.getItem('adminAccessToken') || '';
+
+            if (!accessToken) {
+                document.getElementById('loginOverlay').classList.add('show');
+                return;
+            }
+
+            document.getElementById('loginOverlay').classList.remove('show');
+            loadAdminProfile();
+            loadStats();
+            loadUsers();
+            loadPendingPrompts();
+            loadOrders();
+            loadLogs();
+
+            setInterval(loadStats, 30000);
+        }
+
+        // Run
+        init();
+    </script>
+
+</body>
+</html>

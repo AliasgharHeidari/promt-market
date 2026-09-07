@@ -13,4 +13,12 @@ type Order struct {
 	Status     string    `json:"status" gorm:"default:'pending';index;size:50"`
 	PaymentID  string    `json:"payment_id" gorm:"index;size:255"`
 	CreatedAt  time.Time `json:"created_at"`
+
+	// ✅ Relationships
+	// Prompt is soft-deleted (see PromptRepository.Delete), so a deleted
+	// prompt row still exists with Status="deleted" and DeletedAt set —
+	// this Preload will keep resolving for historical orders instead of
+	// hitting a missing foreign key or a broken join.
+	Buyer  User   `json:"buyer" gorm:"foreignKey:BuyerID"`
+	Prompt Prompt `json:"prompt" gorm:"foreignKey:PromptID"`
 }

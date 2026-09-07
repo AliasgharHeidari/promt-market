@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"promt-market/internal/domain"
@@ -22,7 +23,28 @@ func (r *PromptRepository) Create(ctx context.Context, prompt *domain.Prompt) er
 	return r.db.WithContext(ctx).Create(prompt).Error
 }
 
+// FindByID returns a prompt by ID, excluding soft-deleted ones. Used by
+// regular user-facing flows (view/update/delete-by-owner).
 func (r *PromptRepository) FindByID(ctx context.Context, id string) (*domain.Prompt, error) {
+	var prompt domain.Prompt
+	err := r.db.WithContext(ctx).
+		Preload("Seller").
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&prompt).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &prompt, nil
+}
+
+// FindByIDForAdmin returns a prompt by ID regardless of soft-delete status.
+// Used by admin flows (e.g. approving/rejecting/deleting) where the record
+// must be found even if it was already soft-deleted, to avoid a confusing
+// "not found" when re-running an admin action or auditing history.
+func (r *PromptRepository) FindByIDForAdmin(ctx context.Context, id string) (*domain.Prompt, error) {
 	var prompt domain.Prompt
 	err := r.db.WithContext(ctx).
 		Preload("Seller").
@@ -72,11 +94,14 @@ func (r *PromptRepository) FindAll(ctx context.Context, limit, offset int) ([]do
 	return prompts, total, err
 }
 
+// FindBySeller returns a seller's prompts, excluding soft-deleted ones, so a
+// deleted/moderated-away prompt disappears from the seller's own dashboard.
 func (r *PromptRepository) FindBySeller(ctx context.Context, sellerID string, limit, offset int) ([]domain.Prompt, int64, error) {
 	var prompts []domain.Prompt
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&domain.Prompt{}).Where("seller_id = ?", sellerID)
+	query := r.db.WithContext(ctx).Model(&domain.Prompt{}).
+		Where("seller_id = ? AND deleted_at IS NULL", sellerID)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -96,8 +121,25 @@ func (r *PromptRepository) Update(ctx context.Context, prompt *domain.Prompt) er
 	return r.db.WithContext(ctx).Save(prompt).Error
 }
 
+// Delete performs a soft delete: it stamps DeletedAt instead of removing the
+// row. This matters because Order.PromptID references prompts and existing
+// orders must still be able to display prompt info (title, etc.) after a
+// prompt is deleted/moderated away. A hard delete here would either violate
+// the FK relationship used by Order.Prompt or silently break order history.
+//
+// NOTE: Prompt.DeletedAt is a plain *time.Time (not gorm.DeletedAt), so GORM
+// does NOT treat this model as soft-delete-enabled automatically — calling
+// db.Delete(&Prompt{}, ...) directly would hard-delete the row despite the
+// DeletedAt column existing. We set it explicitly instead.
 func (r *PromptRepository) Delete(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Delete(&domain.Prompt{}, "id = ?", id).Error
+	now := time.Now()
+	return r.db.WithContext(ctx).
+		Model(&domain.Prompt{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"deleted_at": now,
+			"status":     "deleted",
+		}).Error
 }
 
 func (r *PromptRepository) IncrementViews(ctx context.Context, id string) error {
