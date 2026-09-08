@@ -42,8 +42,7 @@ func (r *PromptRepository) FindByID(ctx context.Context, id string) (*domain.Pro
 
 // FindByIDForAdmin returns a prompt by ID regardless of soft-delete status.
 // Used by admin flows (e.g. approving/rejecting/deleting) where the record
-// must be found even if it was already soft-deleted, to avoid a confusing
-// "not found" when re-running an admin action or auditing history.
+// must be found even if it was already soft-deleted.
 func (r *PromptRepository) FindByIDForAdmin(ctx context.Context, id string) (*domain.Prompt, error) {
 	var prompt domain.Prompt
 	err := r.db.WithContext(ctx).

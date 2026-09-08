@@ -220,7 +220,8 @@ func (h *PromptHandler) GetCategories(c *fiber.Ctx) error {
 func (h *PromptHandler) GetPromptByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	prompt, err := h.service.GetByID(c.Context(), id)
+	// ✅ تغییر: استفاده از FindByIDForAdmin به جای FindByID
+	prompt, err := h.service.GetByIDForAdmin(c.Context(), id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

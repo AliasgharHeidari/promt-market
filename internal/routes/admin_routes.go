@@ -37,6 +37,7 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 	admin.Get("/prompts/pending", adminHandler.GetPendingPrompts)
 	admin.Get("/prompts/approved", adminHandler.GetApprovedPrompts)
 	admin.Get("/prompts/rejected", adminHandler.GetRejectedPrompts)
+	admin.Get("/prompts/deleted", adminHandler.GetDeletedPrompts)
 	admin.Get("/prompts/all", adminHandler.GetAllPromptsAdmin)
 
 	admin.Put("/prompts/:id/approve", adminHandler.ApprovePrompt)

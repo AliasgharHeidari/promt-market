@@ -171,3 +171,8 @@ func (s *AdminService) LogAdminAction(ctx context.Context, adminID, action, targ
 	}
 	return s.adminRepo.CreateLog(ctx, log)
 }
+
+// GetByIDForAdmin returns a prompt by ID (includes soft-deleted)
+func (s *PromptService) GetByIDForAdmin(ctx context.Context, id string) (*domain.Prompt, error) {
+	return s.repo.FindByIDForAdmin(ctx, id)
+}

@@ -173,6 +173,31 @@ func (h *AdminHandler) GetRejectedPrompts(c *fiber.Ctx) error {
 	})
 }
 
+
+//Get all deleted prompts
+func (h *AdminHandler) GetDeletedPrompts(c *fiber.Ctx) error {
+    page, _ := strconv.Atoi(c.Query("page", "1"))
+    limit, _ := strconv.Atoi(c.Query("limit", "20"))
+    
+    prompts, total, err := h.service.GetPromptsByStatus(c.Context(), "deleted", page, limit)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+    
+    return c.JSON(fiber.Map{
+        "data": prompts,
+        "pagination": fiber.Map{
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + int64(limit) - 1) / int64(limit),
+        },
+    })
+}
+
+
 // GetAllPromptsAdmin returns all prompts (any status)
 func (h *AdminHandler) GetAllPromptsAdmin(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
