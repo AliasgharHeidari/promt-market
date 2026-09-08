@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Market</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── CSS Variables ─── */
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --bg-hover: #2d3a4f;
+      --bg-input: #2d3a4f;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --badge-bg: #2d3a4f;
+      --scrollbar-track: #1e293b;
+      --scrollbar-thumb: #475569;
+      --success: #22c55e;
+      --error: #ef4444;
+      --info: #3b82f6;
+      --warning: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 1.5rem;
+      min-height: 100vh;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* ─── Header ─── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--bg-secondary);
+      padding: 1rem 2rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+    .header h1 {
+      font-weight: 700;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header .badge {
+      background: #1e3a5f;
+      color: #60a5fa;
+      font-size: 0.6rem;
+      padding: 0.1rem 0.7rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .header .status {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .header .status .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 0.3rem;
+    }
+    .dot.online { background: var(--success); }
+    .dot.offline { background: var(--error); }
+
+    .theme-toggle {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.3rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      transition: 0.15s;
+    }
+    .theme-toggle:hover { background: var(--bg-hover); }
+
+    /* ─── Grid ─── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ─── Cards ─── */
+    .card {
+      background: var(--bg-secondary);
+      border-radius: 1rem;
+      padding: 1.5rem 1.75rem;
+      border: 1px solid var(--border-color);
+      transition: 0.2s;
+    }
+    .card:hover { border-color: #475569; }
+    .card h3 {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-primary);
+    }
+    .card .sub {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ─── Form ─── */
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-top: 0.8rem;
+      margin-bottom: 0.2rem;
+      color: var(--text-secondary);
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.5rem 0.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      transition: 0.15s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--info);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      background: var(--info);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.15s;
+      margin-top: 1rem;
+      width: 100%;
+    }
+    .btn:hover { opacity: 0.85; transform: scale(0.98); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-outline:hover { background: var(--bg-hover); }
+    .btn-sm {
+      width: auto;
+      padding: 0.3rem 1rem;
+      margin-top: 0;
+      font-size: 0.75rem;
+    }
+    .btn-success { background: var(--success); }
+    .btn-danger { background: var(--error); }
+    .btn-warning { background: var(--warning); color: #0f172a; }
+
+    /* ─── Output / Result Box ─── */
+    .output {
+      margin-top: 1rem;
+      background: var(--bg-primary);
+      border-radius: 0.6rem;
+      padding: 0.8rem 1rem;
+      font-size: 0.8rem;
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      font-family: 'Inter', monospace;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+    .output .ok { color: var(--success); }
+    .output .err { color: var(--error); }
+    .output .info { color: var(--info); }
+    .output .warn { color: var(--warning); }
+
+    /* ─── Token Display ─── */
+    .token-box {
+      margin-top: 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: 0.6rem;
+      padding: 0.8rem 1.2rem;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .token-box .label { font-weight: 500; font-size: 0.8rem; color: var(--text-secondary); }
+    .token-box .value {
+      font-family: monospace;
+      font-size: 0.7rem;
+      word-break: break-all;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.3rem;
+      flex: 1;
+    }
+
+    /* ─── Status Badge ─── */
+    .status-badge {
+      display: inline-block;
+      background: var(--badge-bg);
+      padding: 0.15rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .flex { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .mt-1 { margin-top: 1rem; }
+    .mb-1 { margin-bottom: 0.5rem; }
+
+    @media (max-width: 600px) {
+      body { padding: 0.8rem; }
+      .header { flex-direction: column; align-items: stretch; }
+      .row-2 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="header">
+    <h1>
+      🧪 Prompt Market
+      <span class="badge">v0.3</span>
+      <span id="serverStatus" class="status-badge" style="background:#1e3a5f;color:#60a5fa;">● Online</span>
+    </h1>
+    <div class="status">
+      <span>🔑 <span id="tokenStatus" style="color:var(--text-muted);">بدون توکن</span></span>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+      <button class="btn btn-sm" onclick="checkHealth()">🔄 Health</button>
+    </div>
+  </header>
+
+  <!-- ═══ STATUS LINE ═══ -->
+  <div class="card" style="margin-bottom:1.5rem; background:var(--bg-primary); border-color:var(--border-color);">
+    <div class="flex-between">
+      <span style="color:var(--text-secondary); font-size:0.85rem;">
+        🟢 <span id="healthOutput">سرور در حال اجرا است</span>
+      </span>
+      <span style="color:var(--text-muted); font-size:0.75rem;">
+        API: <code style="background:var(--bg-input);padding:0.1rem 0.5rem;border-radius:0.3rem;">http://localhost:8080</code>
+      </span>
+    </div>
+  </div>
+
+  <!-- ═══ GRID ═══ -->
+  <div class="grid-2">
+
+    <!-- ─── AUTH ─── -->
+    <div class="card">
+      <h3>🔐 احراز هویت</h3>
+      <label>ایمیل</label>
+      <input id="authEmail" value="test@example.com">
+      <label>رمز عبور</label>
+      <input id="authPass" type="password" value="password123">
+      <label>نام کامل</label>
+      <input id="authName" value="Test User">
+
+      <div class="row-2" style="margin-top:0.5rem;">
+        <button class="btn btn-sm btn-outline" onclick="registerUser()">📝 ثبت‌نام</button>
+        <button class="btn btn-sm" onclick="loginUser()">🔑 ورود</button>
+      </div>
+      <div class="row-2">
+        <button class="btn btn-sm btn-outline" onclick="refreshTokenFunc()">🔄 رفرش</button>
+        <button class="btn btn-sm btn-outline" onclick="getProfile()">👤 پروفایل</button>
+      </div>
+
+      <div class="output" id="authOutput">↳ نتیجه احراز هویت</div>
+    </div>
+
+    <!-- ─── PROMPT ─── -->
+    <div class="card">
+      <h3>📄 مدیریت پرامپت</h3>
+      <label>عنوان</label>
+      <input id="promptTitle" value="Professional SEO Content Prompt">
+      <label>توضیحات</label>
+      <input id="promptDesc" value="Generate SEO-optimized blog content">
+      <label>دسته‌بندی</label>
+      <input id="promptCategory" value="Content Creation">
+      <div class="row-2">
+        <div>
+          <label>قیمت (تومان)</label>
+          <input id="promptPrice" type="number" value="50000">
+        </div>
+        <div>
+          <label>سطح</label>
+          <select id="promptDifficulty">
+            <option value="beginner">مبتدی</option>
+            <option value="intermediate" selected>متوسط</option>
+            <option value="advanced">پیشرفته</option>
+          </select>
+        </div>
+      </div>
+      <label>محتوای پرامپت</label>
+      <textarea id="promptContent" rows="2">You are an expert SEO writer. Create a blog post about AI...</textarea>
+
+      <div class="row-2">
+        <button class="btn btn-sm" onclick="createPrompt()">➕ ایجاد</button>
+        <button class="btn btn-sm btn-outline" onclick="listPrompts()">📋 لیست</button>
+      </div>
+      <div class="row-2">
+        <button class="btn btn-sm btn-outline" onclick="searchPrompts()">🔍 جستجو</button>
+        <button class="btn btn-sm btn-outline" onclick="getMyPrompts()">📁 پرامپت‌های من</button>
+      </div>
+
+      <div class="output" id="promptOutput">↳ نتیجه عملیات</div>
+    </div>
+  </div>
+
+  <!-- ═══ SEARCH BAR ═══ -->
+  <div class="card" style="margin-top:1.5rem;">
+    <div class="flex-between">
+      <h3 style="margin:0; font-weight:600; font-size:1rem;">🔎 جستجوی پیشرفته</h3>
+      <div class="flex">
+        <input id="searchQuery" placeholder="جستجو..." style="width:160px;">
+        <select id="searchCategory" style="width:130px;">
+          <option value="">همه دسته‌ها</option>
+          <option value="Content Creation">Content Creation</option>
+          <option value="Programming">Programming</option>
+          <option value="Data Science">Data Science</option>
+          <option value="Marketing">Marketing</option>
+        </select>
+        <input id="searchMinPrice" placeholder="قیمت از" type="number" style="width:90px;">
+        <input id="searchMaxPrice" placeholder="تا" type="number" style="width:90px;">
+        <button class="btn btn-sm" onclick="searchPrompts()">🔍 برو</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TOKEN DISPLAY ═══ -->
+  <div class="token-box">
+    <span class="label">🔑 Access Token:</span>
+    <span class="value" id="displayAccessToken">—</span>
+    <span class="label" style="margin-left:0.8rem;">🔄 Refresh:</span>
+    <span class="value" id="displayRefreshToken">—</span>
+  </div>
+
+</div>
+
+<script>
+  // ═══════════════════════════════════════════════
+  //  STATE
+  // ═══════════════════════════════════════════════
+  let accessToken = localStorage.getItem('accessToken') || '';
+  let refreshToken = localStorage.getItem('refreshToken') || '';
+  let theme = localStorage.getItem('theme') || 'dark';
+
+  const API_BASE = 'http://localhost:8080/api/v1';
+
+  // ═══════════════════════════════════════════════
+  //  THEME
+  // ═══════════════════════════════════════════════
+  function applyTheme(t) {
+    theme = t;
+    document.documentElement.style.setProperty('--bg-primary', t === 'dark' ? '#0f172a' : '#f8fafc');
+    document.documentElement.style.setProperty('--bg-secondary', t === 'dark' ? '#1e293b' : '#ffffff');
+    document.documentElement.style.setProperty('--bg-card', t === 'dark' ? '#1e293b' : '#ffffff');
+    document.documentElement.style.setProperty('--bg-hover', t === 'dark' ? '#2d3a4f' : '#f1f5f9');
+    document.documentElement.style.setProperty('--bg-input', t === 'dark' ? '#2d3a4f' : '#ffffff');
+    document.documentElement.style.setProperty('--text-primary', t === 'dark' ? '#f1f5f9' : '#0f172a');
+    document.documentElement.style.setProperty('--text-secondary', t === 'dark' ? '#94a3b8' : '#475569');
+    document.documentElement.style.setProperty('--text-muted', t === 'dark' ? '#64748b' : '#94a3b8');
+    document.documentElement.style.setProperty('--border-color', t === 'dark' ? '#334155' : '#e9edf2');
+    document.documentElement.style.setProperty('--badge-bg', t === 'dark' ? '#2d3a4f' : '#f1f5f9');
+    document.documentElement.style.setProperty('--scrollbar-track', t === 'dark' ? '#1e293b' : '#f1f5f9');
+    document.documentElement.style.setProperty('--scrollbar-thumb', t === 'dark' ? '#475569' : '#cbd5e1');
+    localStorage.setItem('theme', t);
+    document.querySelector('.theme-toggle').textContent = t === 'dark' ? '☀️' : '🌙';
+  }
+
+  function toggleTheme() {
+    applyTheme(theme === 'dark' ? 'light' : 'dark');
+  }
+
+  // ═══════════════════════════════════════════════
+  //  HELPERS
+  // ═══════════════════════════════════════════════
+  function getHeaders(extra) {
+    const h = { 'Content-Type': 'application/json', ...extra };
+    if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+    return h;
+  }
+
+  function renderAuthOutput(html) {
+    document.getElementById('authOutput').innerHTML = html;
+  }
+  function renderPromptOutput(html) {
+    document.getElementById('promptOutput').innerHTML = html;
+  }
+
+  function updateTokenDisplay() {
+    document.getElementById('displayAccessToken').textContent = accessToken ? accessToken.slice(0, 35) + '…' : '—';
+    document.getElementById('displayRefreshToken').textContent = refreshToken ? refreshToken.slice(0, 35) + '…' : '—';
+    document.getElementById('tokenStatus').textContent = accessToken ? '✅ توکن فعال' : '❌ بدون توکن';
+    document.getElementById('tokenStatus').style.color = accessToken ? 'var(--success)' : 'var(--error)';
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+  }
+
+  function formatJSON(data) {
+    return JSON.stringify(data, null, 2);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  HEALTH
+  // ═══════════════════════════════════════════════
+  function checkHealth() {
+    fetch(API_BASE + '/health')
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById('serverStatus').textContent = '● Online';
+        document.getElementById('serverStatus').style.color = 'var(--success)';
+        document.getElementById('healthOutput').textContent = '✅ ' + d.message + ' (status: ' + d.status + ')';
+      })
+      .catch(() => {
+        document.getElementById('serverStatus').textContent = '● Offline';
+        document.getElementById('serverStatus').style.color = 'var(--error)';
+        document.getElementById('healthOutput').textContent = '⚠️ اتصال به سرور برقرار نیست';
+      });
+  }
+
+  // ═══════════════════════════════════════════════
+  //  AUTH
+  // ═══════════════════════════════════════════════
+  function registerUser() {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPass').value;
+    const full_name = document.getElementById('authName').value;
+
+    fetch(API_BASE + '/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, full_name }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = d.data?.id || d.message?.includes('success');
+        const cls = isOk ? 'ok' : 'err';
+        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ ثبت‌نام موفق' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  function loginUser() {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPass').value;
+
+    fetch(API_BASE + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.tokens) {
+          accessToken = d.data.tokens.access_token;
+          refreshToken = d.data.tokens.refresh_token;
+          updateTokenDisplay();
+        }
+        const isOk = d.data?.tokens?.access_token;
+        const cls = isOk ? 'ok' : 'err';
+        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ ورود موفق' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  function refreshTokenFunc() {
+    if (!refreshToken) {
+      renderAuthOutput('<span class="err">❌ Refresh Token موجود نیست</span>');
+      return;
+    }
+    fetch(API_BASE + '/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.access_token) {
+          accessToken = d.data.access_token;
+          if (d.data.refresh_token) refreshToken = d.data.refresh_token;
+          updateTokenDisplay();
+        }
+        const isOk = d.data?.access_token;
+        const cls = isOk ? 'ok' : 'err';
+        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ توکن جدید دریافت شد' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  function getProfile() {
+    if (!accessToken) {
+      renderAuthOutput('<span class="err">❌ ابتدا وارد شوید</span>');
+      return;
+    }
+    fetch(API_BASE + '/profile', { method: 'GET', headers: getHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = d.data?.email;
+        const cls = isOk ? 'ok' : 'err';
+        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ پروفایل' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PROMPT
+  // ═══════════════════════════════════════════════
+  function createPrompt() {
+    if (!accessToken) {
+      renderPromptOutput('<span class="err">❌ ابتدا وارد شوید</span>');
+      return;
+    }
+    const body = {
+      title: document.getElementById('promptTitle').value,
+      description: document.getElementById('promptDesc').value,
+      category: document.getElementById('promptCategory').value,
+      content: document.getElementById('promptContent').value,
+      price: parseInt(document.getElementById('promptPrice').value) || 0,
+      difficulty: document.getElementById('promptDifficulty').value,
+      language: 'english',
+      tags: ['seo', 'content'],
+    };
+
+    fetch(API_BASE + '/prompts', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = d.data?.id || d.message?.includes('success');
+        const cls = isOk ? 'ok' : 'err';
+        renderPromptOutput(`<span class="${cls}">${isOk ? '✅ پرامپت ایجاد شد' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  function listPrompts() {
+    fetch(API_BASE + '/prompts?page=1&limit=10')
+      .then(r => r.json())
+      .then(d => {
+        const count = d.data?.length || 0;
+        renderPromptOutput(`<span class="info">📋 ${count} پرامپت یافت شد</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  function searchPrompts() {
+    const q = document.getElementById('searchQuery').value || '';
+    const cat = document.getElementById('searchCategory').value || '';
+    const min = document.getElementById('searchMinPrice').value || '';
+    const max = document.getElementById('searchMaxPrice').value || '';
+
+    let url = '/prompts/search?';
+    if (q) url += `search=${encodeURIComponent(q)}&`;
+    if (cat) url += `category=${encodeURIComponent(cat)}&`;
+    if (min) url += `min_price=${min}&`;
+    if (max) url += `max_price=${max}&`;
+    url += 'page=1&limit=20';
+
+    fetch(API_BASE + url)
+      .then(r => r.json())
+      .then(d => {
+        const count = d.data?.length || 0;
+        renderPromptOutput(`<span class="info">🔍 ${count} نتیجه یافت شد</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  function getMyPrompts() {
+    if (!accessToken) {
+      renderPromptOutput('<span class="err">❌ ابتدا وارد شوید</span>');
+      return;
+    }
+    fetch(API_BASE + '/my-prompts?page=1&limit=10', { method: 'GET', headers: getHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        const count = d.data?.length || 0;
+        renderPromptOutput(`<span class="info">📁 ${count} پرامپت از شما</span>\n${formatJSON(d)}`);
+      })
+      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+  }
+
+  // ═══════════════════════════════════════════════
+  //  INIT
+  // ═══════════════════════════════════════════════
+  applyTheme(theme);
+  updateTokenDisplay();
+  checkHealth();
+</script>
+
+</body>
+</html>
