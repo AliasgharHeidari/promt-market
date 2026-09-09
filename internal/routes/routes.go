@@ -10,6 +10,7 @@ import (
 
 	"promt-market/internal/handler"
 	"promt-market/internal/middleware"
+	"promt-market/internal/service"
 	"promt-market/pkg/jwt"
 )
 
@@ -30,14 +31,17 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 		})
 	})
 
-	// Auth
-	authHandler := handler.NewAuthHandler(db)
+	// ========== AUTH ROUTES (Public) ==========
+	emailService := service.NewEmailService()
+	authHandler := handler.NewAuthHandler(db, redis, emailService)
 	auth := api.Group("/auth")
 	auth.Post("/register", authHandler.Register)
+	auth.Post("/verify-email", authHandler.VerifyEmail)
+	auth.Post("/resend-verification", authHandler.ResendVerification)
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/refresh", authHandler.RefreshToken)
 
-	// Public prompts
+	// ========== PROMPT ROUTES (Public) ==========
 	promptHandler := handler.NewPromptHandler(db)
 	prompts := api.Group("/prompts")
 	prompts.Get("/", promptHandler.GetAllPrompts)
@@ -45,17 +49,15 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 	prompts.Get("/categories", promptHandler.GetCategories)
 	prompts.Get("/:slug", promptHandler.GetPromptBySlug)
 
-	// Protected routes
+	// ========== PROTECTED ROUTES ==========
 	protected := api.Group("/", middleware.JWTProtected())
 
 	protected.Get("/profile", authHandler.GetProfile)
 
-	// User prompt management (with ownership check)
 	protected.Post("/prompts", promptHandler.CreatePrompt)
 	protected.Put("/prompts/:id", promptHandler.UpdatePrompt)
-	protected.Delete("/prompts/:id", promptHandler.DeletePrompt) // ← کاربر عادی
+	protected.Delete("/prompts/:id", promptHandler.DeletePrompt)
 	protected.Get("/my-prompts", promptHandler.GetMyPrompts)
 
-	// Admin only - get prompt by ID
 	protected.Get("/prompts/id/:id", middleware.AdminOnly(), promptHandler.GetPromptByID)
 }

@@ -208,12 +208,11 @@
       border-radius: 0.6rem;
       padding: 0.8rem 1rem;
       font-size: 0.8rem;
-      max-height: 280px;
+      max-height: 340px;
       overflow-y: auto;
       border: 1px solid var(--border-color);
-      font-family: 'Inter', monospace;
+      font-family: 'Inter', sans-serif;
       color: var(--text-secondary);
-      white-space: pre-wrap;
       word-break: break-word;
       line-height: 1.6;
     }
@@ -221,6 +220,107 @@
     .output .err { color: var(--error); }
     .output .info { color: var(--info); }
     .output .warn { color: var(--warning); }
+    .output .placeholder { color: var(--text-muted); font-family: 'Inter', sans-serif; }
+
+    /* ─── Pretty result banner (top line of an output box) ─── */
+    .result-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 0.7rem;
+    }
+    .result-banner.ok { color: var(--success); }
+    .result-banner.err { color: var(--error); }
+    .result-banner.info { color: var(--info); }
+
+    /* ─── Key/value data card (e.g. user profile, login result) ─── */
+    .data-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.45rem 0.9rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.8rem 1rem;
+      font-family: 'Inter', sans-serif;
+    }
+    .data-card .k {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .data-card .v {
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      align-self: center;
+      word-break: break-word;
+    }
+    .data-card .v.mono {
+      font-family: monospace;
+      font-size: 0.72rem;
+      background: var(--bg-primary);
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.3rem;
+      display: inline-block;
+      word-break: break-all;
+    }
+    .data-card .v .chip {
+      display: inline-block;
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    /* ─── Prompt result list ─── */
+    .prompt-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .prompt-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.7rem 0.9rem;
+    }
+    .prompt-item .pi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+    .prompt-item .pi-title {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+    .prompt-item .pi-price {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--success);
+      white-space: nowrap;
+    }
+    .prompt-item .pi-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+    }
+    .prompt-item .pi-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 1rem 0;
+      font-family: 'Inter', sans-serif;
+    }
 
     /* ─── Token Display ─── */
     .token-box {
@@ -323,7 +423,14 @@
         <button class="btn btn-sm btn-outline" onclick="getProfile()">👤 پروفایل</button>
       </div>
 
-      <div class="output" id="authOutput">↳ نتیجه احراز هویت</div>
+      <label style="margin-top:1.2rem;">کد تایید ایمیل (۶ رقمی)</label>
+      <input id="verifyCode" maxlength="6" placeholder="123456">
+      <div class="row-2">
+        <button class="btn btn-sm btn-success" onclick="verifyEmail()">✅ تایید ایمیل</button>
+        <button class="btn btn-sm btn-warning" onclick="resendVerification()">📨 ارسال مجدد کد</button>
+      </div>
+
+      <div class="output" id="authOutput"><span class="placeholder">↳ نتیجه احراز هویت</span></div>
     </div>
 
     <!-- ─── PROMPT ─── -->
@@ -361,7 +468,7 @@
         <button class="btn btn-sm btn-outline" onclick="getMyPrompts()">📁 پرامپت‌های من</button>
       </div>
 
-      <div class="output" id="promptOutput">↳ نتیجه عملیات</div>
+      <div class="output" id="promptOutput"><span class="placeholder">↳ نتیجه عملیات</span></div>
     </div>
   </div>
 
@@ -455,8 +562,42 @@
     localStorage.setItem('refreshToken', refreshToken);
   }
 
-  function formatJSON(data) {
-    return JSON.stringify(data, null, 2);
+  // ═══════════════════════════════════════════════
+  //  PRETTY RENDER HELPERS
+  // ═══════════════════════════════════════════════
+  function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function banner(kind, text) {
+    const icon = kind === 'ok' ? '✅' : kind === 'err' ? '❌' : 'ℹ️';
+    return `<div class="result-banner ${kind}">${icon} ${esc(text)}</div>`;
+  }
+
+  // Renders a plain "key: value" card from an object. `rows` is an array of
+  // [label, value, opts] where opts can set { mono: true, chip: true }.
+  function dataCard(rows) {
+    const body = rows
+      .filter(r => r[1] !== undefined && r[1] !== null && r[1] !== '')
+      .map(([label, value, opts = {}]) => {
+        let v = esc(value);
+        if (opts.mono) v = `<span class="v mono">${v}</span>`;
+        else if (opts.chip) v = `<span class="chip">${v}</span>`;
+        return `<div class="k">${esc(label)}</div><div class="v">${v}</div>`;
+      })
+      .join('');
+    return `<div class="data-card">${body}</div>`;
+  }
+
+  function errorCard(message) {
+    return banner('err', message || 'خطای نامشخص');
+  }
+
+  function fieldErrorMessage(d, fallback) {
+    if (d && typeof d.error === 'string') return d.error;
+    return fallback || 'خطایی رخ داد';
   }
 
   // ═══════════════════════════════════════════════
@@ -492,11 +633,63 @@
     })
       .then(r => r.json())
       .then(d => {
-        const isOk = d.data?.id || d.message?.includes('success');
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ ثبت‌نام موفق' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+        const isOk = !!d.data?.id;
+        if (isOk) {
+          renderAuthOutput(
+            banner('ok', 'ثبت‌نام موفق — کد تایید به ایمیل ارسال شد') +
+            dataCard([
+              ['شناسه', d.data.id, { mono: true }],
+              ['ایمیل', d.data.email],
+              ['نام کامل', d.data.full_name],
+              ['نقش', d.data.role, { chip: true }],
+            ])
+          );
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ثبت‌نام ناموفق بود')));
+        }
       })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderAuthOutput(errorCard(e.message)));
+  }
+
+  function verifyEmail() {
+    const email = document.getElementById('authEmail').value;
+    const code = document.getElementById('verifyCode').value;
+
+    fetch(API_BASE + '/auth/verify-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = typeof d.message === 'string' && !d.error;
+        if (isOk) {
+          renderAuthOutput(banner('ok', d.message || 'ایمیل با موفقیت تایید شد'));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'تایید ایمیل ناموفق بود')));
+        }
+      })
+      .catch(e => renderAuthOutput(errorCard(e.message)));
+  }
+
+  function resendVerification() {
+    const email = document.getElementById('authEmail').value;
+
+    fetch(API_BASE + '/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = typeof d.message === 'string' && !d.error;
+        if (isOk) {
+          renderAuthOutput(banner('ok', d.message || 'کد تایید مجدداً ارسال شد'));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ارسال مجدد کد ناموفق بود')));
+        }
+      })
+      .catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   function loginUser() {
@@ -515,16 +708,29 @@
           refreshToken = d.data.tokens.refresh_token;
           updateTokenDisplay();
         }
-        const isOk = d.data?.tokens?.access_token;
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ ورود موفق' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+        const isOk = !!d.data?.tokens?.access_token;
+        if (isOk) {
+          const u = d.data.user;
+          renderAuthOutput(
+            banner('ok', 'ورود موفق') +
+            dataCard([
+              ['شناسه', u.id, { mono: true }],
+              ['ایمیل', u.email],
+              ['نام کامل', u.full_name],
+              ['نقش', u.role, { chip: true }],
+              ['امتیاز', u.rating],
+            ])
+          );
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ورود ناموفق بود')));
+        }
       })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   function refreshTokenFunc() {
     if (!refreshToken) {
-      renderAuthOutput('<span class="err">❌ Refresh Token موجود نیست</span>');
+      renderAuthOutput(errorCard('Refresh Token موجود نیست'));
       return;
     }
     fetch(API_BASE + '/auth/refresh', {
@@ -539,34 +745,79 @@
           if (d.data.refresh_token) refreshToken = d.data.refresh_token;
           updateTokenDisplay();
         }
-        const isOk = d.data?.access_token;
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ توکن جدید دریافت شد' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+        const isOk = !!d.data?.access_token;
+        if (isOk) {
+          renderAuthOutput(banner('ok', 'توکن جدید با موفقیت دریافت شد'));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت توکن جدید ناموفق بود')));
+        }
       })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   function getProfile() {
     if (!accessToken) {
-      renderAuthOutput('<span class="err">❌ ابتدا وارد شوید</span>');
+      renderAuthOutput(errorCard('ابتدا وارد شوید'));
       return;
     }
     fetch(API_BASE + '/profile', { method: 'GET', headers: getHeaders() })
       .then(r => r.json())
       .then(d => {
-        const isOk = d.data?.email;
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ پروفایل' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+        const isOk = !!d.data?.email;
+        if (isOk) {
+          const u = d.data;
+          renderAuthOutput(
+            banner('ok', 'پروفایل کاربر') +
+            dataCard([
+              ['شناسه', u.id, { mono: true }],
+              ['ایمیل', u.email],
+              ['نام کامل', u.full_name],
+              ['نقش', u.role, { chip: true }],
+              ['تخصص', u.expertise],
+              ['بیوگرافی', u.bio],
+              ['امتیاز', u.rating],
+              ['تعداد فروش', u.total_sales],
+              ['موجودی کیف پول', u.wallet_balance],
+            ])
+          );
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت پروفایل ناموفق بود')));
+        }
       })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   // ═══════════════════════════════════════════════
   //  PROMPT
   // ═══════════════════════════════════════════════
+  // Renders an array of prompt objects as a list of cards.
+  function promptList(prompts) {
+    if (!prompts || prompts.length === 0) {
+      return '<div class="empty-state">هیچ پرامپتی یافت نشد</div>';
+    }
+    const items = prompts.map(p => {
+      const price = (p.price !== undefined && p.price !== null)
+        ? Number(p.price).toLocaleString('fa-IR') + ' تومان'
+        : '';
+      return `
+        <div class="prompt-item">
+          <div class="pi-top">
+            <span class="pi-title">${esc(p.title || 'بدون عنوان')}</span>
+            ${price ? `<span class="pi-price">${esc(price)}</span>` : ''}
+          </div>
+          ${p.description ? `<div class="pi-desc">${esc(p.description)}</div>` : ''}
+          <div class="pi-meta">
+            ${p.category ? `<span class="chip">${esc(p.category)}</span>` : ''}
+            ${p.difficulty ? `<span class="chip">${esc(p.difficulty)}</span>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+    return `<div class="prompt-list">${items}</div>`;
+  }
+
   function createPrompt() {
     if (!accessToken) {
-      renderPromptOutput('<span class="err">❌ ابتدا وارد شوید</span>');
+      renderPromptOutput(errorCard('ابتدا وارد شوید'));
       return;
     }
     const body = {
@@ -587,21 +838,33 @@
     })
       .then(r => r.json())
       .then(d => {
-        const isOk = d.data?.id || d.message?.includes('success');
-        const cls = isOk ? 'ok' : 'err';
-        renderPromptOutput(`<span class="${cls}">${isOk ? '✅ پرامپت ایجاد شد' : '❌ خطا'}</span>\n${formatJSON(d)}`);
+        const isOk = !!d.data?.id;
+        if (isOk) {
+          renderPromptOutput(
+            banner('ok', 'پرامپت با موفقیت ایجاد شد') +
+            dataCard([
+              ['شناسه', d.data.id, { mono: true }],
+              ['عنوان', d.data.title],
+              ['دسته‌بندی', d.data.category, { chip: true }],
+              ['قیمت', d.data.price !== undefined ? Number(d.data.price).toLocaleString('fa-IR') + ' تومان' : ''],
+            ])
+          );
+        } else {
+          renderPromptOutput(errorCard(fieldErrorMessage(d, 'ایجاد پرامپت ناموفق بود')));
+        }
       })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderPromptOutput(errorCard(e.message)));
   }
 
   function listPrompts() {
     fetch(API_BASE + '/prompts?page=1&limit=10')
       .then(r => r.json())
       .then(d => {
+        if (d.error) { renderPromptOutput(errorCard(d.error)); return; }
         const count = d.data?.length || 0;
-        renderPromptOutput(`<span class="info">📋 ${count} پرامپت یافت شد</span>\n${formatJSON(d)}`);
+        renderPromptOutput(banner('info', `${count} پرامپت یافت شد`) + promptList(d.data));
       })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderPromptOutput(errorCard(e.message)));
   }
 
   function searchPrompts() {
@@ -620,24 +883,26 @@
     fetch(API_BASE + url)
       .then(r => r.json())
       .then(d => {
+        if (d.error) { renderPromptOutput(errorCard(d.error)); return; }
         const count = d.data?.length || 0;
-        renderPromptOutput(`<span class="info">🔍 ${count} نتیجه یافت شد</span>\n${formatJSON(d)}`);
+        renderPromptOutput(banner('info', `${count} نتیجه یافت شد`) + promptList(d.data));
       })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderPromptOutput(errorCard(e.message)));
   }
 
   function getMyPrompts() {
     if (!accessToken) {
-      renderPromptOutput('<span class="err">❌ ابتدا وارد شوید</span>');
+      renderPromptOutput(errorCard('ابتدا وارد شوید'));
       return;
     }
     fetch(API_BASE + '/my-prompts?page=1&limit=10', { method: 'GET', headers: getHeaders() })
       .then(r => r.json())
       .then(d => {
+        if (d.error) { renderPromptOutput(errorCard(d.error)); return; }
         const count = d.data?.length || 0;
-        renderPromptOutput(`<span class="info">📁 ${count} پرامپت از شما</span>\n${formatJSON(d)}`);
+        renderPromptOutput(banner('info', `${count} پرامپت از شما`) + promptList(d.data));
       })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+      .catch(e => renderPromptOutput(errorCard(e.message)));
   }
 
   // ═══════════════════════════════════════════════

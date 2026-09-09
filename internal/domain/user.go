@@ -16,6 +16,8 @@ type User struct {
 	WalletBalance int64    `json:"wallet_balance" gorm:"default:0"`
 	Role         string    `json:"role" gorm:"default:'user';size:20"`
 	IsActive     bool      `json:"is_active" gorm:"default:true"`
+	IsVerified   bool      `json:"is_verified" gorm:"default:false"`
+	Phone        string    `json:"phone" gorm:"size:20"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
