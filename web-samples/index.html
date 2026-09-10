@@ -276,6 +276,13 @@
       border: 1px solid var(--border-color);
       border-radius: 0.6rem;
       padding: 0.7rem 0.9rem;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .prompt-item:hover {
+      border-color: var(--info);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
     }
     .prompt-item .pi-top {
       display: flex;
@@ -305,6 +312,14 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.4rem;
+    }
+    .prompt-item .pi-hint {
+      font-size: 0.7rem;
+      color: var(--info);
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
     }
     .empty-state {
       text-align: center;
@@ -461,7 +476,7 @@
   <header class="header">
     <h1>
       🧪 Prompt Market
-      <span class="badge">v0.5</span>
+      <span class="badge">v0.6</span>
       <span id="serverStatus" class="status-badge" style="background:#1e3a5f;color:#60a5fa;">● Online</span>
     </h1>
     <div class="status">
@@ -678,6 +693,14 @@
   let theme = localStorage.getItem('theme') || 'dark';
 
   const API_BASE = 'http://localhost:8080/api/v1';
+
+  // ═══════════════════════════════════════════════
+  //  PROMPT CACHE
+  // ═══════════════════════════════════════════════
+  // Stores prompts fetched from list/search/my-prompts endpoints so a click
+  // on an item can open the preview overlay without another network round-trip.
+  // Keyed by prompt id. Later fetches overwrite stale entries.
+  const promptCache = {};
 
   // ═══════════════════════════════════════════════
   //  THEME
@@ -1042,12 +1065,17 @@
     if (!prompts || prompts.length === 0) {
       return '<div class="empty-state">هیچ پرامپتی یافت نشد</div>';
     }
+
     const items = prompts.map(p => {
+      // Cache the whole object so clicking it can open the overlay instantly.
+      if (p.id) promptCache[p.id] = p;
+
       const price = (p.price !== undefined && p.price !== null)
         ? Number(p.price).toLocaleString('fa-IR') + ' تومان'
         : '';
+
       return `
-        <div class="prompt-item">
+        <div class="prompt-item" onclick="previewFromCache('${esc(p.id)}')">
           <div class="pi-top">
             <span class="pi-title">${esc(p.title || 'بدون عنوان')}</span>
             ${price ? `<span class="pi-price">${esc(price)}</span>` : ''}
@@ -1059,9 +1087,35 @@
             ${p.language ? `<span class="chip">${esc(p.language)}</span>` : ''}
             ${p.status ? `<span class="chip">${esc(p.status)}</span>` : ''}
           </div>
+          <div class="pi-hint">👁️ برای مشاهده جزئیات کلیک کنید</div>
         </div>`;
     }).join('');
     return `<div class="prompt-list">${items}</div>`;
+  }
+
+  // Opens the preview overlay for a prompt. Prefers the in-memory cache
+  // (instant), falling back to the server if the prompt isn't cached yet.
+  function previewFromCache(promptId) {
+    const cached = promptCache[promptId];
+    if (cached) {
+      openPreviewOverlay(cached);
+      return;
+    }
+    // Fallback: fetch by ID. This endpoint is admin-only, so it may fail
+    // for a regular user if the prompt isn't in the cache — but that only
+    // happens after a hard reload, and list/search immediately re-populate
+    // the cache anyway.
+    fetch(API_BASE + '/prompts/id/' + promptId, { headers: getHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data) {
+          promptCache[promptId] = d.data;
+          openPreviewOverlay(d.data);
+        } else {
+          alert('خطا: ' + (d.error || 'دریافت پرامپت ناموفق بود'));
+        }
+      })
+      .catch(e => alert('خطا: ' + e.message));
   }
 
   // ═══════════════════════════════════════════════
@@ -1125,6 +1179,9 @@
       .then(d => {
         const isOk = !!d.data?.id;
         if (isOk) {
+          // Cache the newly created prompt so its preview is instant too.
+          if (d.data.id) promptCache[d.data.id] = d.data;
+
           renderPromptOutput(
             banner('ok', 'پرامپت ساخته شد (در انتظار تایید ادمین)') +
             dataCard([
@@ -1218,6 +1275,9 @@
         return;
       }
 
+      // Cache every prompt so previewMyPrompt can skip the network round-trip.
+      (d.data || []).forEach(p => { if (p.id) promptCache[p.id] = p; });
+
       renderMyPromptsList(d.data || []);
     } catch (e) {
       renderPromptOutput(errorCard(e.message));
@@ -1264,12 +1324,20 @@
     wrap.innerHTML = `<div class="my-prompts-list">${html}</div>`;
   }
 
-  // Fetch the full prompt and render a full-screen preview overlay that
-  // matches what a buyer would see on the storefront — works for any status.
+  // Fetch a single prompt owned by the authenticated user — works for any
+  // status (pending / approved / rejected / deleted). Uses the dedicated
+  // /my-prompts/:id endpoint which enforces ownership on the server.
   async function previewMyPrompt(promptId) {
     if (!accessToken) return;
+
+    const cached = promptCache[promptId];
+    if (cached) {
+      openPreviewOverlay(cached);
+      return;
+    }
+
     try {
-      const res = await fetch(API_BASE + '/prompts/id/' + promptId, {
+      const res = await fetch(API_BASE + '/my-prompts/' + promptId, {
         headers: getHeaders(),
       });
       const d = await res.json();
@@ -1277,12 +1345,16 @@
         alert('خطا: ' + (d.error || 'دریافت پرامپت ناموفق بود'));
         return;
       }
+      promptCache[promptId] = d.data;
       openPreviewOverlay(d.data);
     } catch (e) {
       alert('خطا: ' + e.message);
     }
   }
 
+  // Full-screen overlay that mirrors what a buyer would see on the storefront.
+  // Works for any prompt status and includes a rejection note banner when
+  // the prompt was rejected by an admin.
   function openPreviewOverlay(p) {
     const prev = document.getElementById('previewOverlay');
     if (prev) prev.remove();

@@ -237,3 +237,38 @@ func (h *PromptHandler) GetPromptByID(c *fiber.Ctx) error {
 		"data": prompt,
 	})
 }
+
+// GetMyPromptByID returns a single prompt owned by the authenticated user,
+// regardless of its status (pending/approved/rejected/deleted). Used by the
+// author dashboard to preview their own drafts and rejected submissions.
+//
+// Admins should use the /admin/prompts/:id route via GetPromptByID instead.
+func (h *PromptHandler) GetMyPromptByID(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	promptID := c.Params("id")
+
+	prompt, err := h.service.GetByIDForAdmin(c.Context(), promptID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	if prompt == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Prompt not found",
+		})
+	}
+
+	// Ownership check: an author can only view their own prompt through
+	// this endpoint. Prevents sellers from peeking at other users' pending
+	// or rejected drafts.
+	if prompt.SellerID != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "You are not the owner of this prompt",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": prompt,
+	})
+}
