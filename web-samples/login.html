@@ -267,6 +267,10 @@
             background: #e9edf2;
             color: #475569;
         }
+        .badge-status.prompt_author {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
         .badge-status.paid {
             background: #d1fae5;
             color: #065f46;
@@ -461,6 +465,132 @@
             font-family: 'Inter', monospace;
         }
 
+        .modal .section input,
+        .modal .section textarea,
+        .modal .section select {
+            width: 100%;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #d1d9e6;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            background: white;
+            font-family: inherit;
+        }
+
+        .modal .section input:focus,
+        .modal .section textarea:focus,
+        .modal .section select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* ─── Image previews in modal ─── */
+        .image-preview-cover {
+            background: #f8fafc;
+            border: 1px solid #e9edf2;
+            border-radius: 0.6rem;
+            padding: 0.6rem;
+            text-align: center;
+        }
+
+        .image-preview-cover img {
+            max-width: 100%;
+            max-height: 220px;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d9e6;
+            cursor: zoom-in;
+            transition: 0.15s;
+        }
+
+        .image-preview-cover img:hover {
+            transform: scale(1.01);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 0.5rem;
+            background: #f8fafc;
+            border: 1px solid #e9edf2;
+            border-radius: 0.6rem;
+            padding: 0.6rem;
+            min-height: 60px;
+        }
+
+        .image-gallery .img-cell {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+
+        .image-gallery .img-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 0.4rem;
+            border: 1px solid #d1d9e6;
+            cursor: zoom-in;
+            transition: 0.15s;
+        }
+
+        .image-gallery .img-cell img:hover {
+            transform: scale(1.04);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .image-gallery .img-cell .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            transition: 0.15s;
+        }
+
+        .image-gallery .img-cell .remove-btn:hover {
+            background: #b91c1c;
+            transform: scale(1.15);
+        }
+
+        .image-gallery .no-image {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            padding: 0.5rem 0;
+        }
+
+        /* ─── Table thumbnail ─── */
+        .table-thumb {
+            width: 36px;
+            height: 36px;
+            object-fit: cover;
+            border-radius: 0.3rem;
+            border: 1px solid #e9edf2;
+            vertical-align: middle;
+            margin-left: 0.4rem;
+            cursor: zoom-in;
+            transition: 0.15s;
+        }
+
+        .table-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
         .modal .actions {
             display: flex;
             gap: 0.8rem;
@@ -469,7 +599,7 @@
         }
 
         .modal .actions .btn {
-            padding: 0.5rem 1.8rem;
+            padding: 0.5rem 1.4rem;
             border: none;
             border-radius: 0.6rem;
             font-weight: 600;
@@ -494,12 +624,38 @@
             background: #fecaca;
         }
 
+        .modal .actions .btn-edit {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .modal .actions .btn-edit:hover {
+            background: #bfdbfe;
+        }
+
+        .modal .actions .btn-save {
+            background: #0f172a;
+            color: white;
+        }
+        .modal .actions .btn-save:hover {
+            background: #1e293b;
+        }
+
         .modal .actions .btn-close-modal {
             background: #e2e8f0;
             color: #1e293b;
         }
         .modal .actions .btn-close-modal:hover {
             background: #cbd5e1;
+        }
+
+        .modal .section .rejection-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 0.7rem 1rem;
+            border-radius: 0.6rem;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
         }
 
         .login-overlay {
@@ -645,39 +801,188 @@
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL: PROMPT DETAIL / EDIT -->
     <div class="modal-overlay" id="promptModal">
         <div class="modal">
             <button class="close" onclick="closeModal()">✕</button>
-            <h2 id="modalTitle">عنوان پرامپت</h2>
-            <div class="meta">
-                <span id="modalCategory">📁 دسته‌بندی</span>
-                <span id="modalPrice">💰 قیمت</span>
-                <span id="modalSeller">👤 فروشنده</span>
-                <span id="modalDifficulty">📊 سطح</span>
-                <span id="modalLanguage">🌐 زبان</span>
-                <span id="modalStatus">📌 وضعیت</span>
+
+            <!-- View mode -->
+            <div id="promptViewMode">
+                <h2 id="modalTitle">عنوان پرامپت</h2>
+                <div class="meta">
+                    <span id="modalCategory">📁 دسته‌بندی</span>
+                    <span id="modalPrice">💰 قیمت</span>
+                    <span id="modalSeller">👤 فروشنده</span>
+                    <span id="modalDifficulty">📊 سطح</span>
+                    <span id="modalLanguage">🌐 زبان</span>
+                    <span id="modalStatus">📌 وضعیت</span>
+                </div>
+
+                <div class="section" id="coverImageSection" style="display:none;">
+                    <label>🖼️ تصویر کاور</label>
+                    <div class="image-preview-cover">
+                        <img id="modalCoverImage" src="" alt="کاور" onclick="openImageInNewTab(this.src)">
+                        <button class="btn-sm delete" style="margin-top:0.5rem;"
+                                onclick="removeCoverImage()">🗑️ حذف کاور</button>
+                    </div>
+                </div>
+
+                <div class="section" id="galleryImagesSection" style="display:none;">
+                    <label>🖼️ گالری تصاویر (برای حذف روی ✕ کلیک کنید)</label>
+                    <div class="image-gallery" id="modalGalleryImages"></div>
+                </div>
+
+                <div class="section">
+                    <label>📝 توضیحات</label>
+                    <div class="content" id="modalDescription"></div>
+                </div>
+                <div class="section">
+                    <label>📄 محتوای پرامپت</label>
+                    <div class="content" id="modalContent"></div>
+                </div>
+                <div class="section">
+                    <label>🎯 خروجی نمونه</label>
+                    <div class="content" id="modalDemo"></div>
+                </div>
+                <div class="section">
+                    <label>📖 راهنمای استفاده</label>
+                    <div class="content" id="modalInstructions"></div>
+                </div>
+                <div class="section" id="modalRejectionSection" style="display:none;">
+                    <label>❌ دلیل رد قبلی</label>
+                    <div class="rejection-box" id="modalRejectionNote"></div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-approve" id="modalApproveBtn" onclick="modalApprove()">✅ تایید</button>
+                    <button class="btn btn-reject" id="modalRejectBtn" onclick="modalReject()">❌ رد</button>
+                    <button class="btn btn-edit" onclick="enterEditMode()">✏️ ویرایش</button>
+                    <button class="btn btn-close-modal" onclick="closeModal()">بستن</button>
+                </div>
             </div>
+
+            <!-- Edit mode -->
+            <div id="promptEditMode" style="display:none;">
+                <h2>✏️ ویرایش پرامپت</h2>
+
+                <div class="section">
+                    <label>عنوان</label>
+                    <input id="editTitle">
+                </div>
+                <div class="section">
+                    <label>توضیحات</label>
+                    <textarea id="editDescription" rows="2"></textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                    <div class="section">
+                        <label>دسته‌بندی</label>
+                        <input id="editCategory">
+                    </div>
+                    <div class="section">
+                        <label>زیردسته</label>
+                        <input id="editSubCategory">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                    <div class="section">
+                        <label>قیمت</label>
+                        <input id="editPrice" type="number">
+                    </div>
+                    <div class="section">
+                        <label>قیمت با تخفیف</label>
+                        <input id="editDiscountPrice" type="number">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                    <div class="section">
+                        <label>سطح</label>
+                        <select id="editDifficulty">
+                            <option value="beginner">مبتدی</option>
+                            <option value="intermediate">متوسط</option>
+                            <option value="advanced">پیشرفته</option>
+                        </select>
+                    </div>
+                    <div class="section">
+                        <label>زبان</label>
+                        <select id="editLanguage">
+                            <option value="english">انگلیسی</option>
+                            <option value="persian">فارسی</option>
+                            <option value="both">هر دو</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="section">
+                    <label>تگ‌ها (با کاما جدا کن)</label>
+                    <input id="editTags">
+                </div>
+                <div class="section">
+                    <label>محتوای پرامپت</label>
+                    <textarea id="editContent" rows="4"></textarea>
+                </div>
+                <div class="section">
+                    <label>خروجی نمونه</label>
+                    <textarea id="editDemoOutput" rows="2"></textarea>
+                </div>
+                <div class="section">
+                    <label>راهنمای استفاده</label>
+                    <textarea id="editInstructions" rows="2"></textarea>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-save" onclick="saveEdit()">💾 ذخیره تغییرات</button>
+                    <button class="btn btn-close-modal" onclick="exitEditMode()">انصراف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REJECT PROMPT WITH NOTE -->
+    <div class="modal-overlay" id="rejectNoteModal">
+        <div class="modal" style="max-width:500px;">
+            <h2>❌ رد پرامپت</h2>
+            <p style="font-size:0.8rem;color:#64748b;margin-bottom:1rem;">
+                دلیلی که می‌نویسید به نویسنده نمایش داده می‌شود تا بتواند مشکل را برطرف کند.
+            </p>
             <div class="section">
-                <label>📝 توضیحات</label>
-                <div class="content" id="modalDescription"></div>
-            </div>
-            <div class="section">
-                <label>📄 محتوای پرامپت</label>
-                <div class="content" id="modalContent"></div>
-            </div>
-            <div class="section" id="demoSection">
-                <label>🎯 خروجی نمونه</label>
-                <div class="content" id="modalDemo"></div>
-            </div>
-            <div class="section" id="instructionsSection">
-                <label>📖 راهنمای استفاده</label>
-                <div class="content" id="modalInstructions"></div>
+                <label>دلیل رد (اختیاری)</label>
+                <textarea id="rejectNoteInput" rows="4"
+                          placeholder="مثلاً: توضیحات کافی نیست، تصویر کاور نامرتبط است..."></textarea>
             </div>
             <div class="actions">
-                <button class="btn btn-approve" id="modalApproveBtn" onclick="modalApprove()">✅ تایید</button>
-                <button class="btn btn-reject" id="modalRejectBtn" onclick="modalReject()">❌ رد</button>
-                <button class="btn btn-close-modal" onclick="closeModal()">بستن</button>
+                <button class="btn btn-reject" onclick="confirmReject()">❌ رد کن</button>
+                <button class="btn btn-close-modal" onclick="closeRejectModal()">انصراف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: AUTHOR APPLICATION DETAIL -->
+    <div class="modal-overlay" id="authorAppModal">
+        <div class="modal">
+            <h2>بررسی درخواست نویسندگی</h2>
+            <div class="meta">
+                <span id="aamUser">👤 کاربر</span>
+                <span id="aamExpertise">🧠 تخصص</span>
+                <span id="aamNationalId">🪪 کد ملی</span>
+                <span id="aamStatus">📌 وضعیت</span>
+            </div>
+            <div class="section">
+                <label>📄 مدرک هویتی (کارت ملی / شناسنامه)</label>
+                <div class="content" id="aamDocumentWrap">
+                    <a id="aamDocumentLink" href="#" target="_blank">مشاهده / دانلود مدرک</a>
+                </div>
+            </div>
+            <div class="section" id="aamRejectionSection" style="display:none;">
+                <label>❌ دلیل رد</label>
+                <div class="content" id="aamRejectionReason"></div>
+            </div>
+            <div class="section" id="aamRejectReasonInputSection">
+                <label>در صورت رد، دلیل را بنویسید (اختیاری)</label>
+                <input id="aamRejectReasonInput" placeholder="مثلاً: تصویر کارت ملی واضح نیست">
+            </div>
+            <div class="actions">
+                <button class="btn btn-approve" id="aamApproveBtn" onclick="modalApproveAuthorApp()">✅ تایید و ارتقا به نویسنده</button>
+                <button class="btn btn-reject" id="aamRejectBtn" onclick="modalRejectAuthorApp()">❌ رد درخواست</button>
+                <button class="btn btn-close-modal" onclick="closeAuthorAppModal()">بستن</button>
             </div>
         </div>
     </div>
@@ -689,7 +994,7 @@
         <header class="header">
             <h1>
                 ⚙️ پنل مدیریت
-                <span class="badge">v2.0</span>
+                <span class="badge">v2.2</span>
             </h1>
             <div class="user-info">
                 <span>👤 <span class="email" id="adminEmail">—</span></span>
@@ -721,6 +1026,10 @@
                 <div class="label">⏳ در انتظار تایید</div>
                 <div class="value" id="statPending">—</div>
             </div>
+            <div class="stat-card">
+                <div class="label">🪪 درخواست نویسندگی</div>
+                <div class="value" id="statAuthorApps">—</div>
+            </div>
         </section>
 
         <!-- TABS -->
@@ -729,6 +1038,7 @@
             <button class="tab-btn" data-tab="tabPrompts">📄 پرامپت‌ها</button>
             <button class="tab-btn" data-tab="tabOrders">🛒 سفارشات</button>
             <button class="tab-btn" data-tab="tabLogs">📋 لاگ‌ها</button>
+            <button class="tab-btn" data-tab="tabAuthorApps">🪪 درخواست‌های نویسندگی</button>
         </div>
 
         <!-- TAB: USERS -->
@@ -756,7 +1066,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                <div style="margin-top:0.8rem;">
                     <span style="font-size:0.75rem;color:#94a3b8;" id="usersPagination"></span>
                 </div>
             </div>
@@ -779,7 +1089,7 @@
                     </div>
                 </div>
                 <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.8rem;">
-                    برای بررسی کامل، روی دکمه <strong>🔍 بررسی</strong> کلیک کنید
+                    برای بررسی، ویرایش، حذف تصویر و ثبت دلیل رد، روی <strong>🔍 بررسی</strong> کلیک کنید
                 </div>
                 <div class="table-wrap">
                     <table>
@@ -797,7 +1107,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                <div style="margin-top:0.8rem;">
                     <span style="font-size:0.75rem;color:#94a3b8;" id="promptsPagination"></span>
                 </div>
             </div>
@@ -828,7 +1138,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                <div style="margin-top:0.8rem;">
                     <span style="font-size:0.75rem;color:#94a3b8;" id="ordersPagination"></span>
                 </div>
             </div>
@@ -858,8 +1168,49 @@
                         </tbody>
                     </table>
                 </div>
-                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                <div style="margin-top:0.8rem;">
                     <span style="font-size:0.75rem;color:#94a3b8;" id="logsPagination"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: AUTHOR APPLICATIONS -->
+        <div class="tab-pane" id="tabAuthorApps">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🪪 درخواست‌های ارتقا به نویسنده پرامپت</h3>
+                    <div class="actions">
+                        <select id="authorAppFilterStatus" onchange="loadAuthorApplications()" style="padding:0.3rem 0.6rem;border-radius:0.4rem;border:1px solid #d1d9e6;font-size:0.75rem;">
+                            <option value="pending">در انتظار</option>
+                            <option value="approved">تایید شده</option>
+                            <option value="rejected">رد شده</option>
+                            <option value="all">همه</option>
+                        </select>
+                        <button class="btn-sm toggle" onclick="loadAuthorApplications()">🔄 بارگذاری</button>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.8rem;">
+                    برای دیدن مدرک هویتی و تایید/رد، روی دکمه <strong>🔍 بررسی</strong> کلیک کنید
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>کاربر</th>
+                                <th>تخصص</th>
+                                <th>کد ملی</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ ارسال</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="authorAppsTableBody">
+                            <tr><td colspan="6" class="empty">⏳ در حال بارگذاری...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:0.8rem;">
+                    <span style="font-size:0.75rem;color:#94a3b8;" id="authorAppsPagination"></span>
                 </div>
             </div>
         </div>
@@ -869,9 +1220,6 @@
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <!-- ==========================================
-    JAVASCRIPT
-    ========================================== -->
     <script>
         // ════════════════════════════════════════════
         //  STATE
@@ -880,6 +1228,7 @@
         let refreshToken = localStorage.getItem('adminRefreshToken') || '';
         let adminEmail = '';
         let currentPromptId = null;
+        let currentPrompt = null;
         let isRefreshing = false;
         let refreshPromise = null;
 
@@ -898,7 +1247,7 @@
         }
 
         // ════════════════════════════════════════════
-        //  ESCAPE (XSS PROTECTION)
+        //  ESCAPE
         // ════════════════════════════════════════════
         function esc(value) {
             if (value === null || value === undefined) return '';
@@ -911,7 +1260,21 @@
         }
 
         // ════════════════════════════════════════════
-        //  HELPERS
+        //  IMAGE HELPERS
+        // ════════════════════════════════════════════
+        function resolveImageURL(url) {
+            if (!url) return '';
+            if (/^https?:\/\//i.test(url)) return url;
+            const base = API_BASE.replace(/\/api\/v1\/?$/, '');
+            return base + (url.startsWith('/') ? url : '/' + url);
+        }
+
+        function openImageInNewTab(src) {
+            if (src) window.open(src, '_blank', 'noopener');
+        }
+
+        // ════════════════════════════════════════════
+        //  HEADERS
         // ════════════════════════════════════════════
         function getHeaders(extra) {
             const h = { 'Content-Type': 'application/json', ...extra };
@@ -920,30 +1283,16 @@
         }
 
         function updateTokenDisplay() {
-            const accessEl = document.getElementById('displayAccessToken');
-            const refreshEl = document.getElementById('displayRefreshToken');
-            const statusEl = document.getElementById('tokenStatus');
-            if (accessEl) accessEl.textContent = accessToken ? accessToken.slice(0, 35) + '…' : '—';
-            if (refreshEl) refreshEl.textContent = refreshToken ? refreshToken.slice(0, 35) + '…' : '—';
-            if (statusEl) {
-                statusEl.textContent = accessToken ? '✅ توکن فعال' : '❌ بدون توکن';
-                statusEl.style.color = accessToken ? '#16a34a' : '#dc2626';
-            }
             localStorage.setItem('adminAccessToken', accessToken);
             localStorage.setItem('adminRefreshToken', refreshToken);
         }
 
         // ════════════════════════════════════════════
-        //  REFRESH TOKEN (Auto)
+        //  REFRESH TOKEN
         // ════════════════════════════════════════════
         function refreshAccessToken() {
-            if (!refreshToken) {
-                return Promise.reject(new Error('No refresh token'));
-            }
-
-            if (isRefreshing) {
-                return refreshPromise;
-            }
+            if (!refreshToken) return Promise.reject(new Error('No refresh token'));
+            if (isRefreshing) return refreshPromise;
 
             isRefreshing = true;
             refreshPromise = fetch(API_BASE + '/auth/refresh', {
@@ -955,11 +1304,7 @@
                 .then(d => {
                     if (d.data?.access_token) {
                         accessToken = d.data.access_token;
-                        if (d.data.refresh_token) {
-                            refreshToken = d.data.refresh_token;
-                        }
-                        localStorage.setItem('adminAccessToken', accessToken);
-                        localStorage.setItem('adminRefreshToken', refreshToken);
+                        if (d.data.refresh_token) refreshToken = d.data.refresh_token;
                         updateTokenDisplay();
                         return accessToken;
                     }
@@ -978,10 +1323,7 @@
         // ════════════════════════════════════════════
         function apiCall(method, path, body, retry = true) {
             const url = API_BASE + path;
-            const opts = {
-                method,
-                headers: getHeaders(),
-            };
+            const opts = { method, headers: getHeaders() };
             if (body) opts.body = JSON.stringify(body);
 
             return fetch(url, opts).then(async r => {
@@ -1018,7 +1360,6 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const errorEl = document.getElementById('loginError');
-
             errorEl.style.display = 'none';
 
             fetch(API_BASE + '/auth/login', {
@@ -1033,7 +1374,6 @@
                         refreshToken = d.data.tokens.refresh_token;
                         localStorage.setItem('adminAccessToken', accessToken);
                         localStorage.setItem('adminRefreshToken', refreshToken);
-                        updateTokenDisplay();
                         document.getElementById('loginOverlay').classList.remove('show');
                         init();
                     } else {
@@ -1057,42 +1397,103 @@
         }
 
         // ════════════════════════════════════════════
-        //  MODAL
+        //  MODAL: PROMPT VIEW
         // ════════════════════════════════════════════
         function openModal(prompt) {
+            currentPrompt = prompt;
             currentPromptId = prompt.id;
 
             document.getElementById('modalTitle').textContent = prompt.title || 'بدون عنوان';
-            document.getElementById('modalCategory').textContent = '📁 ' + (prompt.category || 'دسته‌بندی نشده');
-            document.getElementById('modalPrice').textContent = '💰 ' + (prompt.price ? prompt.price.toLocaleString() : '0') +
-                ' تومان';
-            document.getElementById('modalSeller').textContent = '👤 ' + (prompt.Seller?.full_name || prompt.seller
-                ?.full_name || 'نامشخص');
+            document.getElementById('modalCategory').textContent = '📁 ' + (prompt.category || '—');
+            document.getElementById('modalPrice').textContent = '💰 ' + (prompt.price ? prompt.price.toLocaleString() : '0') + ' تومان';
+            document.getElementById('modalSeller').textContent = '👤 ' + (prompt.Seller?.full_name || prompt.seller?.full_name || 'نامشخص');
             document.getElementById('modalDifficulty').textContent = '📊 ' + (prompt.difficulty || '—');
             document.getElementById('modalLanguage').textContent = '🌐 ' + (prompt.language || '—');
             document.getElementById('modalStatus').textContent = '📌 ' + (prompt.status || '—');
 
-            document.getElementById('modalDescription').textContent = prompt.description || 'توضیحی وجود ندارد';
-            document.getElementById('modalContent').textContent = prompt.content || 'محتوایی وجود ندارد';
-            document.getElementById('modalDemo').textContent = prompt.demo_output || 'خروجی نمونه‌ای ثبت نشده';
-            document.getElementById('modalInstructions').textContent = prompt.instructions || 'راهنمایی ثبت نشده';
+            document.getElementById('modalDescription').textContent = prompt.description || '—';
+            document.getElementById('modalContent').textContent = prompt.content || '—';
+            document.getElementById('modalDemo').textContent = prompt.demo_output || '—';
+            document.getElementById('modalInstructions').textContent = prompt.instructions || '—';
 
-            if (prompt.status === 'pending') {
-                document.getElementById('modalApproveBtn').style.display = 'inline-block';
-                document.getElementById('modalRejectBtn').style.display = 'inline-block';
+            const rejSection = document.getElementById('modalRejectionSection');
+            if (prompt.status === 'rejected' && prompt.rejection_note) {
+                document.getElementById('modalRejectionNote').textContent = prompt.rejection_note;
+                rejSection.style.display = 'block';
             } else {
-                document.getElementById('modalApproveBtn').style.display = 'none';
-                document.getElementById('modalRejectBtn').style.display = 'none';
+                rejSection.style.display = 'none';
             }
 
+            const coverSection = document.getElementById('coverImageSection');
+            const coverImg = document.getElementById('modalCoverImage');
+            if (prompt.cover_image && String(prompt.cover_image).trim() !== '') {
+                coverImg.src = resolveImageURL(prompt.cover_image);
+                coverSection.style.display = 'block';
+            } else {
+                coverImg.src = '';
+                coverSection.style.display = 'none';
+            }
+
+            renderGallery(prompt.images);
+
+            const isPending = prompt.status === 'pending';
+            document.getElementById('modalApproveBtn').style.display = isPending ? 'inline-block' : 'none';
+            document.getElementById('modalRejectBtn').style.display = isPending ? 'inline-block' : 'none';
+
+            document.getElementById('promptViewMode').style.display = 'block';
+            document.getElementById('promptEditMode').style.display = 'none';
             document.getElementById('promptModal').classList.add('show');
+        }
+
+        function renderGallery(images) {
+            const section = document.getElementById('galleryImagesSection');
+            const wrap = document.getElementById('modalGalleryImages');
+            wrap.innerHTML = '';
+
+            const list = Array.isArray(images) ? images.filter(x => x && String(x).trim() !== '') : [];
+            if (list.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            list.forEach((url, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'img-cell';
+
+                const img = document.createElement('img');
+                img.src = resolveImageURL(url);
+                img.onclick = () => openImageInNewTab(img.src);
+                cell.appendChild(img);
+
+                const btn = document.createElement('button');
+                btn.className = 'remove-btn';
+                btn.textContent = '✕';
+                btn.title = 'حذف این تصویر';
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeGalleryImage(index);
+                };
+                cell.appendChild(btn);
+
+                wrap.appendChild(cell);
+            });
+
+            section.style.display = 'block';
         }
 
         function closeModal() {
             document.getElementById('promptModal').classList.remove('show');
             currentPromptId = null;
+            currentPrompt = null;
         }
 
+        document.getElementById('promptModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ════════════════════════════════════════════
+        //  MODAL: ACTIONS
+        // ════════════════════════════════════════════
         function modalApprove() {
             if (currentPromptId) {
                 approvePrompt(currentPromptId);
@@ -1101,23 +1502,143 @@
         }
 
         function modalReject() {
-            if (currentPromptId) {
-                rejectPrompt(currentPromptId);
-                closeModal();
-            }
+            if (!currentPromptId) return;
+            document.getElementById('rejectNoteInput').value = currentPrompt?.rejection_note || '';
+            document.getElementById('rejectNoteModal').classList.add('show');
         }
 
-        document.getElementById('promptModal').addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
+        function closeRejectModal() {
+            document.getElementById('rejectNoteModal').classList.remove('show');
+        }
+
+        document.getElementById('rejectNoteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRejectModal();
         });
+
+        function confirmReject() {
+            if (!currentPromptId) return;
+            const note = document.getElementById('rejectNoteInput').value || '';
+
+            apiCall('PUT', `/admin/prompts/${currentPromptId}/reject`, { note })
+                .then(({ status, data }) => {
+                    if (status === 200) {
+                        toast('✅ پرامپت رد شد', 'success');
+                        closeRejectModal();
+                        closeModal();
+                        loadPendingPrompts(promptsPage);
+                        loadStats();
+                    } else {
+                        toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+                    }
+                });
+        }
+
+        // ════════════════════════════════════════════
+        //  REMOVE IMAGES
+        // ════════════════════════════════════════════
+        function removeGalleryImage(index) {
+            if (!currentPromptId) return;
+            if (!confirm('این تصویر حذف شود؟')) return;
+
+            apiCall('DELETE', `/admin/prompts/${currentPromptId}/images/${index}`)
+                .then(({ status, data }) => {
+                    if (status === 200 && data.data) {
+                        currentPrompt = data.data;
+                        renderGallery(currentPrompt.images);
+                        toast('🗑️ تصویر حذف شد', 'info');
+                        loadPendingPrompts(promptsPage);
+                    } else {
+                        toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+                    }
+                });
+        }
+
+        function removeCoverImage() {
+            if (!currentPromptId) return;
+            if (!confirm('تصویر کاور حذف شود؟')) return;
+
+            apiCall('DELETE', `/admin/prompts/${currentPromptId}/cover`)
+                .then(({ status, data }) => {
+                    if (status === 200 && data.data) {
+                        currentPrompt = data.data;
+                        document.getElementById('coverImageSection').style.display = 'none';
+                        toast('🗑️ کاور حذف شد', 'info');
+                        loadPendingPrompts(promptsPage);
+                    } else {
+                        toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+                    }
+                });
+        }
+
+        // ════════════════════════════════════════════
+        //  EDIT MODE
+        // ════════════════════════════════════════════
+        function enterEditMode() {
+            if (!currentPrompt) return;
+            const p = currentPrompt;
+
+            document.getElementById('editTitle').value = p.title || '';
+            document.getElementById('editDescription').value = p.description || '';
+            document.getElementById('editCategory').value = p.category || '';
+            document.getElementById('editSubCategory').value = p.sub_category || '';
+            document.getElementById('editPrice').value = p.price || 0;
+            document.getElementById('editDiscountPrice').value = p.discount_price || 0;
+            document.getElementById('editDifficulty').value = p.difficulty || 'intermediate';
+            document.getElementById('editLanguage').value = p.language || 'english';
+            document.getElementById('editTags').value = Array.isArray(p.tags) ? p.tags.join(', ') : '';
+            document.getElementById('editContent').value = p.content || '';
+            document.getElementById('editDemoOutput').value = p.demo_output || '';
+            document.getElementById('editInstructions').value = p.instructions || '';
+
+            document.getElementById('promptViewMode').style.display = 'none';
+            document.getElementById('promptEditMode').style.display = 'block';
+        }
+
+        function exitEditMode() {
+            document.getElementById('promptViewMode').style.display = 'block';
+            document.getElementById('promptEditMode').style.display = 'none';
+        }
+
+        function saveEdit() {
+            if (!currentPromptId) return;
+
+            const tagsRaw = document.getElementById('editTags').value || '';
+            const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+            const body = {
+                title: document.getElementById('editTitle').value,
+                description: document.getElementById('editDescription').value,
+                category: document.getElementById('editCategory').value,
+                sub_category: document.getElementById('editSubCategory').value,
+                price: parseInt(document.getElementById('editPrice').value) || 0,
+                discount_price: parseInt(document.getElementById('editDiscountPrice').value) || 0,
+                difficulty: document.getElementById('editDifficulty').value,
+                language: document.getElementById('editLanguage').value,
+                tags: tags,
+                content: document.getElementById('editContent').value,
+                demo_output: document.getElementById('editDemoOutput').value,
+                instructions: document.getElementById('editInstructions').value,
+            };
+
+            apiCall('PATCH', `/admin/prompts/${currentPromptId}`, body)
+                .then(({ status, data }) => {
+                    if (status === 200 && data.data) {
+                        currentPrompt = data.data;
+                        openModal(currentPrompt);
+                        toast('✅ تغییرات ذخیره شد', 'success');
+                        loadPendingPrompts(promptsPage);
+                    } else {
+                        toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+                    }
+                });
+        }
 
         // ════════════════════════════════════════════
         //  LOAD DATA
         // ════════════════════════════════════════════
-
         function loadAdminProfile() {
             if (!accessToken) return;
-            apiCall('GET', '/profile').then(({ status, data }) => {
+            apiCall('GET', '/profile').then(({ data }) => {
                 if (data.data?.email) {
                     adminEmail = data.data.email;
                     document.getElementById('adminEmail').textContent = adminEmail;
@@ -1127,13 +1648,14 @@
 
         function loadStats() {
             if (!accessToken) return;
-            apiCall('GET', '/admin/stats').then(({ status, data }) => {
+            apiCall('GET', '/admin/stats').then(({ data }) => {
                 if (data.data) {
                     document.getElementById('statUsers').textContent = data.data.total_users ?? '—';
                     document.getElementById('statPrompts').textContent = data.data.total_prompts ?? '—';
                     document.getElementById('statOrders').textContent = data.data.total_orders ?? '—';
                     document.getElementById('statRevenue').textContent = (data.data.total_revenue ?? 0).toLocaleString();
                     document.getElementById('statPending').textContent = data.data.total_pending ?? '—';
+                    document.getElementById('statAuthorApps').textContent = data.data.total_author_applications_pending ?? '—';
                 }
             });
         }
@@ -1146,7 +1668,7 @@
             if (!accessToken) return;
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>';
-            apiCall('GET', `/admin/users?page=${page}&limit=10`).then(({ status, data }) => {
+            apiCall('GET', `/admin/users?page=${page}&limit=10`).then(({ data }) => {
                 if (data.data) renderUsers(data.data, data.pagination);
                 else if (data.error) tbody.innerHTML = `<tr><td colspan="5" class="empty">❌ ${data.error}</td></tr>`;
             });
@@ -1200,18 +1722,14 @@
             if (!accessToken) return;
 
             const statusFilter = document.getElementById('promptFilterStatus').value;
-
             const tbody = document.getElementById('promptsTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>';
 
-            let url = '';
-            if (statusFilter === 'all') {
-                url = `/admin/prompts/all?page=${page}&limit=10`;
-            } else {
-                url = `/admin/prompts/${statusFilter}?page=${page}&limit=10`;
-            }
+            const url = statusFilter === 'all'
+                ? `/admin/prompts/all?page=${page}&limit=10`
+                : `/admin/prompts/${statusFilter}?page=${page}&limit=10`;
 
-            apiCall('GET', url).then(({ status, data }) => {
+            apiCall('GET', url).then(({ data }) => {
                 if (data.data) renderPrompts(data.data, data.pagination);
                 else if (data.error) tbody.innerHTML = `<tr><td colspan="5" class="empty">❌ ${data.error}</td></tr>`;
             });
@@ -1228,16 +1746,21 @@
                 const sellerName = p.Seller?.full_name || p.seller?.full_name || 'نامشخص';
                 const isPending = p.status === 'pending';
                 const isDeleted = p.status === 'deleted';
+
+                const thumb = p.cover_image && String(p.cover_image).trim() !== ''
+                    ? `<img src="${resolveImageURL(p.cover_image)}" class="table-thumb" alt="کاور" onclick="openImageInNewTab(this.src)" onerror="this.remove()">`
+                    : '';
+
                 html += `<tr>
-                        <td><strong>${esc(p.title) || 'بدون عنوان'}</strong></td>
+                        <td>${thumb}<strong>${esc(p.title) || 'بدون عنوان'}</strong></td>
                         <td>${esc(sellerName)}</td>
                         <td>${p.price ? esc(p.price.toLocaleString()) : '—'} تومان</td>
                         <td><span class="badge-status ${esc(p.status)}">${esc(p.status) || '—'}</span></td>
                         <td>
                             <button class="btn-sm view" onclick="viewPrompt('${esc(p.id)}')">🔍 بررسی</button>
                             ${isPending ? `
-                                <button class="btn-sm approve" onclick="approvePrompt('${esc(p.id)}')">✅ تایید</button>
-                                <button class="btn-sm reject" onclick="rejectPrompt('${esc(p.id)}')">❌ رد</button>
+                                <button class="btn-sm approve" onclick="approvePrompt('${esc(p.id)}')">✅</button>
+                                <button class="btn-sm reject" onclick="rejectPromptDirect('${esc(p.id)}')">❌</button>
                             ` : ''}
                             ${!isDeleted ? `<button class="btn-sm delete" onclick="deletePrompt('${esc(p.id)}')">🗑️</button>` : ''}
                         </td>
@@ -1252,12 +1775,9 @@
 
         function viewPrompt(promptId) {
             if (!accessToken) return;
-            apiCall('GET', `/prompts/id/${promptId}`).then(({ status, data }) => {
-                if (data.data) {
-                    openModal(data.data);
-                } else {
-                    toast('❌ خطا در دریافت پرامپت: ' + (data.error || 'نامشخص'), 'error');
-                }
+            apiCall('GET', `/prompts/id/${promptId}`).then(({ data }) => {
+                if (data.data) openModal(data.data);
+                else toast('❌ خطا در دریافت پرامپت: ' + (data.error || 'نامشخص'), 'error');
             });
         }
 
@@ -1272,9 +1792,10 @@
             });
         }
 
-        function rejectPrompt(id) {
-            if (!accessToken || !confirm('رد این پرامپت؟')) return;
-            apiCall('PUT', `/admin/prompts/${id}/reject`).then(({ status, data }) => {
+        // Quick reject from the table row (no note prompt for speed).
+        function rejectPromptDirect(id) {
+            if (!accessToken || !confirm('رد این پرامپت؟ (برای ثبت دلیل، از دکمه 🔍 بررسی استفاده کنید)')) return;
+            apiCall('PUT', `/admin/prompts/${id}/reject`, { note: '' }).then(({ status, data }) => {
                 if (status === 200) {
                     toast('✅ پرامپت رد شد', 'success');
                     loadPendingPrompts(promptsPage);
@@ -1304,7 +1825,7 @@
             if (!accessToken) return;
             const tbody = document.getElementById('ordersTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="empty">⏳ در حال بارگذاری...</td></tr>';
-            apiCall('GET', `/admin/orders?page=${page}&limit=10`).then(({ status, data }) => {
+            apiCall('GET', `/admin/orders?page=${page}&limit=10`).then(({ data }) => {
                 if (data.data) renderOrders(data.data, data.pagination);
                 else if (data.error) tbody.innerHTML = `<tr><td colspan="5" class="empty">❌ ${data.error}</td></tr>`;
             });
@@ -1341,7 +1862,7 @@
             if (!accessToken) return;
             const tbody = document.getElementById('logsTableBody');
             tbody.innerHTML = '<tr><td colspan="4" class="empty">⏳ در حال بارگذاری...</td></tr>';
-            apiCall('GET', `/admin/logs?page=${page}&limit=20`).then(({ status, data }) => {
+            apiCall('GET', `/admin/logs?page=${page}&limit=20`).then(({ data }) => {
                 if (data.data) renderLogs(data.data, data.pagination);
                 else if (data.error) tbody.innerHTML = `<tr><td colspan="4" class="empty">❌ ${data.error}</td></tr>`;
             });
@@ -1370,6 +1891,181 @@
             }
         }
 
+        // ── AUTHOR APPLICATIONS ──
+        let authorAppsPage = 1;
+        let currentAuthorAppId = null;
+
+        function loadAuthorApplications(page = 1) {
+            authorAppsPage = page;
+            if (!accessToken) return;
+
+            const statusFilter = document.getElementById('authorAppFilterStatus').value;
+            const tbody = document.getElementById('authorAppsTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="empty">⏳ در حال بارگذاری...</td></tr>';
+
+            apiCall('GET', `/admin/author-applications?status=${statusFilter}&page=${page}&limit=10`)
+                .then(({ data }) => {
+                    if (data.data) renderAuthorApplications(data.data, data.pagination);
+                    else if (data.error) tbody.innerHTML = `<tr><td colspan="6" class="empty">❌ ${data.error}</td></tr>`;
+                });
+        }
+
+        function renderAuthorApplications(apps, pagination) {
+            const tbody = document.getElementById('authorAppsTableBody');
+            if (!apps || apps.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty">📭 درخواستی یافت نشد</td></tr>';
+                return;
+            }
+            let html = '';
+            apps.forEach(a => {
+                const created = a.created_at ? new Date(a.created_at).toLocaleString('fa-IR') : '—';
+                html += `<tr>
+                        <td style="font-size:0.7rem;">${esc(a.user_id?.slice(0,8)) || '—'}</td>
+                        <td>${esc(a.expertise) || '—'}</td>
+                        <td>${esc(a.national_id) || '—'}</td>
+                        <td><span class="badge-status ${esc(a.status)}">${esc(a.status) || '—'}</span></td>
+                        <td style="font-size:0.7rem;">${esc(created)}</td>
+                        <td>
+                            <button class="btn-sm view" onclick="viewAuthorApplication('${esc(a.id)}')">🔍 بررسی</button>
+                        </td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html;
+            if (pagination) {
+                document.getElementById('authorAppsPagination').textContent =
+                    `صفحه ${pagination.page} از ${pagination.pages} · مجموع ${pagination.total}`;
+            }
+        }
+
+        function viewAuthorApplication(id) {
+            if (!accessToken) return;
+            apiCall('GET', `/admin/author-applications/${id}`).then(({ data }) => {
+                if (data.data) openAuthorAppModal(data.data);
+                else toast('❌ خطا در دریافت درخواست: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        function openAuthorAppModal(app) {
+            currentAuthorAppId = app.id;
+
+            document.getElementById('aamUser').textContent = '👤 کاربر: ' + (app.user_id || '—');
+            document.getElementById('aamExpertise').textContent = '🧠 تخصص: ' + (app.expertise || '—');
+            document.getElementById('aamNationalId').textContent = '🪪 کد ملی: ' + (app.national_id || '—');
+            document.getElementById('aamStatus').textContent = '📌 وضعیت: ' + (app.status || '—');
+
+            loadAuthorAppDocument(app.id);
+
+            const rejSection = document.getElementById('aamRejectionSection');
+            if (app.status === 'rejected' && app.rejection_reason) {
+                rejSection.style.display = 'block';
+                document.getElementById('aamRejectionReason').textContent = app.rejection_reason;
+            } else {
+                rejSection.style.display = 'none';
+            }
+
+            const isPending = app.status === 'pending';
+            document.getElementById('aamApproveBtn').style.display = isPending ? 'inline-block' : 'none';
+            document.getElementById('aamRejectBtn').style.display = isPending ? 'inline-block' : 'none';
+            document.getElementById('aamRejectReasonInputSection').style.display = isPending ? 'block' : 'none';
+            document.getElementById('aamRejectReasonInput').value = '';
+
+            document.getElementById('authorAppModal').classList.add('show');
+        }
+
+        let currentDocBlobUrl = null;
+        function revokeCurrentDocBlobUrl() {
+            if (currentDocBlobUrl) {
+                URL.revokeObjectURL(currentDocBlobUrl);
+                currentDocBlobUrl = null;
+            }
+        }
+
+        function loadAuthorAppDocument(appId) {
+            const wrap = document.getElementById('aamDocumentWrap');
+            wrap.innerHTML = '⏳ در حال بارگذاری مدرک...';
+            revokeCurrentDocBlobUrl();
+
+            fetch(API_BASE + `/admin/author-applications/${appId}/document`, {
+                method: 'GET',
+                headers: getHeaders(),
+            })
+                .then(async r => {
+                    if (r.status === 401 || r.status === 403) {
+                        await refreshAccessToken();
+                        return fetch(API_BASE + `/admin/author-applications/${appId}/document`, {
+                            method: 'GET',
+                            headers: getHeaders(),
+                        });
+                    }
+                    return r;
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('دریافت مدرک ناموفق بود (status ' + r.status + ')');
+                    const contentType = r.headers.get('Content-Type') || '';
+                    return r.blob().then(blob => ({ blob, contentType }));
+                })
+                .then(({ blob, contentType }) => {
+                    currentDocBlobUrl = URL.createObjectURL(blob);
+                    if (contentType.includes('pdf')) {
+                        wrap.innerHTML = `<a href="${currentDocBlobUrl}" target="_blank">📄 مشاهده / دانلود PDF</a>`;
+                    } else {
+                        wrap.innerHTML = `<img src="${currentDocBlobUrl}" alt="مدرک هویتی" style="max-width:100%;border-radius:0.5rem;border:1px solid #d1d9e6;">
+                            <div style="margin-top:0.5rem;"><a href="${currentDocBlobUrl}" target="_blank">🔍 نمایش در تب جدید</a></div>`;
+                    }
+                })
+                .catch(err => {
+                    wrap.innerHTML = `❌ خطا در بارگذاری مدرک: ${esc(err.message)}`;
+                });
+        }
+
+        function closeAuthorAppModal() {
+            document.getElementById('authorAppModal').classList.remove('show');
+            currentAuthorAppId = null;
+            revokeCurrentDocBlobUrl();
+        }
+
+        document.getElementById('authorAppModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAuthorAppModal();
+        });
+
+        function modalApproveAuthorApp() {
+            if (currentAuthorAppId) {
+                approveAuthorApplication(currentAuthorAppId);
+                closeAuthorAppModal();
+            }
+        }
+
+        function modalRejectAuthorApp() {
+            if (currentAuthorAppId) {
+                const reason = document.getElementById('aamRejectReasonInput').value;
+                rejectAuthorApplication(currentAuthorAppId, reason);
+                closeAuthorAppModal();
+            }
+        }
+
+        function approveAuthorApplication(id) {
+            if (!accessToken || !confirm('این کاربر به عنوان نویسنده پرامپت تایید شود؟')) return;
+            apiCall('PUT', `/admin/author-applications/${id}/approve`).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('✅ درخواست تایید شد، کاربر نویسنده شد', 'success');
+                    loadAuthorApplications(authorAppsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        function rejectAuthorApplication(id, reason) {
+            if (!accessToken || !confirm('این درخواست رد شود؟')) return;
+            apiCall('PUT', `/admin/author-applications/${id}/reject`, { reason: reason || '' })
+                .then(({ status, data }) => {
+                    if (status === 200) {
+                        toast('✅ درخواست رد شد', 'info');
+                        loadAuthorApplications(authorAppsPage);
+                        loadStats();
+                    } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+                });
+        }
+
         // ════════════════════════════════════════════
         //  TABS
         // ════════════════════════════════════════════
@@ -1385,6 +2081,7 @@
                 if (target === 'tabPrompts') loadPendingPrompts();
                 if (target === 'tabOrders') loadOrders();
                 if (target === 'tabLogs') loadLogs();
+                if (target === 'tabAuthorApps') loadAuthorApplications();
             });
         });
 
@@ -1407,11 +2104,11 @@
             loadPendingPrompts();
             loadOrders();
             loadLogs();
+            loadAuthorApplications();
 
             setInterval(loadStats, 30000);
         }
 
-        // Run
         init();
     </script>
 

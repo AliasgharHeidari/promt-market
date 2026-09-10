@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
 
   <style>
-    /* ─── CSS Variables ─── */
     :root {
       --bg-primary: #0f172a;
       --bg-secondary: #1e293b;
@@ -21,7 +20,6 @@
       --text-secondary: #94a3b8;
       --text-muted: #64748b;
       --border-color: #334155;
-      --shadow-color: rgba(0, 0, 0, 0.3);
       --badge-bg: #2d3a4f;
       --scrollbar-track: #1e293b;
       --scrollbar-thumb: #475569;
@@ -44,11 +42,9 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
     .container { max-width: 1400px; margin: 0 auto; }
 
-    /* ─── Header ─── */
     .header {
       display: flex;
       justify-content: space-between;
@@ -83,15 +79,6 @@
       font-size: 0.85rem;
       color: var(--text-secondary);
     }
-    .header .status .dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 0.3rem;
-    }
-    .dot.online { background: var(--success); }
-    .dot.offline { background: var(--error); }
 
     .theme-toggle {
       background: var(--bg-input);
@@ -105,7 +92,6 @@
     }
     .theme-toggle:hover { background: var(--bg-hover); }
 
-    /* ─── Grid ─── */
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -114,7 +100,6 @@
     }
     @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
 
-    /* ─── Cards ─── */
     .card {
       background: var(--bg-secondary);
       border-radius: 1rem;
@@ -138,7 +123,6 @@
       margin-bottom: 0.5rem;
     }
 
-    /* ─── Form ─── */
     label {
       display: block;
       font-size: 0.75rem;
@@ -156,6 +140,7 @@
       background: var(--bg-input);
       color: var(--text-primary);
       transition: 0.15s;
+      font-family: inherit;
     }
     input:focus, textarea:focus, select:focus {
       outline: none;
@@ -164,13 +149,29 @@
     }
     textarea { resize: vertical; min-height: 60px; font-family: inherit; }
 
+    input[type="file"] {
+      padding: 0.4rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    input[type="file"]::file-selector-button {
+      background: var(--info);
+      color: white;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-left: 0.6rem;
+    }
+
     .row-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.8rem;
     }
 
-    /* ─── Buttons ─── */
     .btn {
       background: var(--info);
       color: white;
@@ -183,6 +184,7 @@
       transition: 0.15s;
       margin-top: 1rem;
       width: 100%;
+      font-family: inherit;
     }
     .btn:hover { opacity: 0.85; transform: scale(0.98); }
     .btn-outline {
@@ -201,7 +203,6 @@
     .btn-danger { background: var(--error); }
     .btn-warning { background: var(--warning); color: #0f172a; }
 
-    /* ─── Output / Result Box ─── */
     .output {
       margin-top: 1rem;
       background: var(--bg-primary);
@@ -211,18 +212,12 @@
       max-height: 340px;
       overflow-y: auto;
       border: 1px solid var(--border-color);
-      font-family: 'Inter', sans-serif;
       color: var(--text-secondary);
       word-break: break-word;
       line-height: 1.6;
     }
-    .output .ok { color: var(--success); }
-    .output .err { color: var(--error); }
-    .output .info { color: var(--info); }
-    .output .warn { color: var(--warning); }
-    .output .placeholder { color: var(--text-muted); font-family: 'Inter', sans-serif; }
+    .output .placeholder { color: var(--text-muted); }
 
-    /* ─── Pretty result banner (top line of an output box) ─── */
     .result-banner {
       display: flex;
       align-items: center;
@@ -235,7 +230,6 @@
     .result-banner.err { color: var(--error); }
     .result-banner.info { color: var(--info); }
 
-    /* ─── Key/value data card (e.g. user profile, login result) ─── */
     .data-card {
       display: grid;
       grid-template-columns: auto 1fr;
@@ -244,7 +238,6 @@
       border: 1px solid var(--border-color);
       border-radius: 0.6rem;
       padding: 0.8rem 1rem;
-      font-family: 'Inter', sans-serif;
     }
     .data-card .k {
       color: var(--text-muted);
@@ -277,7 +270,6 @@
       border-radius: 999px;
     }
 
-    /* ─── Prompt result list ─── */
     .prompt-list { display: flex; flex-direction: column; gap: 0.6rem; }
     .prompt-item {
       background: var(--bg-secondary);
@@ -319,10 +311,94 @@
       color: var(--text-muted);
       font-size: 0.8rem;
       padding: 1rem 0;
-      font-family: 'Inter', sans-serif;
     }
 
-    /* ─── Token Display ─── */
+    /* ─── My Prompts (author) ─── */
+    .my-prompts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 0.5rem;
+    }
+    .my-prompt-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.7rem;
+      padding: 0.8rem 1rem;
+      transition: 0.15s;
+    }
+    .my-prompt-item:hover { border-color: #475569; }
+    .mpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .mpi-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+    .mpi-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
+    .rejection-note {
+      background: #7f1d1d;
+      border: 1px solid #b91c1c;
+      color: #fecaca;
+      padding: 0.5rem 0.8rem;
+      border-radius: 0.5rem;
+      font-size: 0.78rem;
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: var(--badge-bg);
+      padding: 0.15rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .status-badge.status-pending {
+      background: #78350f;
+      border-color: #b45309;
+      color: #fde68a;
+    }
+    .status-badge.status-approved {
+      background: #064e3b;
+      border-color: #047857;
+      color: #a7f3d0;
+    }
+    .status-badge.status-rejected {
+      background: #7f1d1d;
+      border-color: #b91c1c;
+      color: #fecaca;
+    }
+    .status-badge.status-deleted {
+      background: #334155;
+      color: #94a3b8;
+    }
+
+    .chip {
+      display: inline-block;
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+    }
+
     .token-box {
       margin-top: 1.5rem;
       background: var(--bg-secondary);
@@ -346,22 +422,28 @@
       flex: 1;
     }
 
-    /* ─── Status Badge ─── */
-    .status-badge {
-      display: inline-block;
-      background: var(--badge-bg);
-      padding: 0.15rem 0.7rem;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      color: var(--text-secondary);
+    .preview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .preview-row img {
+      border-radius: 0.5rem;
       border: 1px solid var(--border-color);
+      object-fit: cover;
+    }
+    .preview-row .cover-preview {
+      width: 130px;
+      height: 90px;
+    }
+    .preview-row .gallery-preview {
+      width: 62px;
+      height: 62px;
     }
 
     .flex { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
-    .mt-1 { margin-top: 1rem; }
-    .mb-1 { margin-bottom: 0.5rem; }
 
     @media (max-width: 600px) {
       body { padding: 0.8rem; }
@@ -375,11 +457,11 @@
 
 <div class="container">
 
-  <!-- ═══ HEADER ═══ -->
+  <!-- HEADER -->
   <header class="header">
     <h1>
       🧪 Prompt Market
-      <span class="badge">v0.3</span>
+      <span class="badge">v0.5</span>
       <span id="serverStatus" class="status-badge" style="background:#1e3a5f;color:#60a5fa;">● Online</span>
     </h1>
     <div class="status">
@@ -389,7 +471,7 @@
     </div>
   </header>
 
-  <!-- ═══ STATUS LINE ═══ -->
+  <!-- STATUS LINE -->
   <div class="card" style="margin-bottom:1.5rem; background:var(--bg-primary); border-color:var(--border-color);">
     <div class="flex-between">
       <span style="color:var(--text-secondary); font-size:0.85rem;">
@@ -401,10 +483,10 @@
     </div>
   </div>
 
-  <!-- ═══ GRID ═══ -->
+  <!-- GRID -->
   <div class="grid-2">
 
-    <!-- ─── AUTH ─── -->
+    <!-- AUTH -->
     <div class="card">
       <h3>🔐 احراز هویت</h3>
       <label>ایمیل</label>
@@ -433,20 +515,37 @@
       <div class="output" id="authOutput"><span class="placeholder">↳ نتیجه احراز هویت</span></div>
     </div>
 
-    <!-- ─── PROMPT ─── -->
+    <!-- PROMPT -->
     <div class="card">
       <h3>📄 مدیریت پرامپت</h3>
       <label>عنوان</label>
       <input id="promptTitle" value="Professional SEO Content Prompt">
       <label>توضیحات</label>
       <input id="promptDesc" value="Generate SEO-optimized blog content">
-      <label>دسته‌بندی</label>
-      <input id="promptCategory" value="Content Creation">
+
+      <div class="row-2">
+        <div>
+          <label>دسته‌بندی</label>
+          <input id="promptCategory" value="Content Creation">
+        </div>
+        <div>
+          <label>زیردسته (اختیاری)</label>
+          <input id="promptSubCategory" placeholder="Blog, SEO">
+        </div>
+      </div>
+
       <div class="row-2">
         <div>
           <label>قیمت (تومان)</label>
           <input id="promptPrice" type="number" value="50000">
         </div>
+        <div>
+          <label>قیمت با تخفیف (اختیاری)</label>
+          <input id="promptDiscountPrice" type="number" placeholder="0">
+        </div>
+      </div>
+
+      <div class="row-2">
         <div>
           <label>سطح</label>
           <select id="promptDifficulty">
@@ -455,11 +554,37 @@
             <option value="advanced">پیشرفته</option>
           </select>
         </div>
+        <div>
+          <label>زبان</label>
+          <select id="promptLanguage">
+            <option value="english" selected>انگلیسی</option>
+            <option value="persian">فارسی</option>
+            <option value="both">هر دو</option>
+          </select>
+        </div>
       </div>
-      <label>محتوای پرامپت</label>
-      <textarea id="promptContent" rows="2">You are an expert SEO writer. Create a blog post about AI...</textarea>
 
-      <div class="row-2">
+      <label>محتوای پرامپت</label>
+      <textarea id="promptContent" rows="3">You are an expert SEO writer. Create a blog post about AI...</textarea>
+
+      <label>خروجی نمونه (اختیاری)</label>
+      <textarea id="promptDemoOutput" rows="2" placeholder="نمونه خروجی..."></textarea>
+
+      <label>راهنمای استفاده (اختیاری)</label>
+      <textarea id="promptInstructions" rows="2" placeholder="نکات و ترفندها..."></textarea>
+
+      <label>تگ‌ها (با کاما جدا کن)</label>
+      <input id="promptTags" value="seo, content" placeholder="seo, content, blog">
+
+      <label>🖼️ تصویر کاور (حداکثر ۵ مگابایت)</label>
+      <input id="promptCoverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+      <div id="promptCoverPreview" class="preview-row"></div>
+
+      <label>🖼️ گالری تصاویر (چندتایی — حداکثر ۱۰ عدد)</label>
+      <input id="promptImages" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+      <div id="promptImagesPreview" class="preview-row"></div>
+
+      <div class="row-2" style="margin-top:0.8rem;">
         <button class="btn btn-sm" onclick="createPrompt()">➕ ایجاد</button>
         <button class="btn btn-sm btn-outline" onclick="listPrompts()">📋 لیست</button>
       </div>
@@ -468,11 +593,53 @@
         <button class="btn btn-sm btn-outline" onclick="getMyPrompts()">📁 پرامپت‌های من</button>
       </div>
 
+      <!-- Author's prompt list with status -->
+      <label style="margin-top:1.2rem; font-size:0.85rem;">📊 پرامپت‌های من با وضعیت</label>
+      <button class="btn btn-sm btn-outline" style="width:100%;" onclick="loadMyPromptsWithStatus()">
+        🔄 بارگذاری پرامپت‌های من + پیش‌نمایش
+      </button>
+      <div id="myPromptsList"></div>
+
       <div class="output" id="promptOutput"><span class="placeholder">↳ نتیجه عملیات</span></div>
     </div>
   </div>
 
-  <!-- ═══ SEARCH BAR ═══ -->
+  <!-- AUTHOR APPLICATION -->
+  <div class="card" style="margin-top:1.5rem;">
+    <h3>🪪 ارتقا به نویسنده پرامپت</h3>
+    <div class="sub">برای ساخت پرامپت، شماره موبایل و مدارک هویتی رو تایید کن.</div>
+
+    <div class="row-2" style="margin-top:0.8rem;">
+      <div>
+        <label>گام ۱ — شماره موبایل</label>
+        <input id="authorPhone" placeholder="09121234567">
+      </div>
+      <div>
+        <label>گام ۲ — کد تایید (۶ رقمی)</label>
+        <input id="authorPhoneCode" maxlength="6" placeholder="کد از ترمینال سرور">
+      </div>
+    </div>
+    <div class="row-2">
+      <button class="btn btn-sm btn-outline" onclick="sendPhoneOtp()">📲 ارسال کد</button>
+      <button class="btn btn-sm btn-success" onclick="verifyPhoneOtp()">✅ تایید شماره</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--border-color);margin:1.2rem 0;">
+
+    <label>گام ۳ — تخصص شما</label>
+    <input id="authorExpertise" placeholder="تولید محتوا، برنامه‌نویسی...">
+    <label>گام ۳ — کد ملی (۱۰ رقمی)</label>
+    <input id="authorNationalId" maxlength="10" placeholder="0012345678">
+    <label>گام ۴ — عکس کارت ملی یا شناسنامه</label>
+    <input id="authorIdDocument" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf">
+
+    <button class="btn btn-sm" style="width:100%;margin-top:0.8rem;" onclick="submitAuthorApplication()">📤 ارسال درخواست</button>
+    <button class="btn btn-sm btn-outline" style="width:100%;margin-top:0.5rem;" onclick="getMyAuthorApplication()">📋 وضعیت درخواست من</button>
+
+    <div class="output" id="authorOutput"><span class="placeholder">↳ نتیجه احراز هویت نویسنده</span></div>
+  </div>
+
+  <!-- SEARCH BAR -->
   <div class="card" style="margin-top:1.5rem;">
     <div class="flex-between">
       <h3 style="margin:0; font-weight:600; font-size:1rem;">🔎 جستجوی پیشرفته</h3>
@@ -492,7 +659,7 @@
     </div>
   </div>
 
-  <!-- ═══ TOKEN DISPLAY ═══ -->
+  <!-- TOKEN DISPLAY -->
   <div class="token-box">
     <span class="label">🔑 Access Token:</span>
     <span class="value" id="displayAccessToken">—</span>
@@ -546,11 +713,20 @@
     return h;
   }
 
+  function authHeadersOnly() {
+    const h = {};
+    if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+    return h;
+  }
+
   function renderAuthOutput(html) {
     document.getElementById('authOutput').innerHTML = html;
   }
   function renderPromptOutput(html) {
     document.getElementById('promptOutput').innerHTML = html;
+  }
+  function renderAuthorOutput(html) {
+    document.getElementById('authorOutput').innerHTML = html;
   }
 
   function updateTokenDisplay() {
@@ -562,9 +738,6 @@
     localStorage.setItem('refreshToken', refreshToken);
   }
 
-  // ═══════════════════════════════════════════════
-  //  PRETTY RENDER HELPERS
-  // ═══════════════════════════════════════════════
   function esc(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -576,8 +749,6 @@
     return `<div class="result-banner ${kind}">${icon} ${esc(text)}</div>`;
   }
 
-  // Renders a plain "key: value" card from an object. `rows` is an array of
-  // [label, value, opts] where opts can set { mono: true, chip: true }.
   function dataCard(rows) {
     const body = rows
       .filter(r => r[1] !== undefined && r[1] !== null && r[1] !== '')
@@ -598,6 +769,17 @@
   function fieldErrorMessage(d, fallback) {
     if (d && typeof d.error === 'string') return d.error;
     return fallback || 'خطایی رخ داد';
+  }
+
+  function resolveImageURL(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = API_BASE.replace(/\/api\/v1\/?$/, '');
+    return base + (url.startsWith('/') ? url : '/' + url);
+  }
+
+  function openImageInNewTab(src) {
+    if (src) window.open(src, '_blank', 'noopener');
   }
 
   // ═══════════════════════════════════════════════
@@ -664,7 +846,7 @@
       .then(d => {
         const isOk = typeof d.message === 'string' && !d.error;
         if (isOk) {
-          renderAuthOutput(banner('ok', d.message || 'ایمیل با موفقیت تایید شد'));
+          renderAuthOutput(banner('ok', d.message || 'ایمیل تایید شد'));
         } else {
           renderAuthOutput(errorCard(fieldErrorMessage(d, 'تایید ایمیل ناموفق بود')));
         }
@@ -684,9 +866,9 @@
       .then(d => {
         const isOk = typeof d.message === 'string' && !d.error;
         if (isOk) {
-          renderAuthOutput(banner('ok', d.message || 'کد تایید مجدداً ارسال شد'));
+          renderAuthOutput(banner('ok', d.message || 'کد مجدداً ارسال شد'));
         } else {
-          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ارسال مجدد کد ناموفق بود')));
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ارسال مجدد ناموفق')));
         }
       })
       .catch(e => renderAuthOutput(errorCard(e.message)));
@@ -747,9 +929,9 @@
         }
         const isOk = !!d.data?.access_token;
         if (isOk) {
-          renderAuthOutput(banner('ok', 'توکن جدید با موفقیت دریافت شد'));
+          renderAuthOutput(banner('ok', 'توکن جدید دریافت شد'));
         } else {
-          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت توکن جدید ناموفق بود')));
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت توکن ناموفق')));
         }
       })
       .catch(e => renderAuthOutput(errorCard(e.message)));
@@ -781,16 +963,81 @@
             ])
           );
         } else {
-          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت پروفایل ناموفق بود')));
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت پروفایل ناموفق')));
         }
       })
       .catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   // ═══════════════════════════════════════════════
-  //  PROMPT
+  //  UPLOAD
   // ═══════════════════════════════════════════════
-  // Renders an array of prompt objects as a list of cards.
+  async function uploadSingleImage(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const res = await fetch(API_BASE + '/upload/prompt-image', {
+      method: 'POST',
+      headers: authHeadersOnly(),
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.data?.url) {
+      throw new Error(data.error || ('آپلود تصویر ناموفق بود (status ' + res.status + ')'));
+    }
+    return data.data.url;
+  }
+
+  async function uploadMultipleImages(files) {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f);
+
+    const res = await fetch(API_BASE + '/upload/prompt-images', {
+      method: 'POST',
+      headers: authHeadersOnly(),
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !Array.isArray(data.data)) {
+      throw new Error(data.error || ('آپلود تصاویر ناموفق بود (status ' + res.status + ')'));
+    }
+    return data.data.map(x => x.url);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  IMAGE PREVIEWS
+  // ═══════════════════════════════════════════════
+  function setupImagePreviews() {
+    const coverInput = document.getElementById('promptCoverImage');
+    coverInput.addEventListener('change', () => {
+      const wrap = document.getElementById('promptCoverPreview');
+      wrap.innerHTML = '';
+      const f = coverInput.files[0];
+      if (!f) return;
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.className = 'cover-preview';
+      img.onload = () => URL.revokeObjectURL(img.src);
+      wrap.appendChild(img);
+    });
+
+    const imagesInput = document.getElementById('promptImages');
+    imagesInput.addEventListener('change', () => {
+      const wrap = document.getElementById('promptImagesPreview');
+      wrap.innerHTML = '';
+      Array.from(imagesInput.files).forEach(f => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        img.className = 'gallery-preview';
+        img.onload = () => URL.revokeObjectURL(img.src);
+        wrap.appendChild(img);
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PROMPT LIST
+  // ═══════════════════════════════════════════════
   function promptList(prompts) {
     if (!prompts || prompts.length === 0) {
       return '<div class="empty-state">هیچ پرامپتی یافت نشد</div>';
@@ -809,27 +1056,65 @@
           <div class="pi-meta">
             ${p.category ? `<span class="chip">${esc(p.category)}</span>` : ''}
             ${p.difficulty ? `<span class="chip">${esc(p.difficulty)}</span>` : ''}
+            ${p.language ? `<span class="chip">${esc(p.language)}</span>` : ''}
+            ${p.status ? `<span class="chip">${esc(p.status)}</span>` : ''}
           </div>
         </div>`;
     }).join('');
     return `<div class="prompt-list">${items}</div>`;
   }
 
-  function createPrompt() {
+  // ═══════════════════════════════════════════════
+  //  CREATE PROMPT
+  // ═══════════════════════════════════════════════
+  async function createPrompt() {
     if (!accessToken) {
       renderPromptOutput(errorCard('ابتدا وارد شوید'));
       return;
     }
+
+    const coverFile = document.getElementById('promptCoverImage').files[0];
+    const galleryFiles = document.getElementById('promptImages').files;
+
+    let coverURL = '';
+    let galleryURLs = [];
+
+    if (coverFile || (galleryFiles && galleryFiles.length > 0)) {
+      renderPromptOutput(banner('info', '⏳ در حال آپلود تصاویر...'));
+      try {
+        if (coverFile) coverURL = await uploadSingleImage(coverFile);
+        if (galleryFiles && galleryFiles.length > 0) {
+          galleryURLs = await uploadMultipleImages(Array.from(galleryFiles));
+        }
+      } catch (e) {
+        renderPromptOutput(errorCard('آپلود ناموفق: ' + e.message));
+        return;
+      }
+    }
+
+    const tagsRaw = document.getElementById('promptTags').value || '';
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+    const discountRaw = document.getElementById('promptDiscountPrice').value;
+
     const body = {
       title: document.getElementById('promptTitle').value,
       description: document.getElementById('promptDesc').value,
       category: document.getElementById('promptCategory').value,
+      sub_category: document.getElementById('promptSubCategory').value || '',
       content: document.getElementById('promptContent').value,
+      demo_output: document.getElementById('promptDemoOutput').value || '',
+      instructions: document.getElementById('promptInstructions').value || '',
+      cover_image: coverURL,
+      images: galleryURLs,
       price: parseInt(document.getElementById('promptPrice').value) || 0,
+      discount_price: discountRaw ? parseInt(discountRaw) : 0,
       difficulty: document.getElementById('promptDifficulty').value,
-      language: 'english',
-      tags: ['seo', 'content'],
+      language: document.getElementById('promptLanguage').value,
+      tags: tags,
     };
+
+    renderPromptOutput(banner('info', '⏳ در حال ایجاد پرامپت...'));
 
     fetch(API_BASE + '/prompts', {
       method: 'POST',
@@ -841,14 +1126,21 @@
         const isOk = !!d.data?.id;
         if (isOk) {
           renderPromptOutput(
-            banner('ok', 'پرامپت با موفقیت ایجاد شد') +
+            banner('ok', 'پرامپت ساخته شد (در انتظار تایید ادمین)') +
             dataCard([
               ['شناسه', d.data.id, { mono: true }],
               ['عنوان', d.data.title],
               ['دسته‌بندی', d.data.category, { chip: true }],
               ['قیمت', d.data.price !== undefined ? Number(d.data.price).toLocaleString('fa-IR') + ' تومان' : ''],
+              ['کاور', d.data.cover_image ? '✅ آپلود شد' : '—'],
+              ['گالری', (d.data.images && d.data.images.length) ? `${d.data.images.length} تصویر` : '—'],
+              ['وضعیت', d.data.status, { chip: true }],
             ])
           );
+          document.getElementById('promptCoverImage').value = '';
+          document.getElementById('promptImages').value = '';
+          document.getElementById('promptCoverPreview').innerHTML = '';
+          document.getElementById('promptImagesPreview').innerHTML = '';
         } else {
           renderPromptOutput(errorCard(fieldErrorMessage(d, 'ایجاد پرامپت ناموفق بود')));
         }
@@ -906,10 +1198,334 @@
   }
 
   // ═══════════════════════════════════════════════
+  //  AUTHOR: MY PROMPTS WITH STATUS + PREVIEW
+  // ═══════════════════════════════════════════════
+  async function loadMyPromptsWithStatus() {
+    if (!accessToken) {
+      renderPromptOutput(errorCard('ابتدا وارد شوید'));
+      return;
+    }
+
+    try {
+      const res = await fetch(API_BASE + '/my-prompts?page=1&limit=50', {
+        method: 'GET',
+        headers: getHeaders(),
+      });
+      const d = await res.json();
+
+      if (!res.ok || d.error) {
+        renderPromptOutput(errorCard(d.error || 'خطا در دریافت پرامپت‌ها'));
+        return;
+      }
+
+      renderMyPromptsList(d.data || []);
+    } catch (e) {
+      renderPromptOutput(errorCard(e.message));
+    }
+  }
+
+  function renderMyPromptsList(prompts) {
+    const wrap = document.getElementById('myPromptsList');
+
+    if (!prompts || prompts.length === 0) {
+      wrap.innerHTML = '<div class="empty-state">هنوز پرامپتی نساخته‌اید</div>';
+      return;
+    }
+
+    const statusMap = {
+      pending:  { label: '⏳ در انتظار تایید', cls: 'status-pending' },
+      approved: { label: '✅ تایید شده',       cls: 'status-approved' },
+      rejected: { label: '❌ رد شده',          cls: 'status-rejected' },
+      deleted:  { label: '🗑️ حذف شده',         cls: 'status-deleted' },
+    };
+
+    const html = prompts.map(p => {
+      const st = statusMap[p.status] || { label: p.status, cls: '' };
+      const note = (p.status === 'rejected' && p.rejection_note)
+        ? `<div class="rejection-note">❌ دلیل رد: ${esc(p.rejection_note)}</div>`
+        : '';
+
+      return `
+        <div class="my-prompt-item">
+          <div class="mpi-header">
+            <span class="mpi-title">${esc(p.title)}</span>
+            <span class="status-badge ${st.cls}">${st.label}</span>
+          </div>
+          <div class="mpi-meta">
+            ${p.category ? `<span class="chip">${esc(p.category)}</span>` : ''}
+            ${p.price ? `<span class="chip">${Number(p.price).toLocaleString('fa-IR')} تومان</span>` : ''}
+          </div>
+          ${note}
+          <button class="btn btn-sm btn-outline" style="width:100%;margin-top:0.4rem;"
+                  onclick="previewMyPrompt('${esc(p.id)}')">👁️ پیش‌نمایش کامل</button>
+        </div>`;
+    }).join('');
+
+    wrap.innerHTML = `<div class="my-prompts-list">${html}</div>`;
+  }
+
+  // Fetch the full prompt and render a full-screen preview overlay that
+  // matches what a buyer would see on the storefront — works for any status.
+  async function previewMyPrompt(promptId) {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(API_BASE + '/prompts/id/' + promptId, {
+        headers: getHeaders(),
+      });
+      const d = await res.json();
+      if (!res.ok || !d.data) {
+        alert('خطا: ' + (d.error || 'دریافت پرامپت ناموفق بود'));
+        return;
+      }
+      openPreviewOverlay(d.data);
+    } catch (e) {
+      alert('خطا: ' + e.message);
+    }
+  }
+
+  function openPreviewOverlay(p) {
+    const prev = document.getElementById('previewOverlay');
+    if (prev) prev.remove();
+
+    const statusMap = {
+      pending:  '⏳ در انتظار تایید',
+      approved: '✅ تایید شده',
+      rejected: '❌ رد شده',
+      deleted:  '🗑️ حذف شده',
+    };
+    const statusLabel = statusMap[p.status] || p.status;
+
+    const coverHTML = p.cover_image
+      ? `<img src="${resolveImageURL(p.cover_image)}" style="max-width:100%;max-height:360px;border-radius:0.6rem;border:1px solid var(--border-color);" />`
+      : '<div class="empty-state">بدون تصویر کاور</div>';
+
+    const galleryHTML = (Array.isArray(p.images) && p.images.length > 0)
+      ? p.images.map(u => `<img src="${resolveImageURL(u)}" style="width:80px;height:80px;object-fit:cover;border-radius:0.4rem;border:1px solid var(--border-color);margin:0.2rem;" />`).join('')
+      : '<div class="empty-state">بدون گالری</div>';
+
+    const rejectionHTML = (p.status === 'rejected' && p.rejection_note)
+      ? `<div style="background:#7f1d1d;border:1px solid #b91c1c;color:#fecaca;padding:0.8rem 1rem;border-radius:0.6rem;margin-bottom:1rem;font-size:0.85rem;">
+            <strong>❌ دلیل رد:</strong> ${esc(p.rejection_note)}
+         </div>`
+      : '';
+
+    const tagsHTML = (Array.isArray(p.tags) && p.tags.length > 0)
+      ? p.tags.map(t => `<span class="chip">#${esc(t)}</span>`).join(' ')
+      : '';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'previewOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 99999; display: flex; justify-content: center; align-items: flex-start;
+      padding: 2rem 1rem; overflow-y: auto;
+    `;
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = `
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:1rem;max-width:900px;width:100%;padding:1.5rem 2rem;color:var(--text-primary);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:1rem;">
+          <h2 style="margin:0;font-size:1.3rem;">${esc(p.title)}</h2>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span class="status-badge">${esc(statusLabel)}</span>
+            <button class="btn btn-sm btn-outline"
+                    onclick="document.getElementById('previewOverlay').remove()">✕ بستن</button>
+          </div>
+        </div>
+
+        ${rejectionHTML}
+
+        <div style="margin-bottom:1rem;">${coverHTML}</div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;">
+          ${p.category ? `<span class="chip">📁 ${esc(p.category)}</span>` : ''}
+          ${p.difficulty ? `<span class="chip">📊 ${esc(p.difficulty)}</span>` : ''}
+          ${p.language ? `<span class="chip">🌐 ${esc(p.language)}</span>` : ''}
+          ${p.price ? `<span class="chip">💰 ${Number(p.price).toLocaleString('fa-IR')} تومان</span>` : ''}
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📝 توضیحات</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.description || '—')}</div>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📄 محتوای پرامپت</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;font-family:monospace;direction:ltr;text-align:left;">${esc(p.content || '—')}</div>
+        </div>
+
+        ${p.demo_output ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🎯 خروجی نمونه</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.demo_output)}</div>
+        </div>` : ''}
+
+        ${p.instructions ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📖 راهنمای استفاده</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.instructions)}</div>
+        </div>` : ''}
+
+        ${(Array.isArray(p.images) && p.images.length > 0) ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🖼️ گالری تصاویر</h4>
+          <div>${galleryHTML}</div>
+        </div>` : ''}
+
+        ${tagsHTML ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🏷️ تگ‌ها</h4>
+          <div>${tagsHTML}</div>
+        </div>` : ''}
+
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  AUTHOR APPLICATION
+  // ═══════════════════════════════════════════════
+  function sendPhoneOtp() {
+    if (!accessToken) {
+      renderAuthorOutput(errorCard('ابتدا وارد شوید'));
+      return;
+    }
+    const phone = document.getElementById('authorPhone').value;
+    if (!phone) {
+      renderAuthorOutput(errorCard('شماره موبایل را وارد کنید'));
+      return;
+    }
+
+    fetch(API_BASE + '/author-application/send-phone-otp', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ phone }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = typeof d.message === 'string' && !d.error;
+        if (isOk) {
+          renderAuthorOutput(banner('ok', d.message || 'کد ارسال شد — لاگ ترمینال سرور را چک کنید'));
+        } else {
+          renderAuthorOutput(errorCard(fieldErrorMessage(d, 'ارسال کد ناموفق بود')));
+        }
+      })
+      .catch(e => renderAuthorOutput(errorCard(e.message)));
+  }
+
+  function verifyPhoneOtp() {
+    if (!accessToken) {
+      renderAuthorOutput(errorCard('ابتدا وارد شوید'));
+      return;
+    }
+    const code = document.getElementById('authorPhoneCode').value;
+
+    fetch(API_BASE + '/author-application/verify-phone', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ code }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = typeof d.message === 'string' && !d.error;
+        if (isOk) {
+          renderAuthorOutput(banner('ok', d.message || 'شماره موبایل تایید شد'));
+        } else {
+          renderAuthorOutput(errorCard(fieldErrorMessage(d, 'تایید شماره ناموفق')));
+        }
+      })
+      .catch(e => renderAuthorOutput(errorCard(e.message)));
+  }
+
+  function submitAuthorApplication() {
+    if (!accessToken) {
+      renderAuthorOutput(errorCard('ابتدا وارد شوید'));
+      return;
+    }
+    const expertise = document.getElementById('authorExpertise').value;
+    const nationalId = document.getElementById('authorNationalId').value;
+    const fileInput = document.getElementById('authorIdDocument');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      renderAuthorOutput(errorCard('عکس کارت ملی یا شناسنامه را انتخاب کنید'));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('expertise', expertise);
+    formData.append('national_id', nationalId);
+    formData.append('id_document', file);
+
+    fetch(API_BASE + '/author-application', {
+      method: 'POST',
+      headers: authHeadersOnly(),
+      body: formData,
+    })
+      .then(r => r.json())
+      .then(d => {
+        const isOk = !!d.data?.id;
+        if (isOk) {
+          renderAuthorOutput(
+            banner('ok', d.message || 'درخواست ارسال شد') +
+            dataCard([
+              ['شناسه درخواست', d.data.id, { mono: true }],
+              ['وضعیت', d.data.status, { chip: true }],
+              ['تخصص', d.data.expertise],
+            ])
+          );
+        } else {
+          renderAuthorOutput(errorCard(fieldErrorMessage(d, 'ارسال درخواست ناموفق')));
+        }
+      })
+      .catch(e => renderAuthorOutput(errorCard(e.message)));
+  }
+
+  function getMyAuthorApplication() {
+    if (!accessToken) {
+      renderAuthorOutput(errorCard('ابتدا وارد شوید'));
+      return;
+    }
+    fetch(API_BASE + '/author-application/me', { method: 'GET', headers: getHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) {
+          renderAuthorOutput(errorCard(d.error));
+          return;
+        }
+        if (!d.data) {
+          renderAuthorOutput(banner('info', d.message || 'هنوز درخواستی ارسال نکرده‌اید'));
+          return;
+        }
+        const a = d.data;
+        const statusLabel = {
+          pending: 'در انتظار بررسی',
+          approved: 'تایید شده ✅',
+          rejected: 'رد شده ❌',
+        }[a.status] || a.status;
+        renderAuthorOutput(
+          banner('info', 'وضعیت درخواست شما') +
+          dataCard([
+            ['شناسه', a.id, { mono: true }],
+            ['وضعیت', statusLabel, { chip: true }],
+            ['تخصص', a.expertise],
+            ['دلیل رد', a.rejection_reason],
+            ['تاریخ ارسال', a.created_at],
+            ['تاریخ بررسی', a.reviewed_at],
+          ])
+        );
+      })
+      .catch(e => renderAuthorOutput(errorCard(e.message)));
+  }
+
+  // ═══════════════════════════════════════════════
   //  INIT
   // ═══════════════════════════════════════════════
   applyTheme(theme);
   updateTokenDisplay();
+  setupImagePreviews();
   checkHealth();
 </script>
 

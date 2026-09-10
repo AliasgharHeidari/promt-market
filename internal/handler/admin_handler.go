@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"promt-market/internal/domain"
@@ -18,12 +19,18 @@ type AdminHandler struct {
 	validator *validator.Validate
 }
 
-func NewAdminHandler(db *gorm.DB) *AdminHandler {
+func NewAdminHandler(db *gorm.DB, redisClient *redis.Client) *AdminHandler {
 	adminRepo := repository.NewAdminRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	promptRepo := repository.NewPromptRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
-	adminService := service.NewAdminService(adminRepo, userRepo, promptRepo, orderRepo, db)
+
+	// Dependencies for reviewing author-application requests.
+	appRepo := repository.NewAuthorApplicationRepository(db)
+	verifyRepo := repository.NewVerificationRepository(redisClient)
+	appService := service.NewAuthorApplicationService(appRepo, userRepo, verifyRepo)
+
+	adminService := service.NewAdminService(adminRepo, userRepo, promptRepo, orderRepo, appService, db)
 
 	return &AdminHandler{
 		service:   adminService,
@@ -173,30 +180,28 @@ func (h *AdminHandler) GetRejectedPrompts(c *fiber.Ctx) error {
 	})
 }
 
-
-//Get all deleted prompts
+// GetDeletedPrompts returns all soft-deleted prompts
 func (h *AdminHandler) GetDeletedPrompts(c *fiber.Ctx) error {
-    page, _ := strconv.Atoi(c.Query("page", "1"))
-    limit, _ := strconv.Atoi(c.Query("limit", "20"))
-    
-    prompts, total, err := h.service.GetPromptsByStatus(c.Context(), "deleted", page, limit)
-    if err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": err.Error(),
-        })
-    }
-    
-    return c.JSON(fiber.Map{
-        "data": prompts,
-        "pagination": fiber.Map{
-            "page": page,
-            "limit": limit,
-            "total": total,
-            "pages": (total + int64(limit) - 1) / int64(limit),
-        },
-    })
-}
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
 
+	prompts, total, err := h.service.GetPromptsByStatus(c.Context(), "deleted", page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": prompts,
+		"pagination": fiber.Map{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+			"pages": (total + int64(limit) - 1) / int64(limit),
+		},
+	})
+}
 
 // GetAllPromptsAdmin returns all prompts (any status)
 func (h *AdminHandler) GetAllPromptsAdmin(c *fiber.Ctx) error {
@@ -221,7 +226,7 @@ func (h *AdminHandler) GetAllPromptsAdmin(c *fiber.Ctx) error {
 	})
 }
 
-// ApprovePrompt approves a prompt
+// ApprovePrompt approves a prompt.
 func (h *AdminHandler) ApprovePrompt(c *fiber.Ctx) error {
 	promptID := c.Params("id")
 
@@ -235,22 +240,6 @@ func (h *AdminHandler) ApprovePrompt(c *fiber.Ctx) error {
 		"message": "Prompt approved successfully",
 	})
 }
-
-// RejectPrompt rejects a prompt
-func (h *AdminHandler) RejectPrompt(c *fiber.Ctx) error {
-	promptID := c.Params("id")
-
-	if err := h.service.RejectPrompt(c.Context(), promptID); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Prompt rejected successfully",
-	})
-}
-
 
 // DeletePromptAdmin deletes a prompt (admin only, no ownership check).
 // Unlike PromptHandler.DeletePrompt (used by regular sellers), this path
@@ -285,6 +274,110 @@ func (h *AdminHandler) DeletePromptAdmin(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "Prompt deleted successfully",
+	})
+}
+
+// ============================================================
+//  PROMPT EDITING & MODERATION
+// ============================================================
+
+// RejectPromptWithNote rejects a prompt and stores an optional reason text
+// that the seller will see on their dashboard. Body: { "note": "..." }.
+func (h *AdminHandler) RejectPromptWithNote(c *fiber.Ctx) error {
+	promptID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	var req domain.RejectPromptRequest
+	_ = c.BodyParser(&req) // note is optional
+
+	if err := h.service.RejectPrompt(c.Context(), promptID, req.Note); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "reject_prompt", "prompt", promptID,
+		domain.JSONMap{"note": req.Note},
+	)
+
+	return c.JSON(fiber.Map{"message": "Prompt rejected"})
+}
+
+// AdminUpdatePrompt allows the admin to patch any prompt while reviewing it.
+// All fields are optional. Accepts a Status field to approve/reject in the
+// same request as metadata edits.
+func (h *AdminHandler) AdminUpdatePrompt(c *fiber.Ctx) error {
+	promptID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	var req domain.AdminUpdatePromptRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+	if err := h.validator.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	prompt, err := h.service.AdminUpdatePrompt(c.Context(), promptID, &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "update_prompt", "prompt", promptID,
+		domain.JSONMap{"title": prompt.Title},
+	)
+
+	return c.JSON(fiber.Map{
+		"message": "Prompt updated successfully",
+		"data":    prompt,
+	})
+}
+
+// RemovePromptImage removes a single gallery image identified by its
+// zero-based index in the URL path: DELETE /admin/prompts/:id/images/:index
+func (h *AdminHandler) RemovePromptImage(c *fiber.Ctx) error {
+	promptID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	index, err := strconv.Atoi(c.Params("index"))
+	if err != nil || index < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid image index"})
+	}
+
+	prompt, err := h.service.RemovePromptImage(c.Context(), promptID, index)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "remove_prompt_image", "prompt", promptID,
+		domain.JSONMap{"index": index},
+	)
+
+	return c.JSON(fiber.Map{
+		"message": "Image removed",
+		"data":    prompt,
+	})
+}
+
+// RemovePromptCover clears the cover image on a prompt.
+func (h *AdminHandler) RemovePromptCover(c *fiber.Ctx) error {
+	promptID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	prompt, err := h.service.RemovePromptCover(c.Context(), promptID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "remove_prompt_cover", "prompt", promptID,
+		nil,
+	)
+
+	return c.JSON(fiber.Map{
+		"message": "Cover image removed",
+		"data":    prompt,
 	})
 }
 
@@ -408,4 +501,120 @@ func (h *AdminHandler) GetAdminLogs(c *fiber.Ctx) error {
 			"pages": (total + int64(limit) - 1) / int64(limit),
 		},
 	})
+}
+
+// ============================================================
+//  AUTHOR APPLICATIONS
+// ============================================================
+
+// GetAuthorApplications returns applications filtered by status via
+// ?status=pending|approved|rejected|all (defaults to "pending").
+func (h *AdminHandler) GetAuthorApplications(c *fiber.Ctx) error {
+	status := c.Query("status", "pending")
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+
+	apps, total, err := h.service.GetAuthorApplications(c.Context(), status, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": apps,
+		"pagination": fiber.Map{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+			"pages": (total + int64(limit) - 1) / int64(limit),
+		},
+	})
+}
+
+// GetAuthorApplicationDetail returns a single application by ID, including
+// the server-local path to the uploaded ID document — visible only to
+// admins through this endpoint (not exposed in the public User/JSON output).
+func (h *AdminHandler) GetAuthorApplicationDetail(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	app, err := h.service.GetAuthorApplicationByID(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if app == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Application not found"})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": fiber.Map{
+			"id":               app.ID,
+			"user_id":          app.UserID,
+			"expertise":        app.Expertise,
+			"national_id":      app.NationalID,
+			"status":           app.Status,
+			"rejection_reason": app.RejectionReason,
+			"created_at":       app.CreatedAt,
+			"reviewed_at":      app.ReviewedAt,
+			"document_url":     "/api/v1/admin/author-applications/" + app.ID + "/document",
+		},
+	})
+}
+
+// GetAuthorApplicationDocument streams the uploaded ID document image/PDF
+// for admin review. Deliberately not a public route.
+func (h *AdminHandler) GetAuthorApplicationDocument(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	app, err := h.service.GetAuthorApplicationByID(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if app == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Application not found"})
+	}
+
+	return c.SendFile(app.IDDocumentPath, false)
+}
+
+// ApproveAuthorApplication approves an application and promotes the user
+// to Role="prompt_author".
+func (h *AdminHandler) ApproveAuthorApplication(c *fiber.Ctx) error {
+	appID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	app, err := h.service.ApproveAuthorApplication(c.Context(), appID, adminID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "approve_author_application", "author_application", appID,
+		domain.JSONMap{"user_id": app.UserID},
+	)
+
+	return c.JSON(fiber.Map{"message": "Application approved, user promoted to prompt_author"})
+}
+
+// RejectAuthorApplication rejects an application with an optional reason.
+func (h *AdminHandler) RejectAuthorApplication(c *fiber.Ctx) error {
+	appID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	var req struct {
+		Reason string `json:"reason"`
+	}
+	_ = c.BodyParser(&req) // reason is optional
+
+	app, err := h.service.RejectAuthorApplication(c.Context(), appID, adminID, req.Reason)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "reject_author_application", "author_application", appID,
+		domain.JSONMap{"user_id": app.UserID, "reason": req.Reason},
+	)
+
+	return c.JSON(fiber.Map{"message": "Application rejected"})
 }

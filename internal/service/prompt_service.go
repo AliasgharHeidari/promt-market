@@ -83,6 +83,11 @@ func (s *PromptService) GetByID(ctx context.Context, id string) (*domain.Prompt,
 	return s.repo.FindByID(ctx, id)
 }
 
+// GetByIDForAdmin returns a prompt by ID including soft-deleted rows.
+func (s *PromptService) GetByIDForAdmin(ctx context.Context, id string) (*domain.Prompt, error) {
+	return s.repo.FindByIDForAdmin(ctx, id)
+}
+
 func (s *PromptService) GetAll(ctx context.Context, page, limit int) ([]domain.Prompt, int64, error) {
 	if page < 1 {
 		page = 1
@@ -133,7 +138,7 @@ func (s *PromptService) Update(ctx context.Context, promptID, userID string, req
 		prompt.SubCategory = *req.SubCategory
 	}
 	if req.Tags != nil {
-		prompt.Tags = pq.StringArray(req.Tags)  // ✅ اصلاح شده
+		prompt.Tags = pq.StringArray(req.Tags)
 	}
 	if req.Content != nil {
 		prompt.Content = *req.Content
@@ -148,7 +153,7 @@ func (s *PromptService) Update(ctx context.Context, promptID, userID string, req
 		prompt.CoverImage = *req.CoverImage
 	}
 	if req.Images != nil {
-		prompt.Images = pq.StringArray(req.Images)  // ✅ اصلاح شده
+		prompt.Images = pq.StringArray(req.Images)
 	}
 	if req.Price != nil {
 		prompt.Price = *req.Price

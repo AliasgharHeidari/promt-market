@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+
 	"promt-market/internal/domain"
 )
 
@@ -41,8 +42,8 @@ func (r *PromptRepository) FindByID(ctx context.Context, id string) (*domain.Pro
 }
 
 // FindByIDForAdmin returns a prompt by ID regardless of soft-delete status.
-// Used by admin flows (e.g. approving/rejecting/deleting) where the record
-// must be found even if it was already soft-deleted.
+// Used by admin flows (approving/rejecting/editing/deleting) where the
+// record must be found even if it was already soft-deleted.
 func (r *PromptRepository) FindByIDForAdmin(ctx context.Context, id string) (*domain.Prompt, error) {
 	var prompt domain.Prompt
 	err := r.db.WithContext(ctx).
@@ -93,8 +94,7 @@ func (r *PromptRepository) FindAll(ctx context.Context, limit, offset int) ([]do
 	return prompts, total, err
 }
 
-// FindBySeller returns a seller's prompts, excluding soft-deleted ones, so a
-// deleted/moderated-away prompt disappears from the seller's own dashboard.
+// FindBySeller returns a seller's prompts excluding soft-deleted ones.
 func (r *PromptRepository) FindBySeller(ctx context.Context, sellerID string, limit, offset int) ([]domain.Prompt, int64, error) {
 	var prompts []domain.Prompt
 	var total int64
@@ -120,16 +120,9 @@ func (r *PromptRepository) Update(ctx context.Context, prompt *domain.Prompt) er
 	return r.db.WithContext(ctx).Save(prompt).Error
 }
 
-// Delete performs a soft delete: it stamps DeletedAt instead of removing the
-// row. This matters because Order.PromptID references prompts and existing
-// orders must still be able to display prompt info (title, etc.) after a
-// prompt is deleted/moderated away. A hard delete here would either violate
-// the FK relationship used by Order.Prompt or silently break order history.
-//
-// NOTE: Prompt.DeletedAt is a plain *time.Time (not gorm.DeletedAt), so GORM
-// does NOT treat this model as soft-delete-enabled automatically — calling
-// db.Delete(&Prompt{}, ...) directly would hard-delete the row despite the
-// DeletedAt column existing. We set it explicitly instead.
+// Delete performs a soft delete: stamps DeletedAt and flips status to
+// "deleted" instead of removing the row. Existing orders still reference
+// the prompt, so the row must remain for order history to render.
 func (r *PromptRepository) Delete(ctx context.Context, id string) error {
 	now := time.Now()
 	return r.db.WithContext(ctx).
@@ -160,34 +153,27 @@ func (r *PromptRepository) Search(ctx context.Context, filter *domain.PromptFilt
 	if filter.Category != "" {
 		query = query.Where("category = ?", filter.Category)
 	}
-
 	if filter.SubCategory != "" {
 		query = query.Where("sub_category = ?", filter.SubCategory)
 	}
-
 	if filter.MinPrice > 0 {
 		query = query.Where("price >= ?", filter.MinPrice)
 	}
 	if filter.MaxPrice > 0 {
 		query = query.Where("price <= ?", filter.MaxPrice)
 	}
-
 	if filter.Difficulty != "" {
 		query = query.Where("difficulty = ?", filter.Difficulty)
 	}
-
 	if filter.Language != "" {
 		query = query.Where("language = ?", filter.Language)
 	}
-
 	if filter.MinRating > 0 {
 		query = query.Where("rating >= ?", filter.MinRating)
 	}
-
 	if len(filter.Tags) > 0 {
 		query = query.Where("tags && ?", filter.Tags)
 	}
-
 	if filter.Search != "" {
 		searchTerm := strings.TrimSpace(filter.Search)
 		query = query.Where(
@@ -210,7 +196,6 @@ func (r *PromptRepository) Search(ctx context.Context, filter *domain.PromptFilt
 	if !validSortFields[sortField] {
 		sortField = "created_at"
 	}
-
 	if sortOrder != "asc" && sortOrder != "desc" {
 		sortOrder = "desc"
 	}
@@ -233,4 +218,16 @@ func (r *PromptRepository) GetCategories(ctx context.Context, categories *[]stri
 		Where("status = ?", "approved").
 		Distinct("category").
 		Pluck("category", categories).Error
+}
+
+// UpdateFields applies a partial update to a prompt identified by id.
+// Unlike Update (which uses Save and rewrites every column), this only
+// touches the columns present in the fields map — safer for admin edits
+// where concurrent stats updates (views/sales) may be happening.
+func (r *PromptRepository) UpdateFields(ctx context.Context, id string, fields map[string]interface{}) error {
+	fields["updated_at"] = time.Now()
+	return r.db.WithContext(ctx).
+		Model(&domain.Prompt{}).
+		Where("id = ?", id).
+		Updates(fields).Error
 }

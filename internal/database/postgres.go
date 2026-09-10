@@ -45,5 +45,7 @@ func autoMigrate(db *gorm.DB) error {
 		&domain.Prompt{},
 		&domain.Order{},
 		&domain.Review{},
+		&domain.AdminLog{},          // اگه قبلاً migrate نشده بود
+		&domain.AuthorApplication{}, // ✅ جدید: درخواست ارتقا به prompt_author
 	)
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
-	adminHandler := handler.NewAdminHandler(db)
+	adminHandler := handler.NewAdminHandler(db, redisClient)
 
 	admin := app.Group("/api/v1/admin",
 		middleware.JWTProtected(),
@@ -20,10 +20,6 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 	)
 
 	// CSRF token endpoint.
-	// ⚠️ Moved inside the protected `admin` group: previously this was
-	// registered on `app` directly and bypassed JWTProtected/AdminOnly/
-	// AdminRateLimit/AuditLog entirely, letting anyone (even unauthenticated
-	// requests) mint a CSRF cookie tied to the admin panel.
 	admin.Get("/csrf-token", adminHandler.GetCSRFToken)
 
 	// Dashboard
@@ -33,17 +29,19 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 	admin.Get("/users", adminHandler.GetAllUsers)
 	admin.Put("/users/:id/status", adminHandler.UpdateUserStatus)
 
-	// Prompt management
+	// Prompt management — listing
 	admin.Get("/prompts/pending", adminHandler.GetPendingPrompts)
 	admin.Get("/prompts/approved", adminHandler.GetApprovedPrompts)
 	admin.Get("/prompts/rejected", adminHandler.GetRejectedPrompts)
 	admin.Get("/prompts/deleted", adminHandler.GetDeletedPrompts)
 	admin.Get("/prompts/all", adminHandler.GetAllPromptsAdmin)
 
+	// Prompt management — moderation & editing
 	admin.Put("/prompts/:id/approve", adminHandler.ApprovePrompt)
-	admin.Put("/prompts/:id/reject", adminHandler.RejectPrompt)
-	
-	// ✅ مسیر درست برای ادمین
+	admin.Put("/prompts/:id/reject", adminHandler.RejectPromptWithNote)
+	admin.Patch("/prompts/:id", adminHandler.AdminUpdatePrompt)
+	admin.Delete("/prompts/:id/images/:index", adminHandler.RemovePromptImage)
+	admin.Delete("/prompts/:id/cover", adminHandler.RemovePromptCover)
 	admin.Delete("/prompts/:id", adminHandler.DeletePromptAdmin)
 
 	// Order management
@@ -53,4 +51,11 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 
 	// Audit logs
 	admin.Get("/logs", adminHandler.GetAdminLogs)
+
+	// Author applications
+	admin.Get("/author-applications", adminHandler.GetAuthorApplications)
+	admin.Get("/author-applications/:id", adminHandler.GetAuthorApplicationDetail)
+	admin.Get("/author-applications/:id/document", adminHandler.GetAuthorApplicationDocument)
+	admin.Put("/author-applications/:id/approve", adminHandler.ApproveAuthorApplication)
+	admin.Put("/author-applications/:id/reject", adminHandler.RejectAuthorApplication)
 }

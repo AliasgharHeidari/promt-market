@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
-
 	"gorm.io/gorm"
 
 	"promt-market/internal/domain"
@@ -16,6 +16,7 @@ type AdminService struct {
 	userRepo   *repository.UserRepository
 	promptRepo *repository.PromptRepository
 	orderRepo  *repository.OrderRepository
+	appService *AuthorApplicationService
 	db         *gorm.DB
 }
 
@@ -24,6 +25,7 @@ func NewAdminService(
 	userRepo *repository.UserRepository,
 	promptRepo *repository.PromptRepository,
 	orderRepo *repository.OrderRepository,
+	appService *AuthorApplicationService,
 	db *gorm.DB,
 ) *AdminService {
 	return &AdminService{
@@ -31,6 +33,7 @@ func NewAdminService(
 		userRepo:   userRepo,
 		promptRepo: promptRepo,
 		orderRepo:  orderRepo,
+		appService: appService,
 		db:         db,
 	}
 }
@@ -68,6 +71,9 @@ func (s *AdminService) GetAllPromptsAdmin(ctx context.Context, page, limit int) 
 	return s.adminRepo.GetAllPromptsAdmin(ctx, page, limit)
 }
 
+// ApprovePrompt marks a prompt as approved and stamps PublishedAt. Any
+// previous rejection note is cleared so the seller no longer sees a stale
+// "why was I rejected" message.
 func (s *AdminService) ApprovePrompt(ctx context.Context, promptID string) error {
 	prompt, err := s.promptRepo.FindByID(ctx, promptID)
 	if err != nil {
@@ -77,14 +83,18 @@ func (s *AdminService) ApprovePrompt(ctx context.Context, promptID string) error
 		return errors.New("prompt not found")
 	}
 
-	prompt.Status = "approved"
 	now := time.Now()
-	prompt.PublishedAt = &now
-
-	return s.promptRepo.Update(ctx, prompt)
+	fields := map[string]interface{}{
+		"status":         "approved",
+		"published_at":   &now,
+		"rejection_note": "", // clear any prior rejection note
+	}
+	return s.promptRepo.UpdateFields(ctx, promptID, fields)
 }
 
-func (s *AdminService) RejectPrompt(ctx context.Context, promptID string) error {
+// RejectPrompt marks a prompt as rejected and stores an optional note that
+// explains why. The note is what the author sees on their dashboard.
+func (s *AdminService) RejectPrompt(ctx context.Context, promptID, note string) error {
 	prompt, err := s.promptRepo.FindByID(ctx, promptID)
 	if err != nil {
 		return err
@@ -93,14 +103,16 @@ func (s *AdminService) RejectPrompt(ctx context.Context, promptID string) error 
 		return errors.New("prompt not found")
 	}
 
-	prompt.Status = "rejected"
-	return s.promptRepo.Update(ctx, prompt)
+	fields := map[string]interface{}{
+		"status":         "rejected",
+		"rejection_note": strings.TrimSpace(note),
+	}
+	return s.promptRepo.UpdateFields(ctx, promptID, fields)
 }
 
-// ✅ DeletePromptAdmin - Admin can delete any prompt without ownership check.
-// Uses FindByIDForAdmin (not FindByID) so that re-running this on an
-// already-deleted prompt returns a clear "already deleted" error instead of
-// a misleading "prompt not found" — the row still exists, just soft-deleted.
+// DeletePromptAdmin removes any prompt regardless of ownership. Uses
+// FindByIDForAdmin so that re-running on an already-deleted prompt returns
+// a clear "already deleted" error instead of a misleading "not found".
 func (s *AdminService) DeletePromptAdmin(ctx context.Context, promptID string) (*domain.Prompt, error) {
 	prompt, err := s.promptRepo.FindByIDForAdmin(ctx, promptID)
 	if err != nil {
@@ -118,6 +130,154 @@ func (s *AdminService) DeletePromptAdmin(ctx context.Context, promptID string) (
 	}
 
 	return prompt, nil
+}
+
+// AdminUpdatePrompt applies a partial edit to any prompt while it is under
+// review. Unlike the seller-facing Update, this bypasses ownership checks
+// and accepts a Status field so the admin can approve/reject in the same
+// request that fixes metadata.
+func (s *AdminService) AdminUpdatePrompt(ctx context.Context, promptID string, req *domain.AdminUpdatePromptRequest) (*domain.Prompt, error) {
+	prompt, err := s.promptRepo.FindByIDForAdmin(ctx, promptID)
+	if err != nil {
+		return nil, err
+	}
+	if prompt == nil {
+		return nil, errors.New("prompt not found")
+	}
+	if prompt.DeletedAt != nil {
+		return nil, errors.New("cannot edit a deleted prompt")
+	}
+
+	fields := map[string]interface{}{}
+
+	if req.Title != nil {
+		fields["title"] = *req.Title
+	}
+	if req.Description != nil {
+		fields["description"] = *req.Description
+		// Keep the SEO meta description in sync with the manual edit.
+		fields["meta_description"] = truncate(*req.Description, 160)
+	}
+	if req.Category != nil {
+		fields["category"] = *req.Category
+	}
+	if req.SubCategory != nil {
+		fields["sub_category"] = *req.SubCategory
+	}
+	if req.Tags != nil {
+		fields["tags"] = pqStringArray(req.Tags)
+	}
+	if req.Content != nil {
+		fields["content"] = *req.Content
+	}
+	if req.DemoOutput != nil {
+		fields["demo_output"] = *req.DemoOutput
+	}
+	if req.Instructions != nil {
+		fields["instructions"] = *req.Instructions
+	}
+	if req.CoverImage != nil {
+		fields["cover_image"] = *req.CoverImage
+	}
+	if req.Images != nil {
+		fields["images"] = pqStringArray(req.Images)
+	}
+	if req.Price != nil {
+		fields["price"] = *req.Price
+	}
+	if req.DiscountPrice != nil {
+		fields["discount_price"] = *req.DiscountPrice
+	}
+	if req.Difficulty != nil {
+		fields["difficulty"] = *req.Difficulty
+	}
+	if req.Language != nil {
+		fields["language"] = *req.Language
+	}
+	if req.Status != nil {
+		fields["status"] = *req.Status
+		// When approving via edit, clear any prior rejection note and stamp
+		// the publish time. Rejection via edit keeps the note field as-is
+		// (the dedicated RejectPrompt endpoint handles setting it).
+		if *req.Status == "approved" {
+			now := time.Now()
+			fields["published_at"] = &now
+			fields["rejection_note"] = ""
+		}
+	}
+
+	if len(fields) == 0 {
+		return prompt, nil // nothing to update
+	}
+
+	if err := s.promptRepo.UpdateFields(ctx, promptID, fields); err != nil {
+		return nil, err
+	}
+
+	// Re-fetch so the response reflects exactly what's in the DB.
+	return s.promptRepo.FindByIDForAdmin(ctx, promptID)
+}
+
+// RemovePromptImage deletes a single gallery image by index. Returns the
+// updated prompt. Index is validated against the current slice length.
+// The physical file on disk is left untouched so order history and audit
+// trails keep a stable reference — only the DB row loses the reference.
+func (s *AdminService) RemovePromptImage(ctx context.Context, promptID string, index int) (*domain.Prompt, error) {
+	prompt, err := s.promptRepo.FindByIDForAdmin(ctx, promptID)
+	if err != nil {
+		return nil, err
+	}
+	if prompt == nil {
+		return nil, errors.New("prompt not found")
+	}
+	if prompt.DeletedAt != nil {
+		return nil, errors.New("cannot edit a deleted prompt")
+	}
+
+	if index < 0 || index >= len(prompt.Images) {
+		return nil, errors.New("image index out of range")
+	}
+
+	// Copy into a new slice so we don't mutate the loaded model in place
+	// before persistence — makes the intent explicit and avoids surprises
+	// if the slice were ever reused.
+	newImages := make([]string, 0, len(prompt.Images)-1)
+	for i, img := range prompt.Images {
+		if i == index {
+			continue
+		}
+		newImages = append(newImages, img)
+	}
+
+	if err := s.promptRepo.UpdateFields(ctx, promptID, map[string]interface{}{
+		"images": pqStringArray(newImages),
+	}); err != nil {
+		return nil, err
+	}
+
+	return s.promptRepo.FindByIDForAdmin(ctx, promptID)
+}
+
+// RemovePromptCover clears the cover image reference on a prompt.
+func (s *AdminService) RemovePromptCover(ctx context.Context, promptID string) (*domain.Prompt, error) {
+	prompt, err := s.promptRepo.FindByIDForAdmin(ctx, promptID)
+	if err != nil {
+		return nil, err
+	}
+	if prompt == nil {
+		return nil, errors.New("prompt not found")
+	}
+	if prompt.DeletedAt != nil {
+		return nil, errors.New("cannot edit a deleted prompt")
+	}
+
+	if err := s.promptRepo.UpdateFields(ctx, promptID, map[string]interface{}{
+		"cover_image": "",
+	}); err != nil {
+		return nil, err
+	}
+
+	return s.promptRepo.FindByIDForAdmin(ctx, promptID)
 }
 
 // ============================================================
@@ -157,10 +317,6 @@ func (s *AdminService) GetAdminLogs(ctx context.Context, page, limit int) ([]dom
 	return s.adminRepo.GetAdminLogs(ctx, page, limit)
 }
 
-// LogAdminAction persists a structured audit-log entry for a sensitive admin
-// action (e.g. deleting a prompt that belongs to another user). Kept separate
-// from the generic AuditLog middleware so handlers can attach domain-specific
-// details (like the prompt title) that the middleware has no way to know.
 func (s *AdminService) LogAdminAction(ctx context.Context, adminID, action, targetType, targetID string, details domain.JSONMap) error {
 	log := &domain.AdminLog{
 		AdminID:    adminID,
@@ -172,7 +328,22 @@ func (s *AdminService) LogAdminAction(ctx context.Context, adminID, action, targ
 	return s.adminRepo.CreateLog(ctx, log)
 }
 
-// GetByIDForAdmin returns a prompt by ID (includes soft-deleted)
-func (s *PromptService) GetByIDForAdmin(ctx context.Context, id string) (*domain.Prompt, error) {
-	return s.repo.FindByIDForAdmin(ctx, id)
+// ============================================================
+//  AUTHOR APPLICATION REVIEW
+// ============================================================
+
+func (s *AdminService) GetAuthorApplications(ctx context.Context, status string, page, limit int) ([]domain.AuthorApplication, int64, error) {
+	return s.appService.GetApplicationsByStatus(ctx, status, page, limit)
+}
+
+func (s *AdminService) GetAuthorApplicationByID(ctx context.Context, id string) (*domain.AuthorApplication, error) {
+	return s.appService.GetApplicationByID(ctx, id)
+}
+
+func (s *AdminService) ApproveAuthorApplication(ctx context.Context, appID, adminID string) (*domain.AuthorApplication, error) {
+	return s.appService.ApproveApplication(ctx, appID, adminID)
+}
+
+func (s *AdminService) RejectAuthorApplication(ctx context.Context, appID, adminID, reason string) (*domain.AuthorApplication, error) {
+	return s.appService.RejectApplication(ctx, appID, adminID, reason)
 }

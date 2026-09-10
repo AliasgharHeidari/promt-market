@@ -53,7 +53,7 @@ func main() {
 	//  CORS Middleware 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:5500, http://127.0.0.1:5500, http://localhost:3000, http://127.0.0.1:3000", // ✅ مشخص کردن دامنه‌ها
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-CSRF-Token",
 		ExposeHeaders:    "Content-Length, Content-Type",
 		AllowCredentials: true,
