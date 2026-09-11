@@ -22,14 +22,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 		RefreshTTL:    7 * 24 * time.Hour,
 	})
 
-	// ========== STATIC FILES (serve uploaded files) ==========
-	// Any file under ./uploads is publicly reachable via /uploads/<...>.
-	// Example: ./uploads/prompts/<uid>/xxx.jpg
-	//        → http://localhost:8080/uploads/prompts/<uid>/xxx.jpg
-	//
-	// NOTE: this makes images publicly readable by URL. Do NOT serve
-	// sensitive files (e.g. author ID documents) from this directory —
-	// those go through authenticated endpoints instead.
+	// ========== STATIC FILES ==========
 	app.Static("/uploads", "./uploads")
 
 	api := app.Group("/api/v1")
@@ -41,10 +34,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 		})
 	})
 
-	// ========== AUTH ROUTES (Public, strict rate limit) ==========
-	// Register / login / verify / resend are prime targets for automated
-	// abuse (brute force, email spam, code enumeration), so they get a
-	// dedicated, tighter limiter per endpoint.
+	// ========== AUTH ROUTES ==========
 	emailService := service.NewEmailService()
 	authHandler := handler.NewAuthHandler(db, redis, emailService)
 	auth := api.Group("/auth")
@@ -55,14 +45,21 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 	auth.Post("/login", middleware.AuthRateLimit(redis), authHandler.Login)
 	auth.Post("/refresh", middleware.StrictRateLimit(redis), authHandler.RefreshToken)
 
-	// ========== PROMPT ROUTES (Public reads, general limit) ==========
+	// ========== PROMPT ROUTES (Public) ==========
 	promptHandler := handler.NewPromptHandler(db)
+	reviewHandler := handler.NewReviewHandler(db)
 	prompts := api.Group("/prompts",
 		middleware.RateLimit(redis),
 	)
 	prompts.Get("/", promptHandler.GetAllPrompts)
 	prompts.Get("/search", promptHandler.SearchPrompts)
 	prompts.Get("/categories", promptHandler.GetCategories)
+
+	// Reviews for a prompt — public read (only approved ones).
+	prompts.Get("/:id/reviews", reviewHandler.ListReviews)
+
+	// NOTE: this catch-all must stay LAST inside the /prompts group so
+	// /prompts/search and /prompts/:id/reviews take precedence.
 	prompts.Get("/:slug", promptHandler.GetPromptBySlug)
 
 	// ========== PROTECTED ROUTES ==========
@@ -70,23 +67,20 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 
 	protected.Get("/profile", authHandler.GetProfile)
 
-	// Create / update / delete prompts — restricted to prompt_author or admin.
+	// Prompt CRUD — restricted to prompt_author or admin.
 	protected.Post("/prompts", middleware.PromptAuthorOnly(), promptHandler.CreatePrompt)
 	protected.Put("/prompts/:id", middleware.PromptAuthorOnly(), promptHandler.UpdatePrompt)
 	protected.Delete("/prompts/:id", middleware.PromptAuthorOnly(), promptHandler.DeletePrompt)
 	protected.Get("/my-prompts", middleware.PromptAuthorOnly(), promptHandler.GetMyPrompts)
-
-	// Author-only: view a single own prompt with any status (pending/rejected/deleted).
-	// Ownership is enforced inside the handler, not just by middleware.
 	protected.Get("/my-prompts/:id", middleware.PromptAuthorOnly(), promptHandler.GetMyPromptByID)
-
-	// Admin-only: full prompt lookup including soft-deleted rows.
 	protected.Get("/prompts/id/:id", middleware.AdminOnly(), promptHandler.GetPromptByID)
 
+	// Reviews — any authenticated user can try, service enforces the
+	// ownership / purchase / one-per-user rules.
+	protected.Post("/prompts/:id/reviews", reviewHandler.CreateReview)
+	protected.Delete("/reviews/:id", reviewHandler.DeleteOwnReview)
+
 	// ========== UPLOAD ROUTES ==========
-	// Only authenticated users can upload. Returns a public URL for the file.
-	// Uploads are rate-limited per user (falls back to IP) to protect disk
-	// space and prevent automated abuse.
 	baseURL := os.Getenv("BASE_URL")
 	if baseURL == "" {
 		baseURL = "http://localhost:8080"
@@ -95,16 +89,10 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 	upload := protected.Group("/upload",
 		middleware.UploadRateLimit(redis),
 	)
-	upload.Post("/prompt-image", uploadHandler.UploadPromptImage)   // single file (cover)
-	upload.Post("/prompt-images", uploadHandler.UploadPromptImages) // multiple files (gallery)
+	upload.Post("/prompt-image", uploadHandler.UploadPromptImage)
+	upload.Post("/prompt-images", uploadHandler.UploadPromptImages)
 
 	// ========== AUTHOR APPLICATION ROUTES ==========
-	// Flow: authenticated user → verify phone (OTP) → submit ID documents
-	// (expertise, national ID, ID card photo) → admin review → on approval,
-	// the user's role is promoted to "prompt_author".
-	//
-	// Rate-limited per user+path so a single account can't spam OTPs or
-	// flood the review queue with applications.
 	authorAppHandler := handler.NewAuthorApplicationHandler(db, redis)
 	authorApp := protected.Group("/author-application",
 		middleware.AuthorAppRateLimit(redis),

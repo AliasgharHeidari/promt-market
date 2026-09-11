@@ -35,24 +35,31 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.validator.Struct(req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
 	user, err := h.service.Register(c.Context(), &req)
 	if err != nil {
-		if err.Error() == "user already exists with this email" {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+		msg := err.Error()
+
+		// Validation errors from the service start with Persian letters.
+		// We can distinguish them from internal errors by message prefix —
+		// a simpler alternative is a typed error, but this keeps the
+		// service layer dependency-free.
+		if isValidationError(msg) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": msg,
 			})
 		}
-		if err.Error() == "user already registered but not verified. Please use the resend verification endpoint" {
+
+		switch msg {
+		case "user already exists with this email":
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": msg,
+			})
+		case "user already registered but not verified. Please use the resend verification endpoint":
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": msg,
 			})
 		}
+
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to register user",
 		})
@@ -67,6 +74,20 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 			"role":      user.Role,
 		},
 	})
+}
+
+// isValidationError returns true when msg is a user-facing validation error
+// (written in Persian) rather than an internal/English error. This is a
+// pragmatic shortcut — for larger codebases, define a typed ValidationError
+// in the service package instead.
+func isValidationError(msg string) bool {
+	if msg == "" {
+		return false
+	}
+	// Persian Unicode range starts at U+0600. If the first rune is Persian,
+	// it's a validation error we authored ourselves.
+	r := []rune(msg)[0]
+	return r >= 0x0600 && r <= 0x06FF
 }
 
 func (h *AuthHandler) VerifyEmail(c *fiber.Ctx) error {

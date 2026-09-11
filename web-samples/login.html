@@ -658,6 +658,41 @@
             white-space: pre-wrap;
         }
 
+        /* ─── Review card ─── */
+        .review-card {
+            background: #f8fafc;
+            border: 1px solid #e9edf2;
+            border-radius: 0.6rem;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.6rem;
+        }
+        .review-card .rc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+        .review-card .rc-author {
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
+        .review-card .rc-stars {
+            color: #f59e0b;
+            font-size: 0.85rem;
+        }
+        .review-card .rc-comment {
+            font-size: 0.8rem;
+            color: #475569;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            margin-bottom: 0.4rem;
+        }
+        .review-card .rc-actions {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
         .login-overlay {
             display: none;
             position: fixed;
@@ -994,7 +1029,7 @@
         <header class="header">
             <h1>
                 ⚙️ پنل مدیریت
-                <span class="badge">v2.2</span>
+                <span class="badge">v2.3</span>
             </h1>
             <div class="user-info">
                 <span>👤 <span class="email" id="adminEmail">—</span></span>
@@ -1039,6 +1074,7 @@
             <button class="tab-btn" data-tab="tabOrders">🛒 سفارشات</button>
             <button class="tab-btn" data-tab="tabLogs">📋 لاگ‌ها</button>
             <button class="tab-btn" data-tab="tabAuthorApps">🪪 درخواست‌های نویسندگی</button>
+            <button class="tab-btn" data-tab="tabReviews">⭐ نظرات</button>
         </div>
 
         <!-- TAB: USERS -->
@@ -1211,6 +1247,33 @@
                 </div>
                 <div style="margin-top:0.8rem;">
                     <span style="font-size:0.75rem;color:#94a3b8;" id="authorAppsPagination"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: REVIEWS -->
+        <div class="tab-pane" id="tabReviews">
+            <div class="card">
+                <div class="card-header">
+                    <h3>⭐ مدیریت نظرات کاربران</h3>
+                    <div class="actions">
+                        <select id="reviewFilterStatus" onchange="loadReviews()" style="padding:0.3rem 0.6rem;border-radius:0.4rem;border:1px solid #d1d9e6;font-size:0.75rem;">
+                            <option value="pending">در انتظار</option>
+                            <option value="approved">تایید شده</option>
+                            <option value="rejected">رد شده</option>
+                            <option value="all">همه</option>
+                        </select>
+                        <button class="btn-sm toggle" onclick="loadReviews()">🔄 بارگذاری</button>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.8rem;">
+                    ادمین می‌تواند نظرات را <strong>تایید</strong>، <strong>رد</strong> یا <strong>حذف</strong> کند.
+                </div>
+                <div id="reviewsList">
+                    <div class="empty">⏳ در حال بارگذاری...</div>
+                </div>
+                <div style="margin-top:0.8rem;">
+                    <span style="font-size:0.75rem;color:#94a3b8;" id="reviewsPagination"></span>
                 </div>
             </div>
         </div>
@@ -1792,7 +1855,6 @@
             });
         }
 
-        // Quick reject from the table row (no note prompt for speed).
         function rejectPromptDirect(id) {
             if (!accessToken || !confirm('رد این پرامپت؟ (برای ثبت دلیل، از دکمه 🔍 بررسی استفاده کنید)')) return;
             apiCall('PUT', `/admin/prompts/${id}/reject`, { note: '' }).then(({ status, data }) => {
@@ -2067,6 +2129,114 @@
         }
 
         // ════════════════════════════════════════════
+        //  REVIEWS
+        // ════════════════════════════════════════════
+        let reviewsPage = 1;
+
+        function loadReviews(page = 1) {
+            reviewsPage = page;
+            if (!accessToken) return;
+
+            const statusFilter = document.getElementById('reviewFilterStatus').value;
+            const wrap = document.getElementById('reviewsList');
+            wrap.innerHTML = '<div class="empty">⏳ در حال بارگذاری...</div>';
+
+            apiCall('GET', `/admin/reviews?status=${statusFilter}&page=${page}&limit=20`)
+                .then(({ data }) => {
+                    if (data.data) renderReviews(data.data, data.pagination);
+                    else if (data.error) wrap.innerHTML = `<div class="empty">❌ ${data.error}</div>`;
+                });
+        }
+
+        function renderReviews(reviews, pagination) {
+            const wrap = document.getElementById('reviewsList');
+            if (!reviews || reviews.length === 0) {
+                wrap.innerHTML = '<div class="empty">📭 نظری یافت نشد</div>';
+                return;
+            }
+
+            const statusLabel = {
+                pending: '⏳ در انتظار',
+                approved: '✅ تایید شده',
+                rejected: '❌ رد شده',
+            };
+
+            const html = reviews.map(r => {
+                const author = r.user?.full_name || 'کاربر';
+                const promptTitle = r.prompt?.title || '—';
+                const created = r.created_at ? new Date(r.created_at).toLocaleString('fa-IR') : '';
+                const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+
+                const rejectReason = (r.status === 'rejected' && r.rejection_reason)
+                    ? `<div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:0.4rem 0.7rem;border-radius:0.4rem;font-size:0.72rem;margin-top:0.4rem;">دلیل رد: ${esc(r.rejection_reason)}</div>`
+                    : '';
+
+                const actions = `
+                    ${r.status === 'pending' ? `
+                        <button class="btn-sm approve" onclick="approveReview('${esc(r.id)}')">✅ تایید</button>
+                        <button class="btn-sm reject" onclick="rejectReview('${esc(r.id)}')">❌ رد</button>
+                    ` : ''}
+                    <button class="btn-sm delete" onclick="deleteReview('${esc(r.id)}')">🗑️ حذف</button>
+                `;
+
+                return `
+                    <div class="review-card">
+                        <div class="rc-header">
+                            <span class="rc-author">${esc(author)} <span style="color:#94a3b8;font-weight:400;">— ${esc(promptTitle)}</span></span>
+                            <span class="badge-status ${esc(r.status)}">${statusLabel[r.status] || r.status}</span>
+                        </div>
+                        <div class="rc-stars">${stars}</div>
+                        <div class="rc-comment">${esc(r.comment)}</div>
+                        <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:0.5rem;">${esc(created)}</div>
+                        ${rejectReason}
+                        <div class="rc-actions" style="margin-top:0.5rem;">${actions}</div>
+                    </div>
+                `;
+            }).join('');
+
+            wrap.innerHTML = html;
+
+            if (pagination) {
+                document.getElementById('reviewsPagination').textContent =
+                    `صفحه ${pagination.page} از ${pagination.pages} · مجموع ${pagination.total}`;
+            }
+        }
+
+        function approveReview(id) {
+            if (!accessToken || !confirm('این نظر تایید شود؟')) return;
+            apiCall('PUT', `/admin/reviews/${id}/approve`).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('✅ نظر تایید شد', 'success');
+                    loadReviews(reviewsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        function rejectReview(id) {
+            if (!accessToken) return;
+            const reason = prompt('دلیل رد (اختیاری):') || '';
+            apiCall('PUT', `/admin/reviews/${id}/reject`, { reason }).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('✅ نظر رد شد', 'info');
+                    loadReviews(reviewsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        function deleteReview(id) {
+            if (!accessToken || !confirm('این نظر برای همیشه حذف شود؟')) return;
+            apiCall('DELETE', `/admin/reviews/${id}`).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('🗑️ نظر حذف شد', 'info');
+                    loadReviews(reviewsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        // ════════════════════════════════════════════
         //  TABS
         // ════════════════════════════════════════════
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -2082,6 +2252,7 @@
                 if (target === 'tabOrders') loadOrders();
                 if (target === 'tabLogs') loadLogs();
                 if (target === 'tabAuthorApps') loadAuthorApplications();
+                if (target === 'tabReviews') loadReviews();
             });
         });
 
@@ -2105,6 +2276,7 @@
             loadOrders();
             loadLogs();
             loadAuthorApplications();
+            loadReviews();
 
             setInterval(loadStats, 30000);
         }

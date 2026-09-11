@@ -460,6 +460,22 @@
     .flex { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 
+    /* ─── Review stars ─── */
+    .star-input {
+      display: flex;
+      gap: 0.3rem;
+      font-size: 1.6rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .star-input span {
+      color: var(--text-muted);
+      transition: 0.15s;
+    }
+    .star-input span.active {
+      color: #fbbf24;
+    }
+
     @media (max-width: 600px) {
       body { padding: 0.8rem; }
       .header { flex-direction: column; align-items: stretch; }
@@ -476,7 +492,7 @@
   <header class="header">
     <h1>
       🧪 Prompt Market
-      <span class="badge">v0.6</span>
+      <span class="badge">v0.7</span>
       <span id="serverStatus" class="status-badge" style="background:#1e3a5f;color:#60a5fa;">● Online</span>
     </h1>
     <div class="status">
@@ -697,9 +713,6 @@
   // ═══════════════════════════════════════════════
   //  PROMPT CACHE
   // ═══════════════════════════════════════════════
-  // Stores prompts fetched from list/search/my-prompts endpoints so a click
-  // on an item can open the preview overlay without another network round-trip.
-  // Keyed by prompt id. Later fetches overwrite stale entries.
   const promptCache = {};
 
   // ═══════════════════════════════════════════════
@@ -1067,7 +1080,6 @@
     }
 
     const items = prompts.map(p => {
-      // Cache the whole object so clicking it can open the overlay instantly.
       if (p.id) promptCache[p.id] = p;
 
       const price = (p.price !== undefined && p.price !== null)
@@ -1086,6 +1098,7 @@
             ${p.difficulty ? `<span class="chip">${esc(p.difficulty)}</span>` : ''}
             ${p.language ? `<span class="chip">${esc(p.language)}</span>` : ''}
             ${p.status ? `<span class="chip">${esc(p.status)}</span>` : ''}
+            ${p.rating ? `<span class="chip">⭐ ${Number(p.rating).toFixed(1)}</span>` : ''}
           </div>
           <div class="pi-hint">👁️ برای مشاهده جزئیات کلیک کنید</div>
         </div>`;
@@ -1093,18 +1106,12 @@
     return `<div class="prompt-list">${items}</div>`;
   }
 
-  // Opens the preview overlay for a prompt. Prefers the in-memory cache
-  // (instant), falling back to the server if the prompt isn't cached yet.
   function previewFromCache(promptId) {
     const cached = promptCache[promptId];
     if (cached) {
       openPreviewOverlay(cached);
       return;
     }
-    // Fallback: fetch by ID. This endpoint is admin-only, so it may fail
-    // for a regular user if the prompt isn't in the cache — but that only
-    // happens after a hard reload, and list/search immediately re-populate
-    // the cache anyway.
     fetch(API_BASE + '/prompts/id/' + promptId, { headers: getHeaders() })
       .then(r => r.json())
       .then(d => {
@@ -1179,7 +1186,6 @@
       .then(d => {
         const isOk = !!d.data?.id;
         if (isOk) {
-          // Cache the newly created prompt so its preview is instant too.
           if (d.data.id) promptCache[d.data.id] = d.data;
 
           renderPromptOutput(
@@ -1275,7 +1281,6 @@
         return;
       }
 
-      // Cache every prompt so previewMyPrompt can skip the network round-trip.
       (d.data || []).forEach(p => { if (p.id) promptCache[p.id] = p; });
 
       renderMyPromptsList(d.data || []);
@@ -1314,6 +1319,7 @@
           <div class="mpi-meta">
             ${p.category ? `<span class="chip">${esc(p.category)}</span>` : ''}
             ${p.price ? `<span class="chip">${Number(p.price).toLocaleString('fa-IR')} تومان</span>` : ''}
+            ${p.rating ? `<span class="chip">⭐ ${Number(p.rating).toFixed(1)} (${p.review_count || 0})</span>` : ''}
           </div>
           ${note}
           <button class="btn btn-sm btn-outline" style="width:100%;margin-top:0.4rem;"
@@ -1324,9 +1330,6 @@
     wrap.innerHTML = `<div class="my-prompts-list">${html}</div>`;
   }
 
-  // Fetch a single prompt owned by the authenticated user — works for any
-  // status (pending / approved / rejected / deleted). Uses the dedicated
-  // /my-prompts/:id endpoint which enforces ownership on the server.
   async function previewMyPrompt(promptId) {
     if (!accessToken) return;
 
@@ -1352,9 +1355,9 @@
     }
   }
 
-  // Full-screen overlay that mirrors what a buyer would see on the storefront.
-  // Works for any prompt status and includes a rejection note banner when
-  // the prompt was rejected by an admin.
+  // ═══════════════════════════════════════════════
+  //  PREVIEW OVERLAY (with reviews section)
+  // ═══════════════════════════════════════════════
   function openPreviewOverlay(p) {
     const prev = document.getElementById('previewOverlay');
     if (prev) prev.remove();
@@ -1385,6 +1388,10 @@
       ? p.tags.map(t => `<span class="chip">#${esc(t)}</span>`).join(' ')
       : '';
 
+    const ratingChip = (p.rating && p.review_count > 0)
+      ? `<span class="chip" style="background:#78350f;border-color:#b45309;color:#fde68a;">⭐ ${Number(p.rating).toFixed(1)} (${p.review_count} نظر)</span>`
+      : '<span class="chip">⭐ بدون امتیاز</span>';
+
     const overlay = document.createElement('div');
     overlay.id = 'previewOverlay';
     overlay.style.cssText = `
@@ -1414,6 +1421,7 @@
           ${p.difficulty ? `<span class="chip">📊 ${esc(p.difficulty)}</span>` : ''}
           ${p.language ? `<span class="chip">🌐 ${esc(p.language)}</span>` : ''}
           ${p.price ? `<span class="chip">💰 ${Number(p.price).toLocaleString('fa-IR')} تومان</span>` : ''}
+          ${ratingChip}
         </div>
 
         <div style="margin-bottom:1rem;">
@@ -1450,10 +1458,173 @@
           <div>${tagsHTML}</div>
         </div>` : ''}
 
+        <!-- ═══ REVIEWS SECTION ═══ -->
+        <div style="margin-top:1.5rem;border-top:1px solid var(--border-color);padding-top:1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;">
+            <h4 style="margin:0;">⭐ نظرات کاربران <span id="previewReviewCount" style="color:var(--text-muted);font-size:0.8rem;"></span></h4>
+          </div>
+
+          <!-- Review form (only shown to eligible users) -->
+          <div id="reviewFormWrap" style="display:none;background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;margin-bottom:1rem;">
+            <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">امتیاز خود را انتخاب کنید:</div>
+            <div id="reviewStars" class="star-input">
+              <span data-star="1">☆</span>
+              <span data-star="2">☆</span>
+              <span data-star="3">☆</span>
+              <span data-star="4">☆</span>
+              <span data-star="5">☆</span>
+            </div>
+            <textarea id="reviewComment" maxlength="250" rows="3"
+                      placeholder="نظر خود را بنویسید (حداکثر ۲۵۰ کاراکتر)..."
+                      style="width:100%;margin-top:0.6rem;padding:0.5rem;border:1px solid var(--border-color);border-radius:0.4rem;background:var(--bg-secondary);color:var(--text-primary);font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.4rem;">
+              <span id="reviewCharCount" style="font-size:0.7rem;color:var(--text-muted);">0 / 250</span>
+              <button class="btn btn-sm" style="width:auto;" onclick="submitReview('${esc(p.id)}')">📤 ثبت نظر</button>
+            </div>
+            <div id="reviewFormMsg" style="font-size:0.75rem;margin-top:0.4rem;"></div>
+          </div>
+
+          <!-- List of approved reviews -->
+          <div id="previewReviewsList">
+            <div class="empty-state">⏳ در حال بارگذاری نظرات...</div>
+          </div>
+        </div>
+
       </div>
     `;
 
     document.body.appendChild(overlay);
+
+    // Load reviews and set up the form for this prompt.
+    loadPreviewReviews(p.id);
+    setupReviewForm(p);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  REVIEWS (public preview overlay)
+  // ═══════════════════════════════════════════════
+  let currentRating = 0;
+
+  async function loadPreviewReviews(promptId) {
+    const wrap = document.getElementById('previewReviewsList');
+    if (!wrap) return;
+
+    try {
+      const res = await fetch(API_BASE + `/prompts/${promptId}/reviews?page=1&limit=20`);
+      const d = await res.json();
+      if (!res.ok) {
+        wrap.innerHTML = `<div class="empty-state">❌ ${esc(d.error || 'خطا در دریافت نظرات')}</div>`;
+        return;
+      }
+
+      const list = d.data || [];
+      const countEl = document.getElementById('previewReviewCount');
+      if (countEl) countEl.textContent = list.length > 0 ? `(${d.pagination?.total || list.length} نظر)` : '';
+
+      if (list.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">هنوز نظری ثبت نشده</div>';
+        return;
+      }
+
+      wrap.innerHTML = list.map(r => `
+        <div style="background:var(--bg-primary);padding:0.7rem 0.9rem;border-radius:0.5rem;margin-bottom:0.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+            <span style="font-weight:600;font-size:0.85rem;">${esc(r.user?.full_name || 'کاربر')}</span>
+            <span style="color:#fbbf24;font-size:0.85rem;">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+          </div>
+          <div style="font-size:0.82rem;color:var(--text-secondary);white-space:pre-wrap;line-height:1.5;">${esc(r.comment)}</div>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.3rem;">
+            ${r.created_at ? new Date(r.created_at).toLocaleDateString('fa-IR') : ''}
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">❌ ${esc(e.message)}</div>`;
+    }
+  }
+
+  function setupReviewForm(prompt) {
+    const wrap = document.getElementById('reviewFormWrap');
+    if (!wrap) return;
+
+    if (!accessToken) {
+      wrap.style.display = 'none';
+      return;
+    }
+
+    // Hide the form on non-approved prompts (server would reject anyway).
+    if (prompt.status !== 'approved') {
+      wrap.style.display = 'none';
+      return;
+    }
+
+    wrap.style.display = 'block';
+
+    currentRating = 0;
+    document.querySelectorAll('#reviewStars span').forEach(el => {
+      el.onclick = () => {
+        currentRating = parseInt(el.dataset.star);
+        document.querySelectorAll('#reviewStars span').forEach(s => {
+          const n = parseInt(s.dataset.star);
+          if (n <= currentRating) {
+            s.textContent = '★';
+            s.classList.add('active');
+          } else {
+            s.textContent = '☆';
+            s.classList.remove('active');
+          }
+        });
+      };
+    });
+
+    const ta = document.getElementById('reviewComment');
+    const counter = document.getElementById('reviewCharCount');
+    ta.oninput = () => { counter.textContent = `${ta.value.length} / 250`; };
+  }
+
+  async function submitReview(promptId) {
+    const msg = document.getElementById('reviewFormMsg');
+    const comment = document.getElementById('reviewComment').value.trim();
+
+    if (!currentRating || currentRating < 1 || currentRating > 5) {
+      msg.innerHTML = '<span style="color:var(--error);">❌ لطفاً امتیاز خود را انتخاب کنید</span>';
+      return;
+    }
+    if (!comment) {
+      msg.innerHTML = '<span style="color:var(--error);">❌ متن نظر الزامی است</span>';
+      return;
+    }
+    if (comment.length > 250) {
+      msg.innerHTML = '<span style="color:var(--error);">❌ متن نظر نباید بیشتر از ۲۵۰ کاراکتر باشد</span>';
+      return;
+    }
+
+    msg.innerHTML = '<span style="color:var(--info);">⏳ در حال ارسال...</span>';
+
+    try {
+      const res = await fetch(API_BASE + `/prompts/${promptId}/reviews`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ rating: currentRating, comment }),
+      });
+      const d = await res.json();
+
+      if (!res.ok) {
+        msg.innerHTML = `<span style="color:var(--error);">❌ ${esc(d.error || 'خطا')}</span>`;
+        return;
+      }
+
+      msg.innerHTML = '<span style="color:var(--success);">✅ نظر شما ثبت شد و پس از تایید ادمین نمایش داده می‌شود</span>';
+      document.getElementById('reviewComment').value = '';
+      document.getElementById('reviewCharCount').textContent = '0 / 250';
+      currentRating = 0;
+      document.querySelectorAll('#reviewStars span').forEach(s => {
+        s.textContent = '☆';
+        s.classList.remove('active');
+      });
+    } catch (e) {
+      msg.innerHTML = `<span style="color:var(--error);">❌ ${esc(e.message)}</span>`;
+    }
   }
 
   // ═══════════════════════════════════════════════

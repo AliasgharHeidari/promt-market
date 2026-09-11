@@ -12,12 +12,13 @@ import (
 )
 
 type AdminService struct {
-	adminRepo  *repository.AdminRepository
-	userRepo   *repository.UserRepository
-	promptRepo *repository.PromptRepository
-	orderRepo  *repository.OrderRepository
-	appService *AuthorApplicationService
-	db         *gorm.DB
+	adminRepo     *repository.AdminRepository
+	userRepo      *repository.UserRepository
+	promptRepo    *repository.PromptRepository
+	orderRepo     *repository.OrderRepository
+	appService    *AuthorApplicationService
+	reviewService *ReviewService
+	db            *gorm.DB
 }
 
 func NewAdminService(
@@ -26,15 +27,17 @@ func NewAdminService(
 	promptRepo *repository.PromptRepository,
 	orderRepo *repository.OrderRepository,
 	appService *AuthorApplicationService,
+	reviewService *ReviewService,
 	db *gorm.DB,
 ) *AdminService {
 	return &AdminService{
-		adminRepo:  adminRepo,
-		userRepo:   userRepo,
-		promptRepo: promptRepo,
-		orderRepo:  orderRepo,
-		appService: appService,
-		db:         db,
+		adminRepo:     adminRepo,
+		userRepo:      userRepo,
+		promptRepo:    promptRepo,
+		orderRepo:     orderRepo,
+		appService:    appService,
+		reviewService: reviewService,
+		db:            db,
 	}
 }
 
@@ -346,4 +349,28 @@ func (s *AdminService) ApproveAuthorApplication(ctx context.Context, appID, admi
 
 func (s *AdminService) RejectAuthorApplication(ctx context.Context, appID, adminID, reason string) (*domain.AuthorApplication, error) {
 	return s.appService.RejectApplication(ctx, appID, adminID, reason)
+}
+
+
+// ============================================================
+//  REVIEW MODERATION
+// ============================================================
+
+// ListReviewsByStatus returns reviews for admin moderation. Delegates to
+// ReviewService so AdminService remains the single entry point for the
+// admin handler.
+func (s *AdminService) ListReviewsByStatus(ctx context.Context, status string, page, limit int) ([]domain.Review, int64, error) {
+	return s.reviewService.ListByStatus(ctx, status, page, limit)
+}
+
+func (s *AdminService) ApproveReview(ctx context.Context, reviewID string) error {
+	return s.reviewService.ApproveReview(ctx, reviewID)
+}
+
+func (s *AdminService) RejectReview(ctx context.Context, reviewID, reason string) error {
+	return s.reviewService.RejectReview(ctx, reviewID, reason)
+}
+
+func (s *AdminService) DeleteReview(ctx context.Context, reviewID string) (*domain.Review, error) {
+	return s.reviewService.DeleteReview(ctx, reviewID)
 }

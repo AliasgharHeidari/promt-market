@@ -64,9 +64,35 @@ type ResendVerificationRequest struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
-// Register creates a new user, generates a verification code, and sends it via email.
 func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*domain.User, error) {
-	email := strings.ToLower(req.Email)
+	// ---- Manual validation ----
+	// We validate inside the service (not the handler) so the rules are
+	// colocated with business logic and can reuse the same errors for any
+	// transport layer (HTTP, gRPC, CLI...).
+
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	fullName := strings.TrimSpace(req.FullName)
+
+	if email == "" {
+		return nil, errors.New("ایمیل الزامی است")
+	}
+	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
+		return nil, errors.New("ایمیل معتبر نیست")
+	}
+	if req.Password == "" {
+		return nil, errors.New("رمز عبور الزامی است")
+	}
+	if len(req.Password) < 8 {
+		return nil, errors.New("رمز عبور باید حداقل ۸ کاراکتر باشد")
+	}
+	if fullName == "" {
+		return nil, errors.New("نام کامل الزامی است")
+	}
+	if len(fullName) < 2 {
+		return nil, errors.New("نام کامل باید حداقل ۲ کاراکتر باشد")
+	}
+
+	// ---- Business logic ----
 
 	// 1. Check if the user already exists
 	existingUser, err := s.userRepo.FindByEmail(ctx, email)
@@ -77,9 +103,6 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*doma
 		if existingUser.IsVerified {
 			return nil, errors.New("user already exists with this email")
 		}
-		// User exists but never verified their email — treat this as a duplicate
-		// registration attempt and guide them to resend the code instead of
-		// silently creating another account or leaking account state.
 		return nil, errors.New("user already registered but not verified. Please use the resend verification endpoint")
 	}
 
@@ -93,7 +116,7 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*doma
 	user := &domain.User{
 		Email:        email,
 		PasswordHash: string(hashedPassword),
-		FullName:     req.FullName,
+		FullName:     fullName,
 		Role:         "user",
 		IsActive:     true,
 		IsVerified:   false,
@@ -122,7 +145,6 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*doma
 
 	return user, nil
 }
-
 // ResendVerification generates a new verification code for an existing, unverified
 // user and sends it via email. This lets users who never received or who lost
 // their original code get a new one without being stuck behind "already exists".

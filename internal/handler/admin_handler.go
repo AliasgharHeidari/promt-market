@@ -30,7 +30,10 @@ func NewAdminHandler(db *gorm.DB, redisClient *redis.Client) *AdminHandler {
 	verifyRepo := repository.NewVerificationRepository(redisClient)
 	appService := service.NewAuthorApplicationService(appRepo, userRepo, verifyRepo)
 
-	adminService := service.NewAdminService(adminRepo, userRepo, promptRepo, orderRepo, appService, db)
+	reviewRepo := repository.NewReviewRepository(db)
+	reviewService := service.NewReviewService(reviewRepo, promptRepo, orderRepo)
+
+	adminService := service.NewAdminService(adminRepo, userRepo, promptRepo, orderRepo, appService, reviewService, db)
 
 	return &AdminHandler{
 		service:   adminService,
@@ -617,4 +620,87 @@ func (h *AdminHandler) RejectAuthorApplication(c *fiber.Ctx) error {
 	)
 
 	return c.JSON(fiber.Map{"message": "Application rejected"})
+}
+
+// ============================================================
+//  REVIEW MODERATION
+// ============================================================
+
+// GetReviews returns reviews filtered by status for admin moderation.
+// Query: ?status=pending|approved|rejected|all (default: pending)
+func (h *AdminHandler) GetReviews(c *fiber.Ctx) error {
+	status := c.Query("status", "pending")
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+
+	reviews, total, err := h.service.ListReviewsByStatus(c.Context(), status, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": reviews,
+		"pagination": fiber.Map{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+			"pages": (total + int64(limit) - 1) / int64(limit),
+		},
+	})
+}
+
+// ApproveReview marks a review as approved and updates the prompt's rating.
+func (h *AdminHandler) ApproveReview(c *fiber.Ctx) error {
+	reviewID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	if err := h.service.ApproveReview(c.Context(), reviewID); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "approve_review", "review", reviewID, nil,
+	)
+
+	return c.JSON(fiber.Map{"message": "نظر تایید شد"})
+}
+
+// RejectReview marks a review as rejected with an optional reason.
+// Body: { "reason": "..." }
+func (h *AdminHandler) RejectReview(c *fiber.Ctx) error {
+	reviewID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	var req domain.RejectReviewRequest
+	_ = c.BodyParser(&req)
+
+	if err := h.service.RejectReview(c.Context(), reviewID, req.Reason); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "reject_review", "review", reviewID,
+		domain.JSONMap{"reason": req.Reason},
+	)
+
+	return c.JSON(fiber.Map{"message": "نظر رد شد"})
+}
+
+// DeleteReview permanently removes a review. Also recalculates the prompt's
+// rating so a deleted approved review stops counting.
+func (h *AdminHandler) DeleteReview(c *fiber.Ctx) error {
+	reviewID := c.Params("id")
+	adminID, _ := c.Locals("userID").(string)
+
+	review, err := h.service.DeleteReview(c.Context(), reviewID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	_ = h.service.LogAdminAction(
+		c.Context(), adminID, "delete_review", "review", reviewID,
+		domain.JSONMap{"prompt_id": review.PromptID, "user_id": review.UserID},
+	)
+
+	return c.JSON(fiber.Map{"message": "نظر حذف شد"})
 }

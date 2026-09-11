@@ -72,7 +72,7 @@ func RateLimit(redisClient *redis.Client) fiber.Handler {
 func StrictRateLimit(redisClient *redis.Client) fiber.Handler {
 	return limiter.New(limiter.Config{
 		Max:        10,
-		Expiration: 1 * time.Minute,
+		Expiration: 5 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP() + ":" + c.Path()
 		},

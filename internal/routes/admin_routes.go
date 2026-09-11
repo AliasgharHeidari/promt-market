@@ -19,10 +19,7 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 		middleware.AuditLog(db),
 	)
 
-	// CSRF token endpoint.
 	admin.Get("/csrf-token", adminHandler.GetCSRFToken)
-
-	// Dashboard
 	admin.Get("/stats", adminHandler.GetDashboardStats)
 
 	// User management
@@ -58,4 +55,10 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 	admin.Get("/author-applications/:id/document", adminHandler.GetAuthorApplicationDocument)
 	admin.Put("/author-applications/:id/approve", adminHandler.ApproveAuthorApplication)
 	admin.Put("/author-applications/:id/reject", adminHandler.RejectAuthorApplication)
+
+	// Review moderation (approve / reject / delete only — no edit).
+	admin.Get("/reviews", adminHandler.GetReviews)
+	admin.Put("/reviews/:id/approve", adminHandler.ApproveReview)
+	admin.Put("/reviews/:id/reject", adminHandler.RejectReview)
+	admin.Delete("/reviews/:id", adminHandler.DeleteReview)
 }
