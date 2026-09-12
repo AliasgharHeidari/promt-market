@@ -25,7 +25,9 @@ func NewAdminHandler(db *gorm.DB, redisClient *redis.Client) *AdminHandler {
 	promptRepo := repository.NewPromptRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
 
-	// Dependencies for reviewing author-application requests.
+	viewRepo := repository.NewPromptViewRepository(db)
+	viewService := service.NewPromptViewService(viewRepo)
+
 	appRepo := repository.NewAuthorApplicationRepository(db)
 	verifyRepo := repository.NewVerificationRepository(redisClient)
 	appService := service.NewAuthorApplicationService(appRepo, userRepo, verifyRepo)
@@ -33,7 +35,11 @@ func NewAdminHandler(db *gorm.DB, redisClient *redis.Client) *AdminHandler {
 	reviewRepo := repository.NewReviewRepository(db)
 	reviewService := service.NewReviewService(reviewRepo, promptRepo, orderRepo)
 
-	adminService := service.NewAdminService(adminRepo, userRepo, promptRepo, orderRepo, appService, reviewService, db)
+	adminService := service.NewAdminService(
+		adminRepo, userRepo, promptRepo, orderRepo,
+		appService, reviewService, db,
+	)
+	_ = viewService // admin doesn't need viewService yet
 
 	return &AdminHandler{
 		service:   adminService,

@@ -92,6 +92,23 @@
     }
     .theme-toggle:hover { background: var(--bg-hover); }
 
+    .btn-dashboard {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      border: none;
+      padding: 0.4rem 1.1rem;
+      border-radius: 0.6rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: 0.15s;
+    }
+    .btn-dashboard:hover { opacity: 0.9; transform: scale(0.98); }
+
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -328,7 +345,6 @@
       padding: 1rem 0;
     }
 
-    /* ─── My Prompts (author) ─── */
     .my-prompts-list {
       display: flex;
       flex-direction: column;
@@ -460,7 +476,6 @@
     .flex { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 
-    /* ─── Review stars ─── */
     .star-input {
       display: flex;
       gap: 0.3rem;
@@ -492,11 +507,12 @@
   <header class="header">
     <h1>
       🧪 Prompt Market
-      <span class="badge">v0.7</span>
+      <span class="badge">v0.8</span>
       <span id="serverStatus" class="status-badge" style="background:#1e3a5f;color:#60a5fa;">● Online</span>
     </h1>
     <div class="status">
       <span>🔑 <span id="tokenStatus" style="color:var(--text-muted);">بدون توکن</span></span>
+      <a href="dashboard.html" class="btn-dashboard">📊 داشبورد نویسنده</a>
       <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
       <button class="btn btn-sm" onclick="checkHealth()">🔄 Health</button>
     </div>
@@ -624,7 +640,6 @@
         <button class="btn btn-sm btn-outline" onclick="getMyPrompts()">📁 پرامپت‌های من</button>
       </div>
 
-      <!-- Author's prompt list with status -->
       <label style="margin-top:1.2rem; font-size:0.85rem;">📊 پرامپت‌های من با وضعیت</label>
       <button class="btn btn-sm btn-outline" style="width:100%;" onclick="loadMyPromptsWithStatus()">
         🔄 بارگذاری پرامپت‌های من + پیش‌نمایش
@@ -710,9 +725,6 @@
 
   const API_BASE = 'http://localhost:8080/api/v1';
 
-  // ═══════════════════════════════════════════════
-  //  PROMPT CACHE
-  // ═══════════════════════════════════════════════
   const promptCache = {};
 
   // ═══════════════════════════════════════════════
@@ -1309,12 +1321,22 @@
       const note = (p.status === 'rejected' && p.rejection_note)
         ? `<div class="rejection-note">❌ دلیل رد: ${esc(p.rejection_note)}</div>`
         : '';
+      const paused = p.is_paused
+        ? `<span class="status-badge" style="background:#78350f;border-color:#b45309;color:#fde68a;">⏸️ پنهان</span>`
+        : '';
+      const pendingEdit = p.has_pending_edit
+        ? `<span class="status-badge" style="background:#1e3a5f;border-color:#3b82f6;color:#93c5fd;">✏️ ویرایش در انتظار</span>`
+        : '';
 
       return `
         <div class="my-prompt-item">
           <div class="mpi-header">
             <span class="mpi-title">${esc(p.title)}</span>
-            <span class="status-badge ${st.cls}">${st.label}</span>
+            <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+              ${paused}
+              ${pendingEdit}
+              <span class="status-badge ${st.cls}">${st.label}</span>
+            </div>
           </div>
           <div class="mpi-meta">
             ${p.category ? `<span class="chip">${esc(p.category)}</span>` : ''}
@@ -1356,7 +1378,7 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  PREVIEW OVERLAY (with reviews section)
+  //  PREVIEW OVERLAY
   // ═══════════════════════════════════════════════
   function openPreviewOverlay(p) {
     const prev = document.getElementById('previewOverlay');
@@ -1458,13 +1480,11 @@
           <div>${tagsHTML}</div>
         </div>` : ''}
 
-        <!-- ═══ REVIEWS SECTION ═══ -->
         <div style="margin-top:1.5rem;border-top:1px solid var(--border-color);padding-top:1rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;">
             <h4 style="margin:0;">⭐ نظرات کاربران <span id="previewReviewCount" style="color:var(--text-muted);font-size:0.8rem;"></span></h4>
           </div>
 
-          <!-- Review form (only shown to eligible users) -->
           <div id="reviewFormWrap" style="display:none;background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;margin-bottom:1rem;">
             <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">امتیاز خود را انتخاب کنید:</div>
             <div id="reviewStars" class="star-input">
@@ -1484,7 +1504,6 @@
             <div id="reviewFormMsg" style="font-size:0.75rem;margin-top:0.4rem;"></div>
           </div>
 
-          <!-- List of approved reviews -->
           <div id="previewReviewsList">
             <div class="empty-state">⏳ در حال بارگذاری نظرات...</div>
           </div>
@@ -1494,14 +1513,12 @@
     `;
 
     document.body.appendChild(overlay);
-
-    // Load reviews and set up the form for this prompt.
     loadPreviewReviews(p.id);
     setupReviewForm(p);
   }
 
   // ═══════════════════════════════════════════════
-  //  REVIEWS (public preview overlay)
+  //  REVIEWS
   // ═══════════════════════════════════════════════
   let currentRating = 0;
 
@@ -1547,13 +1564,7 @@
     const wrap = document.getElementById('reviewFormWrap');
     if (!wrap) return;
 
-    if (!accessToken) {
-      wrap.style.display = 'none';
-      return;
-    }
-
-    // Hide the form on non-approved prompts (server would reject anyway).
-    if (prompt.status !== 'approved') {
+    if (!accessToken || prompt.status !== 'approved') {
       wrap.style.display = 'none';
       return;
     }

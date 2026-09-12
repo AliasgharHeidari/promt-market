@@ -41,11 +41,13 @@ func Connect(dsn string, maxConns int) (*gorm.DB, error) {
 
 func autoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
-		&domain.User{},
-		&domain.Prompt{},
-		&domain.Order{},
-		&domain.Review{},
-		&domain.AdminLog{},          // اگه قبلاً migrate نشده بود
-		&domain.AuthorApplication{}, // ✅ جدید: درخواست ارتقا به prompt_author
+    &domain.User{},
+    &domain.Prompt{},
+    &domain.Order{},
+    &domain.Review{},
+    &domain.AdminLog{},
+    &domain.AuthorApplication{},
+    &domain.PromptView{},
+    &domain.PromptEditProposal{},
 	)
 }

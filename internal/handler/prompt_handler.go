@@ -20,7 +20,9 @@ type PromptHandler struct {
 func NewPromptHandler(db *gorm.DB) *PromptHandler {
 	promptRepo := repository.NewPromptRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	promptService := service.NewPromptService(promptRepo, userRepo)
+	viewRepo := repository.NewPromptViewRepository(db)
+	viewService := service.NewPromptViewService(viewRepo)
+	promptService := service.NewPromptService(promptRepo, userRepo, viewService)
 
 	return &PromptHandler{
 		service:   promptService,

@@ -11,6 +11,7 @@ import (
 
 func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 	adminHandler := handler.NewAdminHandler(db, redisClient)
+	editHandler := handler.NewAuthorDashboardHandler(db)
 
 	admin := app.Group("/api/v1/admin",
 		middleware.JWTProtected(),
@@ -19,6 +20,7 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 		middleware.AuditLog(db),
 	)
 
+	// CSRF + Dashboard
 	admin.Get("/csrf-token", adminHandler.GetCSRFToken)
 	admin.Get("/stats", adminHandler.GetDashboardStats)
 
@@ -61,4 +63,9 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 	admin.Put("/reviews/:id/approve", adminHandler.ApproveReview)
 	admin.Put("/reviews/:id/reject", adminHandler.RejectReview)
 	admin.Delete("/reviews/:id", adminHandler.DeleteReview)
+
+	// Prompt edit proposals — authors propose changes; admins approve/reject.
+	admin.Get("/prompt-edits", editHandler.AdminListEdits)
+	admin.Put("/prompt-edits/:id/approve", editHandler.AdminApproveEdit)
+	admin.Put("/prompt-edits/:id/reject", editHandler.AdminRejectEdit)
 }

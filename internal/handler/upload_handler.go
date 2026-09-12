@@ -2,6 +2,8 @@ package handler
 
 import (
 	"fmt"
+	"io"
+	"mime/multipart"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +11,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+
+	"promt-market/internal/utils"
 )
 
 type UploadHandler struct {
@@ -33,13 +37,70 @@ var allowedImageExts = map[string]bool{
 
 const maxImageSize = 5 * 1024 * 1024 // 5MB
 
-// ensureDir - پوشه رو (به صورت بازگشتی) می‌سازه اگه وجود نداشته باشه
+// ensureDir creates path recursively if it doesn't exist.
 func ensureDir(path string) error {
 	return os.MkdirAll(path, 0o755)
 }
 
+// saveImageAs stores a single uploaded image into uploads/<subDir>/<ownerID>/
+// and returns the public URL. Shared by prompt-image and avatar uploads so
+// validation rules stay consistent.
+//
+// After the file is written to disk, it is passed through CompressImage
+// which may:
+//   - downscale oversized images (longest side > 1200px)
+//   - re-encode JPEG at quality 85
+//   - re-encode PNG losslessly at max compression
+//
+// Small files (<2 MB) and non-compressible formats (WebP/GIF) are left as-is.
+func (h *UploadHandler) saveImageAs(file *multipart.FileHeader, subDir, ownerID string) (string, error) {
+	if file.Size > maxImageSize {
+		return "", fmt.Errorf("حجم فایل نباید بیشتر از 5 مگابایت باشد")
+	}
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !allowedImageExts[ext] {
+		return "", fmt.Errorf("فرمت فایل مجاز نیست (jpg, jpeg, png, webp, gif)")
+	}
+
+	dir := filepath.Join(h.uploadDir, subDir, ownerID)
+	if err := ensureDir(dir); err != nil {
+		return "", fmt.Errorf("ساخت پوشه ناموفق بود: %w", err)
+	}
+
+	filename := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), uuid.New().String()[:8], ext)
+	fullPath := filepath.Join(dir, filename)
+
+	src, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(fullPath)
+	if err != nil {
+		return "", err
+	}
+	if _, err := io.Copy(dst, src); err != nil {
+		dst.Close()
+		return "", err
+	}
+	if err := dst.Close(); err != nil {
+		return "", err
+	}
+
+	// Best-effort compression. If it fails, we still keep the original file
+	// — the upload is not rejected because of a compression error.
+	if _, err := utils.CompressImage(fullPath); err != nil {
+		// Log via fmt for now; replace with your logger if you have one.
+		fmt.Printf("⚠️ compress failed for %s: %v\n", fullPath, err)
+	}
+
+	urlPath := "/uploads/" + filepath.ToSlash(filepath.Join(subDir, ownerID, filename))
+	return strings.TrimRight(h.baseURL, "/") + urlPath, nil
+}
+
 // UploadPromptImage - POST /api/v1/upload/prompt-image
-// فیلد فرم: file
+// Form field: file
 func (h *UploadHandler) UploadPromptImage(c *fiber.Ctx) error {
 	userID, _ := c.Locals("userID").(string)
 	if userID == "" {
@@ -55,53 +116,22 @@ func (h *UploadHandler) UploadPromptImage(c *fiber.Ctx) error {
 		})
 	}
 
-	if file.Size > maxImageSize {
+	url, err := h.saveImageAs(file, "prompts", userID)
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "حجم فایل نباید بیشتر از 5 مگابایت باشد",
+			"error": err.Error(),
 		})
 	}
-
-	ext := strings.ToLower(filepath.Ext(file.Filename))
-	if !allowedImageExts[ext] {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "فرمت فایل مجاز نیست (jpg, jpeg, png, webp, gif)",
-		})
-	}
-
-	// مسیر: uploads/prompts/<userID>/
-	subDir := filepath.Join("prompts", userID)
-	fullDir := filepath.Join(h.uploadDir, subDir)
-
-	// ✅ این خط حیاتی است: پوشه رو بساز (اگه نباشه)
-	if err := ensureDir(fullDir); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "ساخت پوشه ناموفق بود: " + err.Error(),
-		})
-	}
-
-	filename := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), uuid.New().String()[:8], ext)
-	fullPath := filepath.Join(fullDir, filename)
-
-	if err := c.SaveFile(file, fullPath); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "ذخیره فایل ناموفق بود: " + err.Error(),
-		})
-	}
-
-	urlPath := "/uploads/" + filepath.ToSlash(filepath.Join(subDir, filename))
-	publicURL := strings.TrimRight(h.baseURL, "/") + urlPath
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data": fiber.Map{
-			"url":      publicURL,
-			"path":     urlPath,
-			"filename": filename,
-			"size":     file.Size,
+			"url": url,
 		},
 	})
 }
 
-// UploadPromptImages - POST /api/v1/upload/prompt-images (چندتایی)
+// UploadPromptImages - POST /api/v1/upload/prompt-images (multiple)
+// Form field: files
 func (h *UploadHandler) UploadPromptImages(c *fiber.Ctx) error {
 	userID, _ := c.Locals("userID").(string)
 	if userID == "" {
@@ -129,55 +159,19 @@ func (h *UploadHandler) UploadPromptImages(c *fiber.Ctx) error {
 		})
 	}
 
-	subDir := filepath.Join("prompts", userID)
-	fullDir := filepath.Join(h.uploadDir, subDir)
-
-	// ✅ این خط حیاتی است
-	if err := ensureDir(fullDir); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "ساخت پوشه ناموفق بود: " + err.Error(),
-		})
-	}
-
 	type uploaded struct {
-		URL      string `json:"url"`
-		Path     string `json:"path"`
-		Filename string `json:"filename"`
-		Size     int64  `json:"size"`
+		URL string `json:"url"`
 	}
 	results := make([]uploaded, 0, len(files))
 
 	for _, file := range files {
-		if file.Size > maxImageSize {
+		url, err := h.saveImageAs(file, "prompts", userID)
+		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": fmt.Sprintf("حجم فایل %s بیشتر از 5 مگابایت است", file.Filename),
+				"error": fmt.Sprintf("%s: %s", file.Filename, err.Error()),
 			})
 		}
-		ext := strings.ToLower(filepath.Ext(file.Filename))
-		if !allowedImageExts[ext] {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": fmt.Sprintf("فرمت %s مجاز نیست", file.Filename),
-			})
-		}
-
-		filename := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), uuid.New().String()[:8], ext)
-		fullPath := filepath.Join(fullDir, filename)
-
-		if err := c.SaveFile(file, fullPath); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "ذخیره فایل ناموفق بود: " + err.Error(),
-			})
-		}
-
-		urlPath := "/uploads/" + filepath.ToSlash(filepath.Join(subDir, filename))
-		publicURL := strings.TrimRight(h.baseURL, "/") + urlPath
-
-		results = append(results, uploaded{
-			URL:      publicURL,
-			Path:     urlPath,
-			Filename: filename,
-			Size:     file.Size,
-		})
+		results = append(results, uploaded{URL: url})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

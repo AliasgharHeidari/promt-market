@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>داشبورد نویسنده · Prompt Market</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --bg-hover: #2d3a4f;
+      --bg-input: #2d3a4f;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --badge-bg: #2d3a4f;
+      --scrollbar-track: #1e293b;
+      --scrollbar-thumb: #475569;
+      --success: #22c55e;
+      --error: #ef4444;
+      --info: #3b82f6;
+      --warning: #f59e0b;
+      --accent: #8b5cf6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      width: 250px;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-color);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar .brand {
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 0.5rem 0.8rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 0.6rem;
+    }
+    .sidebar .brand .badge {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      font-size: 0.55rem;
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .sidebar .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem 0.9rem;
+      border-radius: 0.6rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: 0.15s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: right;
+      font-family: inherit;
+    }
+    .sidebar .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .sidebar .nav-item.active {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+    }
+    .sidebar .spacer { flex: 1; }
+    .sidebar .back-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.9rem;
+      border-radius: 0.6rem;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      text-decoration: none;
+      transition: 0.15s;
+    }
+    .sidebar .back-link:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* ─── Main ─── */
+    .main {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      max-width: calc(100vw - 250px);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .page-header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .page-header .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .avatar-small {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--info);
+      background: var(--bg-hover);
+    }
+    .avatar-placeholder {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .btn-logout {
+      background: #7f1d1d;
+      color: #fecaca;
+      border: none;
+      padding: 0.35rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 500;
+      transition: 0.15s;
+    }
+    .btn-logout:hover { background: #991b1b; }
+
+    /* ─── Panels ─── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ─── Stat grid ─── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+      padding: 1.1rem 1.3rem;
+      transition: 0.15s;
+    }
+    .stat-card:hover {
+      border-color: var(--info);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+    .stat-card .label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+    .stat-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 0.3rem;
+      color: var(--text-primary);
+    }
+    .stat-card .sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+    .stat-card.accent-1 { border-color: #3b82f6; }
+    .stat-card.accent-2 { border-color: #22c55e; }
+    .stat-card.accent-3 { border-color: #8b5cf6; }
+    .stat-card.accent-4 { border-color: #f59e0b; }
+
+    /* ─── Chart card ─── */
+    .chart-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+      padding: 1.3rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .chart-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .chart-tabs {
+      display: flex;
+      gap: 0.2rem;
+      background: var(--bg-primary);
+      padding: 0.25rem;
+      border-radius: 0.5rem;
+    }
+    .chart-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    .chart-tab.active {
+      background: var(--info);
+      color: white;
+    }
+    .chart-wrap {
+      position: relative;
+      height: 280px;
+    }
+
+    /* ─── Products table ─── */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+      padding: 1.3rem 1.5rem;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    .card-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    th {
+      text-align: right;
+      padding: 0.6rem 0.5rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    td {
+      padding: 0.7rem 0.5rem;
+      border-bottom: 1px solid var(--bg-primary);
+      vertical-align: middle;
+    }
+    tr:hover td { background: var(--bg-primary); }
+
+    .table-thumb {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 0.4rem;
+      border: 1px solid var(--border-color);
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+    .table-thumb-placeholder {
+      display: inline-flex;
+      width: 40px;
+      height: 40px;
+      border-radius: 0.4rem;
+      background: var(--bg-hover);
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 1rem;
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.15rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .status-badge.status-pending  { background: #78350f; color: #fde68a; }
+    .status-badge.status-approved { background: #064e3b; color: #a7f3d0; }
+    .status-badge.status-rejected { background: #7f1d1d; color: #fecaca; }
+    .status-badge.status-deleted  { background: #334155; color: #94a3b8; }
+    .status-badge.status-paused   { background: #1e3a5f; color: #93c5fd; }
+    .status-badge.status-edit     { background: #4c1d95; color: #ddd6fe; }
+
+    .btn-sm {
+      padding: 0.25rem 0.7rem;
+      border: none;
+      border-radius: 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.1s;
+      font-family: inherit;
+      white-space: nowrap;
+      margin-left: 0.2rem;
+    }
+    .btn-sm.pause    { background: #78350f; color: #fde68a; }
+    .btn-sm.pause:hover { background: #92400e; }
+    .btn-sm.unpause  { background: #064e3b; color: #a7f3d0; }
+    .btn-sm.unpause:hover { background: #065f46; }
+    .btn-sm.edit     { background: #1e3a5f; color: #93c5fd; }
+    .btn-sm.edit:hover { background: #1e40af; }
+    .btn-sm.view     { background: #334155; color: #cbd5e1; }
+    .btn-sm.view:hover { background: #475569; }
+
+    /* ─── Profile ─── */
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .avatar-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--info);
+      background: var(--bg-hover);
+    }
+    .avatar-large-placeholder {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 2.2rem;
+    }
+    .profile-meta h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+    .profile-meta .email {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+    .profile-meta .chips {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .chip {
+      display: inline-block;
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
+      color: var(--text-secondary);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 0.55rem 0.85rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: 0.15s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--info);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    input[type="file"] { padding: 0.5rem; }
+
+    .btn {
+      background: var(--info);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+      margin-top: 1rem;
+    }
+    .btn:hover { opacity: 0.9; transform: scale(0.98); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-outline:hover { background: var(--bg-hover); }
+
+    /* ─── Toast ─── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.6rem;
+      background: var(--bg-secondary);
+      color: white;
+      font-size: 0.85rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      opacity: 0;
+      transform: translateY(1rem);
+      transition: 0.25s;
+      pointer-events: none;
+      z-index: 9999;
+      max-width: 400px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #065f46; border-color: #10b981; }
+    .toast.error { background: #7f1d1d; border-color: #ef4444; }
+    .toast.info { background: #1e3a5f; border-color: #3b82f6; }
+
+    /* ─── Modal (edit proposal) ─── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+    }
+    .modal h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .modal .actions {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 1.5rem;
+      justify-content: flex-start;
+    }
+    .modal .section { margin-bottom: 0.7rem; }
+    .modal .section label {
+      margin-top: 0.6rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0.8rem;
+      }
+      .sidebar .brand { display: none; }
+      .sidebar .nav-item { white-space: nowrap; }
+      .sidebar .spacer { display: none; }
+      .main { max-width: 100%; padding: 1rem; }
+      .chart-wrap { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="brand">
+    🧪 Prompt Market
+    <span class="badge">AUTHOR</span>
+  </div>
+
+  <button class="nav-item active" data-panel="panelOverview">
+    📊 نمای کلی
+  </button>
+  <button class="nav-item" data-panel="panelProducts">
+    📦 محصولات من
+  </button>
+  <button class="nav-item" data-panel="panelProfile">
+    👤 پروفایل
+  </button>
+
+  <div class="spacer"></div>
+
+  <a href="index.html" class="back-link">← بازگشت به فروشگاه</a>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1 id="pageTitle">📊 نمای کلی</h1>
+    <div class="user-info">
+      <div id="headerAvatarWrap"></div>
+      <span id="headerName">—</span>
+      <button class="btn-logout" onclick="logout()">🚪 خروج</button>
+    </div>
+  </div>
+
+  <!-- ═══ PANEL: OVERVIEW ═══ -->
+  <section class="panel active" id="panelOverview">
+
+    <div class="stats-grid">
+      <div class="stat-card accent-1">
+        <div class="label">💰 درآمد کل</div>
+        <div class="value" id="statTotalRevenue">—</div>
+        <div class="sub">تومان</div>
+      </div>
+      <div class="stat-card accent-2">
+        <div class="label">🛒 فروش کل</div>
+        <div class="value" id="statTotalSales">—</div>
+        <div class="sub">سفارش موفق</div>
+      </div>
+      <div class="stat-card accent-3">
+        <div class="label">📈 درآمد ۳۰ روز</div>
+        <div class="value" id="statMonthlyRevenue">—</div>
+        <div class="sub">تومان</div>
+      </div>
+      <div class="stat-card accent-4">
+        <div class="label">👁️ بازدید ۳۰ روز</div>
+        <div class="value" id="statTotalViews30d">—</div>
+        <div class="sub">بازدید پرامپت‌ها</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">📦 کل محصولات</div>
+        <div class="value" id="statTotalPrompts">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">✅ فعال</div>
+        <div class="value" id="statActivePrompts" style="color:#22c55e;">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">⏸️ پنهان</div>
+        <div class="value" id="statPausedPrompts" style="color:#f59e0b;">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">✏️ ویرایش در انتظار</div>
+        <div class="value" id="statPendingEdits" style="color:#93c5fd;">—</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>
+        📊 نمودار بازدید
+        <div class="chart-tabs">
+          <button class="chart-tab active" data-days="7" onclick="switchChartPeriod(7, this)">۷ روز</button>
+          <button class="chart-tab" data-days="30" onclick="switchChartPeriod(30, this)">۳۰ روز</button>
+          <button class="chart-tab" data-days="90" onclick="switchChartPeriod(90, this)">۹۰ روز</button>
+        </div>
+      </h3>
+      <div class="chart-wrap"><canvas id="viewsChart"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>
+        💰 نمودار فروش و درآمد
+        <div class="chart-tabs">
+          <button class="chart-tab active" data-days="7" onclick="switchRevenuePeriod(7, this)">۷ روز</button>
+          <button class="chart-tab" data-days="30" onclick="switchRevenuePeriod(30, this)">۳۰ روز</button>
+          <button class="chart-tab" data-days="90" onclick="switchRevenuePeriod(90, this)">۹۰ روز</button>
+        </div>
+      </h3>
+      <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+    </div>
+
+  </section>
+
+  <!-- ═══ PANEL: PRODUCTS ═══ -->
+  <section class="panel" id="panelProducts">
+    <div class="card">
+      <div class="card-header">
+        <h3>📦 محصولات من</h3>
+        <button class="btn-sm view" onclick="loadProducts()">🔄 بارگذاری</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>عنوان</th>
+              <th>قیمت</th>
+              <th>بازدید</th>
+              <th>فروش</th>
+              <th>⭐</th>
+              <th>وضعیت</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">⏳ در حال بارگذاری...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PANEL: PROFILE ═══ -->
+  <section class="panel" id="panelProfile">
+    <div class="card">
+
+      <div class="profile-header">
+        <div id="profileAvatarWrap"></div>
+        <div class="profile-meta">
+          <h2 id="profileName">—</h2>
+          <div class="email" id="profileEmail">—</div>
+          <div class="chips" id="profileChips"></div>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border-color);margin:1.5rem 0;">
+
+      <h3 style="font-size:0.95rem;margin-bottom:1rem;">🖼️ تغییر آواتار</h3>
+      <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp">
+      <button class="btn btn-outline" onclick="uploadAvatar()">📤 آپلود آواتار</button>
+
+      <hr style="border:none;border-top:1px solid var(--border-color);margin:1.5rem 0;">
+
+      <h3 style="font-size:0.95rem;margin-bottom:0.5rem;">📝 اطلاعات پروفایل</h3>
+
+      <label>نام کامل</label>
+      <input id="editFullName" maxlength="100">
+
+      <label>تخصص</label>
+      <input id="editExpertise" maxlength="100" placeholder="مثلاً: تولید محتوا، برنامه‌نویسی">
+
+      <label>بیوگرافی</label>
+      <textarea id="editBio" maxlength="500" placeholder="درباره خودتان بنویسید..."></textarea>
+      <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.3rem;">
+        <span id="bioCharCount">0</span> / 500
+      </div>
+
+      <button class="btn" onclick="saveProfile()">💾 ذخیره تغییرات</button>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- Modal: Edit proposal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>✏️ ارسال پیشنهاد ویرایش</h3>
+    <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">
+      تغییرات پس از تایید ادمین روی پرامپت اعمال می‌شود. تا آن زمان پرامپت فعلی نمایش داده می‌شود.
+    </p>
+
+    <div class="section">
+      <label>عنوان</label>
+      <input id="editTitle">
+    </div>
+    <div class="section">
+      <label>توضیحات</label>
+      <textarea id="editDescription" rows="2"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+      <div class="section">
+        <label>دسته‌بندی</label>
+        <input id="editCategory">
+      </div>
+      <div class="section">
+        <label>زیردسته</label>
+        <input id="editSubCategory">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+      <div class="section">
+        <label>قیمت</label>
+        <input id="editPrice" type="number">
+      </div>
+      <div class="section">
+        <label>قیمت با تخفیف</label>
+        <input id="editDiscountPrice" type="number">
+      </div>
+    </div>
+    <div class="section">
+      <label>تگ‌ها (با کاما جدا کن)</label>
+      <input id="editTags">
+    </div>
+    <div class="section">
+      <label>محتوای پرامپت</label>
+      <textarea id="editContent" rows="4"></textarea>
+    </div>
+    <div class="section">
+      <label>خروجی نمونه</label>
+      <textarea id="editDemoOutput" rows="2"></textarea>
+    </div>
+    <div class="section">
+      <label>راهنمای استفاده</label>
+      <textarea id="editInstructions" rows="2"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="submitEditProposal()">📤 ارسال برای تایید</button>
+      <button class="btn btn-outline" onclick="closeEditModal()">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ═══════════════════════════════════════════════
+  //  STATE
+  // ═══════════════════════════════════════════════
+  let accessToken = localStorage.getItem('accessToken') || '';
+  let refreshToken = localStorage.getItem('refreshToken') || '';
+  let currentUser = null;
+  let currentPrompts = [];
+  let editingPromptId = null;
+  let isRefreshing = false;
+  let refreshPromise = null;
+
+  const API_BASE = 'http://localhost:8080/api/v1';
+
+  // Charts
+  let viewsChart = null;
+  let revenueChart = null;
+
+  // ═══════════════════════════════════════════════
+  //  TOAST
+  // ═══════════════════════════════════════════════
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    el.classList.add('show');
+    clearTimeout(el._hide);
+    el._hide = setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  HELPERS
+  // ═══════════════════════════════════════════════
+  function esc(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function resolveImageURL(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = API_BASE.replace(/\/api\/v1\/?$/, '');
+    return base + (url.startsWith('/') ? url : '/' + url);
+  }
+
+  function getHeaders(extra) {
+    const h = { 'Content-Type': 'application/json', ...extra };
+    if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+    return h;
+  }
+
+  function authHeadersOnly() {
+    const h = {};
+    if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+    return h;
+  }
+
+  function fmtNum(n) {
+    if (n === null || n === undefined) return '—';
+    return Number(n).toLocaleString('fa-IR');
+  }
+
+  // ═══════════════════════════════════════════════
+  //  API WITH AUTO REFRESH
+  // ═══════════════════════════════════════════════
+  function refreshAccessToken() {
+    if (!refreshToken) return Promise.reject(new Error('No refresh token'));
+    if (isRefreshing) return refreshPromise;
+
+    isRefreshing = true;
+    refreshPromise = fetch(API_BASE + '/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.access_token) {
+          accessToken = d.data.access_token;
+          if (d.data.refresh_token) refreshToken = d.data.refresh_token;
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
+          return accessToken;
+        }
+        throw new Error('Refresh failed');
+      })
+      .finally(() => {
+        isRefreshing = false;
+        refreshPromise = null;
+      });
+
+    return refreshPromise;
+  }
+
+  function apiCall(method, path, body, retry = true) {
+    const opts = { method, headers: getHeaders() };
+    if (body) opts.body = JSON.stringify(body);
+
+    return fetch(API_BASE + path, opts).then(async r => {
+      const text = await r.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { error: text || 'Unknown error' }; }
+
+      if ((r.status === 401 || r.status === 403) && retry) {
+        try {
+          await refreshAccessToken();
+          return apiCall(method, path, body, false);
+        } catch {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = 'index.html';
+          return { status: r.status, data: { error: 'Session expired' } };
+        }
+      }
+      return { status: r.status, data };
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  //  LOGOUT
+  // ═══════════════════════════════════════════════
+  function logout() {
+    if (!confirm('از حساب خارج می‌شوید؟')) return;
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.location.href = 'index.html';
+  }
+
+  // ═══════════════════════════════════════════════
+  //  NAVIGATION
+  // ═══════════════════════════════════════════════
+  const panelTitles = {
+    panelOverview: '📊 نمای کلی',
+    panelProducts: '📦 محصولات من',
+    panelProfile: '👤 پروفایل',
+  };
+
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+
+      const target = this.dataset.panel;
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(target).classList.add('active');
+      document.getElementById('pageTitle').textContent = panelTitles[target] || '';
+
+      // Lazy-load per panel
+      if (target === 'panelProducts') loadProducts();
+      if (target === 'panelProfile') loadProfilePanel();
+    });
+  });
+
+  // ═══════════════════════════════════════════════
+  //  LOAD: OVERVIEW
+  // ═══════════════════════════════════════════════
+  async function loadOverview() {
+    const { data } = await apiCall('GET', '/author/dashboard/stats');
+    if (!data.data) return;
+
+    const s = data.data;
+    document.getElementById('statTotalRevenue').textContent = fmtNum(s.total_revenue);
+    document.getElementById('statTotalSales').textContent = fmtNum(s.total_sales);
+    document.getElementById('statMonthlyRevenue').textContent = fmtNum(s.monthly_revenue);
+    document.getElementById('statTotalViews30d').textContent = fmtNum(s.total_views_30d);
+    document.getElementById('statTotalPrompts').textContent = fmtNum(s.total_prompts);
+    document.getElementById('statActivePrompts').textContent = fmtNum(s.active_prompts);
+    document.getElementById('statPausedPrompts').textContent = fmtNum(s.paused_prompts);
+    document.getElementById('statPendingEdits').textContent = fmtNum(s.pending_edits);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  CHARTS
+  // ═══════════════════════════════════════════════
+  const chartCommonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } },
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: '#64748b', font: { size: 10 } },
+        grid: { color: '#1e293b' },
+      },
+      y: {
+        ticks: { color: '#64748b', font: { size: 10 } },
+        grid: { color: '#1e293b' },
+        beginAtZero: true,
+      },
+    },
+  };
+
+  async function loadViewsChart(days = 7) {
+    const { data } = await apiCall('GET', `/author/dashboard/views-chart?days=${days}`);
+    const points = data.data || [];
+
+    const labels = points.map(p => {
+      const d = new Date(p.date);
+      return d.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
+    });
+    const values = points.map(p => p.value);
+
+    if (viewsChart) viewsChart.destroy();
+
+    const ctx = document.getElementById('viewsChart');
+    viewsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'بازدید',
+          data: values,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.15)',
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: '#8b5cf6',
+          pointRadius: 3,
+        }],
+      },
+      options: chartCommonOptions,
+    });
+  }
+
+  async function loadRevenueChart(days = 7) {
+    const { data } = await apiCall('GET', `/author/dashboard/revenue-chart?days=${days}`);
+    const points = data.data || [];
+
+    const labels = points.map(p => {
+      const d = new Date(p.date);
+      return d.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
+    });
+    const sales = points.map(p => p.value);
+    const revenue = points.map(p => p.revenue || 0);
+
+    if (revenueChart) revenueChart.destroy();
+
+    const ctx = document.getElementById('revenueChart');
+    revenueChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'فروش (تعداد)',
+            data: sales,
+            backgroundColor: 'rgba(34, 197, 94, 0.7)',
+            borderColor: '#22c55e',
+            borderWidth: 1,
+            yAxisID: 'y',
+          },
+          {
+            label: 'درآمد (تومان)',
+            data: revenue,
+            type: 'line',
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            fill: false,
+            tension: 0.35,
+            pointBackgroundColor: '#f59e0b',
+            yAxisID: 'y1',
+          },
+        ],
+      },
+      options: {
+        ...chartCommonOptions,
+        scales: {
+          x: chartCommonOptions.scales.x,
+          y: {
+            ...chartCommonOptions.scales.y,
+            position: 'left',
+            title: { display: true, text: 'تعداد فروش', color: '#64748b', font: { size: 10 } },
+          },
+          y1: {
+            position: 'right',
+            beginAtZero: true,
+            grid: { display: false },
+            ticks: { color: '#64748b', font: { size: 10 } },
+            title: { display: true, text: 'درآمد', color: '#64748b', font: { size: 10 } },
+          },
+        },
+      },
+    });
+  }
+
+  function switchChartPeriod(days, btn) {
+    document.querySelectorAll('#panelOverview .chart-card:first-of-type .chart-tab')
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadViewsChart(days);
+  }
+
+  function switchRevenuePeriod(days, btn) {
+    document.querySelectorAll('#panelOverview .chart-card:last-of-type .chart-tab')
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadRevenueChart(days);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PRODUCTS
+  // ═══════════════════════════════════════════════
+  async function loadProducts() {
+    const tbody = document.getElementById('productsTableBody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">⏳ در حال بارگذاری...</td></tr>';
+
+    const { data } = await apiCall('GET', '/my-prompts?page=1&limit=100');
+    if (!data.data) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">📭 محصولی یافت نشد</td></tr>';
+      return;
+    }
+
+    currentPrompts = data.data;
+    renderProducts(data.data);
+  }
+
+  function renderProducts(prompts) {
+    const tbody = document.getElementById('productsTableBody');
+    if (!prompts || prompts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">📭 محصولی یافت نشد</td></tr>';
+      return;
+    }
+
+    const statusMap = {
+      pending:  { label: '⏳ در انتظار', cls: 'status-pending' },
+      approved: { label: '✅ تایید شده', cls: 'status-approved' },
+      rejected: { label: '❌ رد شده', cls: 'status-rejected' },
+      deleted:  { label: '🗑️ حذف شده', cls: 'status-deleted' },
+    };
+
+    tbody.innerHTML = prompts.map(p => {
+      const st = statusMap[p.status] || { label: p.status, cls: '' };
+      const thumb = p.cover_image
+        ? `<img src="${resolveImageURL(p.cover_image)}" class="table-thumb" onerror="this.outerHTML='<span class=\\'table-thumb-placeholder\\'>🖼️</span>'">`
+        : '<span class="table-thumb-placeholder">🖼️</span>';
+
+      const pausedBadge = p.is_paused
+        ? `<span class="status-badge status-paused" style="margin-right:0.3rem;">⏸️ پنهان</span>`
+        : '';
+      const editBadge = p.has_pending_edit
+        ? `<span class="status-badge status-edit" style="margin-right:0.3rem;">✏️ در انتظار ویرایش</span>`
+        : '';
+
+      const pauseBtn = p.status === 'approved'
+        ? (p.is_paused
+            ? `<button class="btn-sm unpause" onclick="unpausePrompt('${esc(p.id)}')">▶️ نمایش</button>`
+            : `<button class="btn-sm pause" onclick="pausePrompt('${esc(p.id)}')">⏸️ پنهان</button>`)
+        : '';
+
+      const editBtn = p.status === 'approved' && !p.has_pending_edit
+        ? `<button class="btn-sm edit" onclick="openEditModal('${esc(p.id)}')">✏️ ویرایش</button>`
+        : '';
+
+      return `
+        <tr>
+          <td>${thumb}<strong>${esc(p.title)}</strong></td>
+          <td>${fmtNum(p.price)} تومان</td>
+          <td>${fmtNum(p.views)}</td>
+          <td>${fmtNum(p.sales_count)}</td>
+          <td>${p.rating ? '⭐ ' + Number(p.rating).toFixed(1) : '—'}</td>
+          <td>${pausedBadge}${editBadge}<span class="status-badge ${st.cls}">${st.label}</span></td>
+          <td>
+            <button class="btn-sm view" onclick="viewPrompt('${esc(p.id)}')">👁️</button>
+            ${pauseBtn}
+            ${editBtn}
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PAUSE / UNPAUSE
+  // ═══════════════════════════════════════════════
+  async function pausePrompt(id) {
+    if (!confirm('این پرامپت موقتاً از فروشگاه پنهان شود؟')) return;
+    const { status, data } = await apiCall('POST', `/author/prompts/${id}/pause`);
+    if (status === 200) {
+      toast('⏸️ پرامپت پنهان شد', 'info');
+      loadProducts();
+      loadOverview();
+    } else {
+      toast('❌ ' + (data.error || 'خطا'), 'error');
+    }
+  }
+
+  async function unpausePrompt(id) {
+    if (!confirm('این پرامپت دوباره نمایش داده شود؟')) return;
+    const { status, data } = await apiCall('POST', `/author/prompts/${id}/unpause`);
+    if (status === 200) {
+      toast('▶️ پرامپت نمایش داده می‌شود', 'success');
+      loadProducts();
+      loadOverview();
+    } else {
+      toast('❌ ' + (data.error || 'خطا'), 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PROMPT PREVIEW (in-page overlay)
+  // ═══════════════════════════════════════════════
+  function viewPrompt(id) {
+    const p = currentPrompts.find(x => x.id === id);
+    if (!p) return;
+    openPromptPreview(p);
+  }
+
+  function openPromptPreview(p) {
+    const prev = document.getElementById('promptPreviewOverlay');
+    if (prev) prev.remove();
+
+    const statusMap = {
+      pending:  '⏳ در انتظار تایید',
+      approved: '✅ تایید شده',
+      rejected: '❌ رد شده',
+      deleted:  '🗑️ حذف شده',
+    };
+    const statusLabel = statusMap[p.status] || p.status;
+
+    const coverHTML = p.cover_image
+      ? `<img src="${resolveImageURL(p.cover_image)}" style="max-width:100%;max-height:360px;border-radius:0.6rem;border:1px solid var(--border-color);" />`
+      : '<div style="text-align:center;color:var(--text-muted);padding:1rem;">بدون تصویر کاور</div>';
+
+    const galleryHTML = (Array.isArray(p.images) && p.images.length > 0)
+      ? p.images.map(u => `<img src="${resolveImageURL(u)}" style="width:80px;height:80px;object-fit:cover;border-radius:0.4rem;border:1px solid var(--border-color);margin:0.2rem;" />`).join('')
+      : '<div style="text-align:center;color:var(--text-muted);padding:0.5rem;">بدون گالری</div>';
+
+    const rejectionHTML = (p.status === 'rejected' && p.rejection_note)
+      ? `<div style="background:#7f1d1d;border:1px solid #b91c1c;color:#fecaca;padding:0.8rem 1rem;border-radius:0.6rem;margin-bottom:1rem;font-size:0.85rem;">
+            <strong>❌ دلیل رد:</strong> ${esc(p.rejection_note)}
+         </div>`
+      : '';
+
+    const tagsHTML = (Array.isArray(p.tags) && p.tags.length > 0)
+      ? p.tags.map(t => `<span class="chip">#${esc(t)}</span>`).join(' ')
+      : '';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'promptPreviewOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 99999; display: flex; justify-content: center; align-items: flex-start;
+      padding: 2rem 1rem; overflow-y: auto;
+    `;
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = `
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:1rem;max-width:900px;width:100%;padding:1.5rem 2rem;color:var(--text-primary);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:1rem;">
+          <h2 style="margin:0;font-size:1.3rem;">${esc(p.title)}</h2>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span class="status-badge">${esc(statusLabel)}</span>
+            <button class="btn-sm view" onclick="document.getElementById('promptPreviewOverlay').remove()">✕ بستن</button>
+          </div>
+        </div>
+
+        ${rejectionHTML}
+
+        <div style="margin-bottom:1rem;">${coverHTML}</div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;">
+          ${p.category ? `<span class="chip">📁 ${esc(p.category)}</span>` : ''}
+          ${p.difficulty ? `<span class="chip">📊 ${esc(p.difficulty)}</span>` : ''}
+          ${p.language ? `<span class="chip">🌐 ${esc(p.language)}</span>` : ''}
+          ${p.price ? `<span class="chip">💰 ${Number(p.price).toLocaleString('fa-IR')} تومان</span>` : ''}
+          ${p.rating ? `<span class="chip">⭐ ${Number(p.rating).toFixed(1)} (${p.review_count || 0} نظر)</span>` : ''}
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📝 توضیحات</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.description || '—')}</div>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📄 محتوای پرامپت</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;font-family:monospace;direction:ltr;text-align:left;">${esc(p.content || '—')}</div>
+        </div>
+
+        ${p.demo_output ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🎯 خروجی نمونه</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.demo_output)}</div>
+        </div>` : ''}
+
+        ${p.instructions ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📖 راهنمای استفاده</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.instructions)}</div>
+        </div>` : ''}
+
+        ${(Array.isArray(p.images) && p.images.length > 0) ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🖼️ گالری تصاویر</h4>
+          <div>${galleryHTML}</div>
+        </div>` : ''}
+
+        ${tagsHTML ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🏷️ تگ‌ها</h4>
+          <div>${tagsHTML}</div>
+        </div>` : ''}
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  EDIT PROPOSAL
+  // ═══════════════════════════════════════════════
+  function openEditModal(promptId) {
+    const p = currentPrompts.find(x => x.id === promptId);
+    if (!p) return;
+
+    editingPromptId = promptId;
+
+    document.getElementById('editTitle').value = p.title || '';
+    document.getElementById('editDescription').value = p.description || '';
+    document.getElementById('editCategory').value = p.category || '';
+    document.getElementById('editSubCategory').value = p.sub_category || '';
+    document.getElementById('editPrice').value = p.price || 0;
+    document.getElementById('editDiscountPrice').value = p.discount_price || 0;
+    document.getElementById('editTags').value = Array.isArray(p.tags) ? p.tags.join(', ') : '';
+    document.getElementById('editContent').value = p.content || '';
+    document.getElementById('editDemoOutput').value = p.demo_output || '';
+    document.getElementById('editInstructions').value = p.instructions || '';
+
+    document.getElementById('editModal').classList.add('show');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+    editingPromptId = null;
+  }
+
+  async function submitEditProposal() {
+    if (!editingPromptId) return;
+
+    const tagsRaw = document.getElementById('editTags').value || '';
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+    const changes = {
+      title: document.getElementById('editTitle').value,
+      description: document.getElementById('editDescription').value,
+      category: document.getElementById('editCategory').value,
+      sub_category: document.getElementById('editSubCategory').value,
+      price: parseInt(document.getElementById('editPrice').value) || 0,
+      discount_price: parseInt(document.getElementById('editDiscountPrice').value) || 0,
+      tags: tags,
+      content: document.getElementById('editContent').value,
+      demo_output: document.getElementById('editDemoOutput').value,
+      instructions: document.getElementById('editInstructions').value,
+    };
+
+    const { status, data } = await apiCall('POST', `/author/prompts/${editingPromptId}/edit-proposal`, changes);
+    if (status === 201) {
+      toast('✅ پیشنهاد ویرایش ارسال شد و در انتظار تایید ادمین است', 'success');
+      closeEditModal();
+      loadProducts();
+      loadOverview();
+    } else {
+      toast('❌ ' + (data.error || 'خطا'), 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PROFILE
+  // ═══════════════════════════════════════════════
+  async function loadProfile() {
+    const { data } = await apiCall('GET', '/author/profile');
+    if (!data.data) return;
+
+    currentUser = data.data;
+    renderProfile(currentUser);
+    renderHeaderAvatar(currentUser);
+  }
+
+  function renderProfile(u) {
+    const initial = (u.full_name || '?').charAt(0).toUpperCase();
+
+    // Avatar
+    const avatarHTML = u.avatar
+      ? `<img src="${resolveImageURL(u.avatar)}" class="avatar-large" onerror="this.outerHTML='<div class=\\'avatar-large-placeholder\\'>${esc(initial)}</div>'">`
+      : `<div class="avatar-large-placeholder">${esc(initial)}</div>`;
+    document.getElementById('profileAvatarWrap').innerHTML = avatarHTML;
+
+    // Meta
+    document.getElementById('profileName').textContent = u.full_name || '—';
+    document.getElementById('profileEmail').textContent = u.email || '—';
+
+    const chips = [];
+    if (u.role) chips.push(`<span class="chip">${esc(u.role)}</span>`);
+    if (u.expertise) chips.push(`<span class="chip">${esc(u.expertise)}</span>`);
+    if (u.rating) chips.push(`<span class="chip">⭐ ${Number(u.rating).toFixed(1)}</span>`);
+    if (u.total_sales) chips.push(`<span class="chip">🛒 ${u.total_sales} فروش</span>`);
+    document.getElementById('profileChips').innerHTML = chips.join('');
+
+    // Form
+    document.getElementById('editFullName').value = u.full_name || '';
+    document.getElementById('editExpertise').value = u.expertise || '';
+    document.getElementById('editBio').value = u.bio || '';
+    updateBioCount();
+  }
+
+  function renderHeaderAvatar(u) {
+    const initial = (u.full_name || '?').charAt(0).toUpperCase();
+    const avatar = u.avatar
+      ? `<img src="${resolveImageURL(u.avatar)}" class="avatar-small" onerror="this.outerHTML='<div class=\\'avatar-placeholder\\'>${esc(initial)}</div>'">`
+      : `<div class="avatar-placeholder">${esc(initial)}</div>`;
+    document.getElementById('headerAvatarWrap').innerHTML = avatar;
+    document.getElementById('headerName').textContent = u.full_name || '—';
+  }
+
+  function loadProfilePanel() {
+    loadProfile();
+  }
+
+  function updateBioCount() {
+    const bio = document.getElementById('editBio').value || '';
+    document.getElementById('bioCharCount').textContent = bio.length;
+  }
+
+  document.getElementById('editBio').addEventListener('input', updateBioCount);
+
+  async function saveProfile() {
+    const body = {
+      full_name: document.getElementById('editFullName').value,
+      expertise: document.getElementById('editExpertise').value,
+      bio: document.getElementById('editBio').value,
+    };
+
+    const { status, data } = await apiCall('PUT', '/author/profile', body);
+    if (status === 200) {
+      toast('✅ پروفایل ذخیره شد', 'success');
+      currentUser = data.data;
+      renderProfile(currentUser);
+      renderHeaderAvatar(currentUser);
+    } else {
+      toast('❌ ' + (data.error || 'خطا'), 'error');
+    }
+  }
+
+  async function uploadAvatar() {
+    const input = document.getElementById('avatarInput');
+    const file = input.files[0];
+    if (!file) {
+      toast('❌ ابتدا یک تصویر انتخاب کنید', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast('❌ حجم فایل نباید بیشتر از ۵ مگابایت باشد', 'error');
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+      const res = await fetch(API_BASE + '/author/profile/avatar', {
+        method: 'POST',
+        headers: authHeadersOnly(),
+        body: fd,
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        toast('❌ ' + (d.error || 'خطا در آپلود'), 'error');
+        return;
+      }
+      toast('✅ آواتار به‌روزرسانی شد', 'success');
+      input.value = '';
+      loadProfile();
+    } catch (e) {
+      toast('❌ ' + e.message, 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  INIT
+  // ═══════════════════════════════════════════════
+  async function init() {
+    if (!accessToken) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // Verify token by fetching profile
+    const { status } = await apiCall('GET', '/profile');
+    if (status !== 200) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    await loadProfile();
+    await loadOverview();
+    await loadViewsChart(7);
+    await loadRevenueChart(7);
+  }
+
+  // Modal close on overlay click
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
+
+  init();
+</script>
+
+</body>
+</html>

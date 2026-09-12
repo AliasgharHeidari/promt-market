@@ -14,14 +14,20 @@ import (
 )
 
 type PromptService struct {
-	repo     *repository.PromptRepository
-	userRepo *repository.UserRepository
+	repo        *repository.PromptRepository
+	userRepo    *repository.UserRepository
+	viewService *PromptViewService
 }
 
-func NewPromptService(repo *repository.PromptRepository, userRepo *repository.UserRepository) *PromptService {
+func NewPromptService(
+	repo *repository.PromptRepository,
+	userRepo *repository.UserRepository,
+	viewService *PromptViewService,
+) *PromptService {
 	return &PromptService{
-		repo:     repo,
-		userRepo: userRepo,
+		repo:        repo,
+		userRepo:    userRepo,
+		viewService: viewService,
 	}
 }
 
@@ -65,6 +71,12 @@ func (s *PromptService) Create(ctx context.Context, sellerID string, req *domain
 	return prompt, nil
 }
 
+// GetBySlug returns a public prompt and records a view. The view is
+// recorded in two places:
+//   - Prompt.Views (lifetime counter, incremented atomically in SQL)
+//   - PromptView row for today's date (for chart aggregations)
+//
+// Both writes happen in a goroutine so the response isn't delayed.
 func (s *PromptService) GetBySlug(ctx context.Context, slug string) (*domain.Prompt, error) {
 	prompt, err := s.repo.FindBySlug(ctx, slug)
 	if err != nil {
@@ -74,7 +86,18 @@ func (s *PromptService) GetBySlug(ctx context.Context, slug string) (*domain.Pro
 		return nil, errors.New("prompt not found")
 	}
 
-	go s.repo.IncrementViews(context.Background(), prompt.ID)
+	// Only record views for approved, non-paused prompts. Recording views
+	// for pending/rejected prompts would pollute the author's dashboard
+	// and (more importantly) leak existence of unlisted prompts.
+	if prompt.Status == "approved" && !prompt.IsPaused {
+		go func(id string) {
+			bg := context.Background()
+			_ = s.repo.IncrementViews(bg, id)
+			if s.viewService != nil {
+				_ = s.viewService.Record(bg, id)
+			}
+		}(prompt.ID)
+	}
 
 	return prompt, nil
 }

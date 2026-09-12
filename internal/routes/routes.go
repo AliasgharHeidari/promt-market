@@ -55,11 +55,10 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 	prompts.Get("/search", promptHandler.SearchPrompts)
 	prompts.Get("/categories", promptHandler.GetCategories)
 
-	// Reviews for a prompt — public read (only approved ones).
+	// Reviews for a prompt — public read (only approved).
 	prompts.Get("/:id/reviews", reviewHandler.ListReviews)
 
-	// NOTE: this catch-all must stay LAST inside the /prompts group so
-	// /prompts/search and /prompts/:id/reviews take precedence.
+	// Catch-all slug route must stay LAST.
 	prompts.Get("/:slug", promptHandler.GetPromptBySlug)
 
 	// ========== PROTECTED ROUTES ==========
@@ -75,10 +74,27 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, redis *redis.Client) {
 	protected.Get("/my-prompts/:id", middleware.PromptAuthorOnly(), promptHandler.GetMyPromptByID)
 	protected.Get("/prompts/id/:id", middleware.AdminOnly(), promptHandler.GetPromptByID)
 
-	// Reviews — any authenticated user can try, service enforces the
-	// ownership / purchase / one-per-user rules.
+	// Reviews — any authenticated user can try; service enforces ownership,
+	// purchase, and one-per-user rules.
 	protected.Post("/prompts/:id/reviews", reviewHandler.CreateReview)
 	protected.Delete("/reviews/:id", reviewHandler.DeleteOwnReview)
+
+	// ========== AUTHOR DASHBOARD ROUTES ==========
+	// Everything below is author-only. The dashboard shows sales, views,
+	// profile management, pause/unpause, and edit proposals.
+	authorDashHandler := handler.NewAuthorDashboardHandler(db)
+	author := protected.Group("/author", middleware.PromptAuthorOnly())
+	author.Get("/dashboard/stats", authorDashHandler.GetDashboardStats)
+	author.Get("/dashboard/views-chart", authorDashHandler.GetViewsChart)
+	author.Get("/dashboard/revenue-chart", authorDashHandler.GetRevenueChart)
+
+	author.Get("/profile", authorDashHandler.GetProfile)
+	author.Put("/profile", authorDashHandler.UpdateProfile)
+	author.Post("/profile/avatar", authorDashHandler.UploadAvatar)
+
+	author.Post("/prompts/:id/pause", authorDashHandler.PausePrompt)
+	author.Post("/prompts/:id/unpause", authorDashHandler.UnpausePrompt)
+	author.Post("/prompts/:id/edit-proposal", authorDashHandler.SubmitEdit)
 
 	// ========== UPLOAD ROUTES ==========
 	baseURL := os.Getenv("BASE_URL")

@@ -485,7 +485,6 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
-        /* ─── Image previews in modal ─── */
         .image-preview-cover {
             background: #f8fafc;
             border: 1px solid #e9edf2;
@@ -573,7 +572,6 @@
             padding: 0.5rem 0;
         }
 
-        /* ─── Table thumbnail ─── */
         .table-thumb {
             width: 36px;
             height: 36px;
@@ -658,7 +656,6 @@
             white-space: pre-wrap;
         }
 
-        /* ─── Review card ─── */
         .review-card {
             background: #f8fafc;
             border: 1px solid #e9edf2;
@@ -691,6 +688,30 @@
             display: flex;
             gap: 0.4rem;
             flex-wrap: wrap;
+        }
+
+        /* ─── Edit Proposal card ─── */
+        .edit-diff {
+            background: #f8fafc;
+            border: 1px solid #e9edf2;
+            border-radius: 0.4rem;
+            padding: 0.6rem 0.8rem;
+            margin-top: 0.4rem;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.3rem 0.8rem;
+        }
+        .edit-diff .ek {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #64748b;
+            white-space: nowrap;
+        }
+        .edit-diff .ev {
+            font-size: 0.75rem;
+            color: #0f172a;
+            word-break: break-word;
+            white-space: pre-wrap;
         }
 
         .login-overlay {
@@ -1029,7 +1050,7 @@
         <header class="header">
             <h1>
                 ⚙️ پنل مدیریت
-                <span class="badge">v2.3</span>
+                <span class="badge">v2.4</span>
             </h1>
             <div class="user-info">
                 <span>👤 <span class="email" id="adminEmail">—</span></span>
@@ -1075,6 +1096,7 @@
             <button class="tab-btn" data-tab="tabLogs">📋 لاگ‌ها</button>
             <button class="tab-btn" data-tab="tabAuthorApps">🪪 درخواست‌های نویسندگی</button>
             <button class="tab-btn" data-tab="tabReviews">⭐ نظرات</button>
+            <button class="tab-btn" data-tab="tabPromptEdits">✏️ ویرایش‌های پیشنهادی</button>
         </div>
 
         <!-- TAB: USERS -->
@@ -1274,6 +1296,33 @@
                 </div>
                 <div style="margin-top:0.8rem;">
                     <span style="font-size:0.75rem;color:#94a3b8;" id="reviewsPagination"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PROMPT EDIT PROPOSALS -->
+        <div class="tab-pane" id="tabPromptEdits">
+            <div class="card">
+                <div class="card-header">
+                    <h3>✏️ ویرایش‌های پیشنهادی پرامپت‌ها</h3>
+                    <div class="actions">
+                        <select id="promptEditFilterStatus" onchange="loadPromptEdits()" style="padding:0.3rem 0.6rem;border-radius:0.4rem;border:1px solid #d1d9e6;font-size:0.75rem;">
+                            <option value="pending">در انتظار</option>
+                            <option value="approved">تایید شده</option>
+                            <option value="rejected">رد شده</option>
+                            <option value="all">همه</option>
+                        </select>
+                        <button class="btn-sm toggle" onclick="loadPromptEdits()">🔄 بارگذاری</button>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.8rem;">
+                    نویسندگان می‌توانند تغییرات پیشنهادی ارسال کنند. تایید شما تغییرات را روی پرامپت اصلی اعمال می‌کند.
+                </div>
+                <div id="promptEditsList">
+                    <div class="empty">⏳ در حال بارگذاری...</div>
+                </div>
+                <div style="margin-top:0.8rem;">
+                    <span style="font-size:0.75rem;color:#94a3b8;" id="promptEditsPagination"></span>
                 </div>
             </div>
         </div>
@@ -2237,6 +2286,150 @@
         }
 
         // ════════════════════════════════════════════
+        //  PROMPT EDIT PROPOSALS
+        // ════════════════════════════════════════════
+        let promptEditsPage = 1;
+
+        function loadPromptEdits(page = 1) {
+            promptEditsPage = page;
+            if (!accessToken) return;
+
+            const statusFilter = document.getElementById('promptEditFilterStatus').value;
+            const wrap = document.getElementById('promptEditsList');
+            wrap.innerHTML = '<div class="empty">⏳ در حال بارگذاری...</div>';
+
+            apiCall('GET', `/admin/prompt-edits?status=${statusFilter}&page=${page}&limit=20`)
+                .then(({ data }) => {
+                    if (data.data) renderPromptEdits(data.data, data.pagination);
+                    else if (data.error) wrap.innerHTML = `<div class="empty">❌ ${data.error}</div>`;
+                });
+        }
+
+        // Field labels for human-readable rendering of the diff.
+        const editFieldLabels = {
+            title: 'عنوان',
+            description: 'توضیحات',
+            category: 'دسته‌بندی',
+            sub_category: 'زیردسته',
+            tags: 'تگ‌ها',
+            content: 'محتوای پرامپت',
+            demo_output: 'خروجی نمونه',
+            instructions: 'راهنمای استفاده',
+            cover_image: 'تصویر کاور',
+            images: 'گالری تصاویر',
+            price: 'قیمت',
+            discount_price: 'قیمت با تخفیف',
+            difficulty: 'سطح',
+            language: 'زبان',
+        };
+
+        function renderPromptEdits(edits, pagination) {
+            const wrap = document.getElementById('promptEditsList');
+            if (!edits || edits.length === 0) {
+                wrap.innerHTML = '<div class="empty">📭 پیشنهادی یافت نشد</div>';
+                return;
+            }
+
+            const statusLabel = {
+                pending: '⏳ در انتظار',
+                approved: '✅ تایید شده',
+                rejected: '❌ رد شده',
+            };
+
+            const html = edits.map(e => {
+                const sellerName = e.seller?.full_name || 'نویسنده';
+                const promptTitle = e.prompt?.title || '—';
+                const created = e.created_at ? new Date(e.created_at).toLocaleString('fa-IR') : '';
+                const reviewedAt = e.reviewed_at ? new Date(e.reviewed_at).toLocaleString('fa-IR') : '';
+
+                // Parse the sparse changes JSON into labeled rows.
+                let diffRows = '';
+                try {
+                    const ch = typeof e.changes === 'string' ? JSON.parse(e.changes) : e.changes;
+                    if (ch && typeof ch === 'object') {
+                        diffRows = Object.entries(ch).map(([k, v]) => {
+                            let vStr;
+                            if (Array.isArray(v)) {
+                                vStr = v.join('، ');
+                            } else if (v === null || v === undefined) {
+                                vStr = '—';
+                            } else {
+                                vStr = String(v);
+                            }
+                            const short = vStr.length > 200 ? vStr.slice(0, 200) + '…' : vStr;
+                            const label = editFieldLabels[k] || k;
+                            return `<div class="ek">${esc(label)}:</div><div class="ev">${esc(short)}</div>`;
+                        }).join('');
+                    }
+                } catch (_) {
+                    diffRows = '<div class="ek">—</div><div class="ev">نمایش تغییرات ممکن نبود</div>';
+                }
+
+                const adminNote = (e.status === 'rejected' && e.admin_note)
+                    ? `<div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:0.4rem 0.7rem;border-radius:0.4rem;font-size:0.72rem;margin-top:0.4rem;">دلیل رد: ${esc(e.admin_note)}</div>`
+                    : '';
+
+                const reviewedInfo = reviewedAt
+                    ? `<div style="font-size:0.68rem;color:#94a3b8;margin-top:0.3rem;">بررسی شده در: ${esc(reviewedAt)}</div>`
+                    : '';
+
+                const actions = e.status === 'pending' ? `
+                    <button class="btn-sm approve" onclick="approvePromptEdit('${esc(e.id)}')">✅ تایید و اعمال</button>
+                    <button class="btn-sm reject" onclick="rejectPromptEdit('${esc(e.id)}')">❌ رد</button>
+                ` : '';
+
+                return `
+                    <div class="review-card" style="margin-bottom:0.8rem;">
+                        <div class="rc-header">
+                            <span class="rc-author">${esc(sellerName)} <span style="color:#94a3b8;font-weight:400;">— ${esc(promptTitle)}</span></span>
+                            <span class="badge-status ${esc(e.status)}">${statusLabel[e.status] || e.status}</span>
+                        </div>
+                        <div class="edit-diff">
+                            <div class="ek" style="grid-column:1/-1;border-bottom:1px solid #e9edf2;padding-bottom:0.3rem;margin-bottom:0.2rem;">
+                                📝 فیلدهای پیشنهادی برای تغییر:
+                            </div>
+                            ${diffRows}
+                        </div>
+                        <div style="font-size:0.68rem;color:#94a3b8;margin-top:0.4rem;">ارسال: ${esc(created)}</div>
+                        ${reviewedInfo}
+                        ${adminNote}
+                        <div class="rc-actions" style="margin-top:0.5rem;">${actions}</div>
+                    </div>
+                `;
+            }).join('');
+
+            wrap.innerHTML = html;
+
+            if (pagination) {
+                document.getElementById('promptEditsPagination').textContent =
+                    `صفحه ${pagination.page} از ${pagination.pages} · مجموع ${pagination.total}`;
+            }
+        }
+
+        function approvePromptEdit(id) {
+            if (!accessToken || !confirm('این ویرایش تایید و روی پرامپت اعمال شود؟')) return;
+            apiCall('PUT', `/admin/prompt-edits/${id}/approve`).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('✅ ویرایش اعمال شد', 'success');
+                    loadPromptEdits(promptEditsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        function rejectPromptEdit(id) {
+            if (!accessToken) return;
+            const note = prompt('دلیل رد (اختیاری):') || '';
+            apiCall('PUT', `/admin/prompt-edits/${id}/reject`, { note }).then(({ status, data }) => {
+                if (status === 200) {
+                    toast('✅ پیشنهاد رد شد', 'info');
+                    loadPromptEdits(promptEditsPage);
+                    loadStats();
+                } else toast('❌ خطا: ' + (data.error || 'نامشخص'), 'error');
+            });
+        }
+
+        // ════════════════════════════════════════════
         //  TABS
         // ════════════════════════════════════════════
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -2253,6 +2446,7 @@
                 if (target === 'tabLogs') loadLogs();
                 if (target === 'tabAuthorApps') loadAuthorApplications();
                 if (target === 'tabReviews') loadReviews();
+                if (target === 'tabPromptEdits') loadPromptEdits();
             });
         });
 
@@ -2277,6 +2471,7 @@
             loadLogs();
             loadAuthorApplications();
             loadReviews();
+            loadPromptEdits();
 
             setInterval(loadStats, 30000);
         }
