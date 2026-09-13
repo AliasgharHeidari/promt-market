@@ -20,9 +20,15 @@ const (
 // actually modified are present. On approval, those fields are applied to
 // the prompt via a partial update.
 type PromptEditProposal struct {
-	ID       string `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	PromptID string `json:"prompt_id" gorm:"not null;index"`
-	SellerID string `json:"seller_id" gorm:"not null;index"`
+	ID string `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+
+	// PromptID/SellerID explicitly typed uuid. Likely already correct via
+	// GORM inferring the type from the Prompt/Seller relation fields below,
+	// but made explicit here so it doesn't silently depend on those
+	// relation fields staying present (see PromptView.PromptID for the bug
+	// this class of implicit typing caused).
+	PromptID string `json:"prompt_id" gorm:"not null;type:uuid;index"`
+	SellerID string `json:"seller_id" gorm:"not null;type:uuid;index"`
 
 	Changes datatypes.JSON `json:"changes" gorm:"type:jsonb;not null"`
 

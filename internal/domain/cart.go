@@ -14,9 +14,16 @@ import "time"
 //     whose prompt was later removed/paused remain in the cart and are
 //     surfaced to the UI as "unavailable".
 type CartItem struct {
-	ID        string    `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	UserID    string    `json:"user_id" gorm:"not null;index;uniqueIndex:idx_cart_user_prompt"`
-	PromptID  string    `json:"prompt_id" gorm:"not null;index;uniqueIndex:idx_cart_user_prompt"`
+	ID string `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+
+	// UserID is explicitly typed uuid to match users.id. There is no
+	// `User User` relation field on this struct for GORM to infer the type
+	// from at AutoMigrate time (unlike PromptID below, which is covered by
+	// the Prompt relation), so without this explicit tag the column would
+	// silently default to text/varchar — the same class of bug that broke
+	// the author dashboard views chart (see PromptView.PromptID).
+	UserID   string    `json:"user_id" gorm:"not null;type:uuid;index;uniqueIndex:idx_cart_user_prompt"`
+	PromptID string    `json:"prompt_id" gorm:"not null;type:uuid;index;uniqueIndex:idx_cart_user_prompt"`
 	CreatedAt time.Time `json:"created_at"`
 
 	// Relationships (populated via Preload).

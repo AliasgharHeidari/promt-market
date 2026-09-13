@@ -20,8 +20,13 @@ const (
 //   - amount is captured at checkout time, not recomputed later, so the
 //     user pays exactly what the cart showed them.
 type Payment struct {
-	ID     string `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	UserID string `json:"user_id" gorm:"not null;index"`
+	ID string `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+
+	// UserID explicitly typed uuid. Likely already correct via GORM
+	// inferring the type from the User relation field below, but made
+	// explicit here so it doesn't silently depend on that relation field
+	// staying present.
+	UserID string `json:"user_id" gorm:"not null;type:uuid;index"`
 
 	Amount int64 `json:"amount" gorm:"not null"`
 

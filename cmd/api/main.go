@@ -45,7 +45,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 		Prefork:      cfg.App.Env == "production",
 	})
-
+	
 	// CORS Middleware
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:5500, http://127.0.0.1:5500, http://localhost:3000, http://127.0.0.1:3000",
@@ -54,13 +54,20 @@ func main() {
 		ExposeHeaders:    "Content-Length, Content-Type",
 		AllowCredentials: true,
 	}))
-
+	
 	// Global middlewares
-	app.Use(recover.New())
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+	}))
 	app.Use(logger.New(logger.Config{
 		Format: "[${time}] ${status} - ${method} ${path} ${latency}\n",
 	}))
 
+	if err := os.MkdirAll("./uploads", 0o755); err != nil {
+		log.Fatal("Failed to create uploads dir:", err)
+	}
+	app.Static("/uploads", "./uploads")
+	
 	// Setup routes
 	routes.SetupRoutes(app, db, redisClient)
 	routes.SetupAdminRoutes(app, db, redisClient)
