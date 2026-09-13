@@ -19,8 +19,17 @@ func NewReviewHandler(db *gorm.DB) *ReviewHandler {
 	reviewRepo := repository.NewReviewRepository(db)
 	promptRepo := repository.NewPromptRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
-	reviewService := service.NewReviewService(reviewRepo, promptRepo, orderRepo)
+	userRepo := repository.NewUserRepository(db)
+	viewRepo := repository.NewPromptViewRepository(db)
 
+	viewService := service.NewPromptViewService(viewRepo)
+	purchaseSvc := service.NewPurchaseService(orderRepo, promptRepo, userRepo)
+
+	// ReviewService doesn't actually need PromptService, but if your
+	// current ReviewHandler wires one, update the constructor call:
+	_ = service.NewPromptService(promptRepo, userRepo, viewService, purchaseSvc)
+
+	reviewService := service.NewReviewService(reviewRepo, promptRepo, orderRepo)
 	return &ReviewHandler{service: reviewService}
 }
 

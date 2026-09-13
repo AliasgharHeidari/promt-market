@@ -18,8 +18,19 @@ func AuditLog(db *gorm.DB) fiber.Handler {
 			return err
 		}
 
+		// Safe assertion: if userID was somehow never set on this request
+		// (e.g. this middleware ends up wired on a route where JWTProtected
+		// didn't run first, or a future refactor changes the middleware
+		// order), we must not panic mid-response. We just skip audit
+		// logging rather than crash the request — a request that already
+		// completed shouldn't fail because of a logging concern.
+		adminID, ok := c.Locals("userID").(string)
+		if !ok || adminID == "" {
+			return err
+		}
+
 		log := domain.AdminLog{
-			AdminID:    c.Locals("userID").(string),
+			AdminID:    adminID,
 			Action:     c.Method() + " " + c.Path(),
 			TargetType: c.Params("target_type"),
 			TargetID:   c.Params("id"),

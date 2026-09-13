@@ -2,9 +2,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"fmt"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
@@ -29,7 +29,10 @@ func main() {
 		log.Fatal("ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env")
 	}
 
-	// ✅ Build DSN from environment variables (matching your .env)
+	// Build DSN from environment variables (matching your .env). No
+	// hardcoded fallback for DB_PASSWORD — an empty/default password for a
+	// database credential should never be silently assumed; if it's not
+	// set, fail loudly instead of connecting with a guessed password.
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	dbUser := os.Getenv("DB_USER")
@@ -47,7 +50,7 @@ func main() {
 		dbUser = "db-admin"
 	}
 	if dbPassword == "" {
-		dbPassword = "secret"
+		log.Fatal("DB_PASSWORD must be set in .env (no default password is used)")
 	}
 	if dbName == "" {
 		dbName = "promt_market"
@@ -61,7 +64,9 @@ func main() {
 		dbHost, dbPort, dbUser, dbPassword, dbName, dbSSLMode,
 	)
 
-	log.Printf("Connecting to database: %s", dsn)
+	// Do NOT log the DSN — it contains DB_PASSWORD in plaintext. Log only
+	// the non-secret parts a human might need to sanity-check the target.
+	log.Printf("Connecting to database %q at %s:%s (user=%s)", dbName, dbHost, dbPort, dbUser)
 
 	// Connect to database
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -94,8 +99,11 @@ func main() {
 		log.Fatal("Failed to create admin:", result.Error)
 	}
 
+	// Do NOT log adminPassword — it's a real, live credential. The operator
+	// already knows it (they set ADMIN_PASSWORD themselves); printing it
+	// again only risks it ending up in shell history, CI logs, or a log
+	// aggregator with no operational benefit.
 	log.Println("✅ Admin created/updated successfully!")
 	log.Printf("📧 Email: %s", adminEmail)
-	log.Printf("🔑 Password: %s", adminPassword)
 	log.Printf("👤 Role: %s", admin.Role)
 }

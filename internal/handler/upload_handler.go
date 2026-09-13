@@ -46,8 +46,18 @@ func ensureDir(path string) error {
 // and returns the public URL. Shared by prompt-image and avatar uploads so
 // validation rules stay consistent.
 //
-// After the file is written to disk, it is passed through CompressImage
-// which may:
+// Validation order matters:
+//  1. Size and extension are checked first (cheap, rejects obviously bad
+//     input before we read the whole file into memory).
+//  2. The file is read fully into memory and its ACTUAL content is
+//     validated against the claimed extension via utils.ValidateImageContent
+//     (decodes the image header — this is what actually matters: a
+//     filename ending in .png proves nothing about what bytes are inside
+//     it). This runs BEFORE anything touches disk, so a rejected upload
+//     never leaves a file behind.
+//  3. Only after content validation passes is the file written to disk.
+//
+// After the file is written, it is passed through CompressImage which may:
 //   - downscale oversized images (longest side > 1200px)
 //   - re-encode JPEG at quality 85
 //   - re-encode PNG losslessly at max compression
@@ -62,6 +72,29 @@ func (h *UploadHandler) saveImageAs(file *multipart.FileHeader, subDir, ownerID 
 		return "", fmt.Errorf("فرمت فایل مجاز نیست (jpg, jpeg, png, webp, gif)")
 	}
 
+	src, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+
+	data, err := io.ReadAll(io.LimitReader(src, maxImageSize+1))
+	if err != nil {
+		return "", fmt.Errorf("خواندن فایل ناموفق بود: %w", err)
+	}
+	if int64(len(data)) > maxImageSize {
+		// Defense in depth: FileHeader.Size is client-reported for some
+		// multipart implementations, so re-check the bytes we actually read.
+		return "", fmt.Errorf("حجم فایل نباید بیشتر از 5 مگابایت باشد")
+	}
+
+	// Verify the real content matches the claimed extension BEFORE writing
+	// anything to disk. See utils.ValidateImageContent for why this matters
+	// (uploaded files are served back out as static assets).
+	if _, err := utils.ValidateImageContent(data, ext); err != nil {
+		return "", fmt.Errorf("فایل نامعتبر است: %w", err)
+	}
+
 	dir := filepath.Join(h.uploadDir, subDir, ownerID)
 	if err := ensureDir(dir); err != nil {
 		return "", fmt.Errorf("ساخت پوشه ناموفق بود: %w", err)
@@ -70,22 +103,8 @@ func (h *UploadHandler) saveImageAs(file *multipart.FileHeader, subDir, ownerID 
 	filename := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), uuid.New().String()[:8], ext)
 	fullPath := filepath.Join(dir, filename)
 
-	src, err := file.Open()
-	if err != nil {
-		return "", err
-	}
-	defer src.Close()
-
-	dst, err := os.Create(fullPath)
-	if err != nil {
-		return "", err
-	}
-	if _, err := io.Copy(dst, src); err != nil {
-		dst.Close()
-		return "", err
-	}
-	if err := dst.Close(); err != nil {
-		return "", err
+	if err := os.WriteFile(fullPath, data, 0o644); err != nil {
+		return "", fmt.Errorf("ذخیره فایل ناموفق بود: %w", err)
 	}
 
 	// Best-effort compression. If it fails, we still keep the original file

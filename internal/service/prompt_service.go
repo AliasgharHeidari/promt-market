@@ -14,20 +14,23 @@ import (
 )
 
 type PromptService struct {
-	repo        *repository.PromptRepository
-	userRepo    *repository.UserRepository
-	viewService *PromptViewService
+	repo         *repository.PromptRepository
+	userRepo     *repository.UserRepository
+	viewService  *PromptViewService
+	purchaseSvc  *PurchaseService
 }
 
 func NewPromptService(
 	repo *repository.PromptRepository,
 	userRepo *repository.UserRepository,
 	viewService *PromptViewService,
+	purchaseSvc *PurchaseService,
 ) *PromptService {
 	return &PromptService{
 		repo:        repo,
 		userRepo:    userRepo,
 		viewService: viewService,
+		purchaseSvc: purchaseSvc,
 	}
 }
 
@@ -71,13 +74,12 @@ func (s *PromptService) Create(ctx context.Context, sellerID string, req *domain
 	return prompt, nil
 }
 
-// GetBySlug returns a public prompt and records a view. The view is
-// recorded in two places:
-//   - Prompt.Views (lifetime counter, incremented atomically in SQL)
-//   - PromptView row for today's date (for chart aggregations)
+// GetBySlug returns a public prompt with the viewer's access level applied.
+// Views are recorded for approved, non-paused prompts.
 //
-// Both writes happen in a goroutine so the response isn't delayed.
-func (s *PromptService) GetBySlug(ctx context.Context, slug string) (*domain.Prompt, error) {
+// userID may be empty (anonymous visitor). In that case only free prompts
+// expose their content; everything else is stripped.
+func (s *PromptService) GetBySlug(ctx context.Context, slug, userID string) (*domain.PromptResponse, error) {
 	prompt, err := s.repo.FindBySlug(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -86,9 +88,7 @@ func (s *PromptService) GetBySlug(ctx context.Context, slug string) (*domain.Pro
 		return nil, errors.New("prompt not found")
 	}
 
-	// Only record views for approved, non-paused prompts. Recording views
-	// for pending/rejected prompts would pollute the author's dashboard
-	// and (more importantly) leak existence of unlisted prompts.
+	// Record a view for publicly visible prompts only.
 	if prompt.Status == "approved" && !prompt.IsPaused {
 		go func(id string) {
 			bg := context.Background()
@@ -99,9 +99,10 @@ func (s *PromptService) GetBySlug(ctx context.Context, slug string) (*domain.Pro
 		}(prompt.ID)
 	}
 
-	return prompt, nil
+	return s.buildPromptResponse(ctx, prompt, userID)
 }
 
+// GetByID returns a prompt by ID (no access filtering; used internally).
 func (s *PromptService) GetByID(ctx context.Context, id string) (*domain.Prompt, error) {
 	return s.repo.FindByID(ctx, id)
 }
@@ -223,6 +224,52 @@ func (s *PromptService) Search(ctx context.Context, filter *domain.PromptFilter)
 
 func (s *PromptService) GetCategories(ctx context.Context, categories *[]string) error {
 	return s.repo.GetCategories(ctx, categories)
+}
+
+// ─────────────────────────────────────────────────────────
+//  Access-aware response builder
+// ─────────────────────────────────────────────────────────
+
+// buildPromptResponse wraps a raw prompt with the viewer's access decision
+// and strips protected fields when access is not granted.
+//
+// This is the ONLY place where content gating happens, so every caller
+// (slug lookup, ID lookup, purchases listing) can reuse it.
+func (s *PromptService) buildPromptResponse(ctx context.Context, prompt *domain.Prompt, viewerID string) (*domain.PromptResponse, error) {
+	resp := &domain.PromptResponse{
+		Prompt: *prompt,
+	}
+
+	// If the purchase service isn't wired (legacy setups), default to public
+	// view with no gating. This keeps tests and older deployments working.
+	if s.purchaseSvc == nil {
+		resp.HasAccess = false
+		resp.AccessReason = ""
+		s.stripProtectedFields(resp)
+		return resp, nil
+	}
+
+	decision, err := s.purchaseSvc.CanAccessPrompt(ctx, viewerID, prompt.ID, prompt)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.HasAccess = decision.Allowed
+	resp.AccessReason = decision.Reason
+
+	if !decision.Allowed {
+		s.stripProtectedFields(resp)
+	}
+
+	return resp, nil
+}
+
+// stripProtectedFields blanks out the fields that should not be visible to
+// non-owners. Called by buildPromptResponse when HasAccess is false.
+func (s *PromptService) stripProtectedFields(resp *domain.PromptResponse) {
+	resp.Content = ""
+	resp.Instructions = ""
+	// demo_output is intentionally left visible: sellers use it as a teaser.
 }
 
 func (s *PromptService) generateSlug(title string) string {

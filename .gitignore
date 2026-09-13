@@ -7,7 +7,7 @@
 /api
 *.test
 *.out
-
+/bin
 # Environment files
 .env
 .env.local
@@ -32,7 +32,7 @@ logs/
 # Temporary files
 tmp/
 temp/
-
+uploads
 # Coverage
 *.cover
 *.coverprofile

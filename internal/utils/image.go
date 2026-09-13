@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/disintegration/imaging"
+
+	_ "golang.org/x/image/webp" // registers "webp" with image.DecodeConfig
 )
 
 // Compression thresholds and targets. Tuned so a typical phone photo
@@ -34,6 +36,18 @@ const (
 	PNGCompressionLevel = png.BestCompression
 )
 
+// extToFormats maps an accepted file extension to the image format name(s)
+// that image.DecodeConfig may report for genuinely matching content. GIF
+// intentionally maps to itself only; animated GIFs are handled fine since
+// we only decode the header here, not the full animation.
+var extToFormats = map[string][]string{
+	".jpg":  {"jpeg"},
+	".jpeg": {"jpeg"},
+	".png":  {"png"},
+	".webp": {"webp"},
+	".gif":  {"gif"},
+}
+
 // ShouldCompress reports whether the given file should be processed.
 // We only touch images larger than CompressSizeThreshold — smaller files
 // are already fine and re-encoding them would waste CPU for no gain.
@@ -49,6 +63,43 @@ func ShouldCompress(path string, size int64) bool {
 		// Skip WebP (already compact) and GIF (animation would break).
 		return false
 	}
+}
+
+// ValidateImageContent verifies that data's actual content is a decodable
+// image whose real format matches the extension the caller claims for it.
+// This is the check that should run BEFORE anything is written to disk —
+// relying on the filename extension alone (e.g. checking that the upload
+// is named "photo.png") tells you nothing about what bytes are actually
+// inside the file. A request can name any content "photo.png".
+//
+// Why this matters: files under this project are served back out as static
+// assets (app.Static("/uploads", ...)). A file whose real content is HTML/
+// JS but whose extension is an allowed image type could, depending on the
+// serving configuration and browser content-sniffing behavior, be
+// interpreted as HTML by a victim's browser — a stored-XSS vector via
+// "image" upload. Verifying the real format closes that gap.
+//
+// Returns the detected format name (e.g. "jpeg", "png", "webp", "gif") on
+// success, or an error describing the mismatch/failure.
+func ValidateImageContent(data []byte, claimedExt string) (string, error) {
+	claimedExt = strings.ToLower(claimedExt)
+	allowedFormats, extKnown := extToFormats[claimedExt]
+	if !extKnown {
+		return "", fmt.Errorf("پسوند فایل مجاز نیست: %s", claimedExt)
+	}
+
+	cfgReader := bytes.NewReader(data)
+	_, format, err := image.DecodeConfig(cfgReader)
+	if err != nil {
+		return "", fmt.Errorf("محتوای فایل یک تصویر معتبر نیست: %w", err)
+	}
+
+	for _, allowed := range allowedFormats {
+		if format == allowed {
+			return format, nil
+		}
+	}
+	return "", fmt.Errorf("محتوای فایل با پسوند اعلام‌شده مطابقت ندارد (پسوند: %s، محتوای واقعی: %s)", claimedExt, format)
 }
 
 // CompressImage compresses the image at inPath in place. Returns the new

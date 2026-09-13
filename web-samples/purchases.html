@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>خریدهای من · Prompt Market</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-elevated: #243244;
+      --bg-hover: #2d3a4f;
+      --bg-input: #2d3a4f;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --border-strong: #475569;
+      --badge-bg: #2d3a4f;
+      --success: #22c55e;
+      --success-bg: #064e3b;
+      --error: #ef4444;
+      --error-bg: #7f1d1d;
+      --info: #3b82f6;
+      --info-bg: #1e3a5f;
+      --warning: #f59e0b;
+      --warning-bg: #78350f;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    [data-theme="light"] {
+      --bg-primary: #f1f5f9;
+      --bg-secondary: #ffffff;
+      --bg-elevated: #f8fafc;
+      --bg-hover: #f1f5f9;
+      --bg-input: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --badge-bg: #f1f5f9;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 1.5rem;
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--bg-secondary);
+      padding: 1rem 2rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+    }
+    .header h1 {
+      font-weight: 700;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header .status { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      transition: 0.15s;
+      background: var(--bg-input);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-link.primary {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+
+    .theme-toggle {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      transition: 0.15s;
+    }
+    .theme-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .page-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .page-title h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .page-title .count-badge {
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      padding: 0.15rem 0.7rem;
+      border-radius: 999px;
+    }
+    .btn-reload {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: inherit;
+      transition: 0.15s;
+    }
+    .btn-reload:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .purchases-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .purchase-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: 0.15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .purchase-card:hover {
+      border-color: var(--info);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .purchase-card .thumb-wrap {
+      width: 100%;
+      height: 150px;
+      background: var(--bg-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .purchase-card .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .purchase-card .thumb-wrap .placeholder { font-size: 2.5rem; color: var(--text-muted); }
+
+    .purchase-card .body { padding: 1rem 1.1rem; flex: 1; display: flex; flex-direction: column; }
+    .purchase-card .title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+    .purchase-card .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.6rem;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+    .purchase-card .meta span {
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+    }
+    .purchase-card .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      margin-bottom: 0.8rem;
+      font-size: 0.8rem;
+    }
+    .purchase-card .price { font-weight: 700; color: var(--success); }
+    .purchase-card .date { color: var(--text-muted); font-size: 0.7rem; }
+    .purchase-card .btn-view {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: none;
+      padding: 0.65rem 1rem;
+      border-radius: 0.55rem;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .purchase-card .btn-view:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+    .empty-state h3 { font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .empty-state p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+    .loading { text-align: center; padding: 3rem 0; color: var(--text-muted); font-size: 0.9rem; }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .pagination button {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.4rem 0.9rem;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.78rem;
+      transition: 0.15s;
+    }
+    .pagination button:hover:not(:disabled) { background: var(--bg-hover); }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem 1rem;
+      overflow-y: auto;
+    }
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      max-width: 850px;
+      width: 100%;
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-content h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .modal-content h2 .close-btn {
+      background: var(--bg-hover);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+    .modal-content .section { margin-bottom: 1rem; }
+    .modal-content .section h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+    }
+    .modal-content .section .body {
+      background: var(--bg-primary);
+      padding: 0.8rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .modal-content .section .body.code {
+      font-family: monospace;
+      direction: ltr;
+      text-align: left;
+    }
+    .modal-content .img-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .modal-content .img-grid img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      cursor: zoom-in;
+    }
+    .modal-content .copy-btn {
+      background: var(--info);
+      color: white;
+      border: none;
+      padding: 0.4rem 0.9rem;
+      border-radius: 0.4rem;
+      font-size: 0.72rem;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 0.5rem;
+    }
+    .modal-content .copy-btn:hover { opacity: 0.9; }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: 0.7rem;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+      opacity: 0;
+      transform: translateY(1rem);
+      transition: 0.25s;
+      pointer-events: none;
+      z-index: 99999;
+      max-width: 400px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: var(--success-bg); border-color: #10b981; color: #a7f3d0; }
+    .toast.error { background: var(--error-bg); border-color: #ef4444; color: #fecaca; }
+    .toast.info { background: var(--info-bg); border-color: #3b82f6; color: #93c5fd; }
+
+    @media (max-width: 600px) {
+      .purchases-grid { grid-template-columns: 1fr; }
+      .modal-content { padding: 1rem; }
+      .header { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <header class="header">
+    <h1>
+      📦 خریدهای من
+      <span class="badge" style="background:var(--info-bg);color:#60a5fa;font-size:0.6rem;padding:0.1rem 0.7rem;border-radius:999px;font-weight:600;">Prompt Market</span>
+    </h1>
+    <div class="status">
+      <a href="index.html" class="nav-link">← فروشگاه</a>
+      <a href="cart.html" class="nav-link">🛒 سبد خرید</a>
+      <a href="dashboard.html" class="nav-link primary">📊 داشبورد</a>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    </div>
+  </header>
+
+  <div class="page-title">
+    <h2>پرامپت‌های خریداری‌شده <span class="count-badge" id="totalBadge">—</span></h2>
+    <button class="btn-reload" onclick="loadPurchases(1)">🔄 بارگذاری مجدد</button>
+  </div>
+
+  <div id="contentArea"><div class="loading">⏳ در حال بارگذاری...</div></div>
+  <div class="pagination" id="pagination" style="display:none;"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let accessToken = localStorage.getItem('accessToken') || '';
+  let refreshToken = localStorage.getItem('refreshToken') || '';
+  let theme = localStorage.getItem('theme') || 'dark';
+  let isRefreshing = false;
+  let refreshPromise = null;
+  let currentPage = 1;
+
+  const API_BASE = 'http://localhost:8080/api/v1';
+
+  function applyTheme(t) {
+    theme = t;
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = t === 'dark' ? '🌙' : '☀️';
+  }
+  function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
+
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    el.classList.add('show');
+    clearTimeout(el._hide);
+    el._hide = setTimeout(() => el.classList.remove('show'), 3200);
+  }
+
+  function esc(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtMoney(n) { return Number(n || 0).toLocaleString('fa-IR') + ' تومان'; }
+  function resolveImageURL(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = API_BASE.replace(/\/api\/v1\/?$/, '');
+    return base + (url.startsWith('/') ? url : '/' + url);
+  }
+  function openImageInNewTab(src) { if (src) window.open(src, '_blank', 'noopener'); }
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('fa-IR', { year: 'numeric', month: 'short', day: 'numeric' }); }
+    catch { return iso; }
+  }
+  function getHeaders(extra) {
+    const h = { 'Content-Type': 'application/json', ...extra };
+    if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+    return h;
+  }
+
+  function refreshAccessToken() {
+    if (!refreshToken) return Promise.reject(new Error('No refresh token'));
+    if (isRefreshing) return refreshPromise;
+    isRefreshing = true;
+    refreshPromise = fetch(API_BASE + '/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.access_token) {
+          accessToken = d.data.access_token;
+          if (d.data.refresh_token) refreshToken = d.data.refresh_token;
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
+          return accessToken;
+        }
+        throw new Error('Refresh failed');
+      })
+      .finally(() => { isRefreshing = false; refreshPromise = null; });
+    return refreshPromise;
+  }
+
+  async function apiCall(method, path, body, retry = true) {
+    const opts = { method, headers: getHeaders() };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API_BASE + path, opts);
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { error: text || 'Unknown error' }; }
+
+    if ((r.status === 401 || r.status === 403) && retry) {
+      try {
+        await refreshAccessToken();
+        return apiCall(method, path, body, false);
+      } catch {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = 'index.html';
+        return { status: r.status, data: { error: 'Session expired' } };
+      }
+    }
+    return { status: r.status, data };
+  }
+
+  async function loadPurchases(page = 1) {
+    currentPage = page;
+    const area = document.getElementById('contentArea');
+    area.innerHTML = '<div class="loading">⏳ در حال بارگذاری...</div>';
+    document.getElementById('pagination').style.display = 'none';
+
+    const { status, data } = await apiCall('GET', `/my-purchases?page=${page}&limit=12`);
+
+    if (status !== 200) {
+      area.innerHTML = `<div class="empty-state">
+        <div class="icon">⚠️</div>
+        <h3>خطا در دریافت خریدها</h3>
+        <p>${esc(data.error || 'لطفاً دوباره تلاش کنید')}</p>
+        <a href="index.html" class="btn" style="background:var(--info);color:white;padding:0.6rem 1.4rem;border-radius:0.5rem;text-decoration:none;display:inline-flex;">بازگشت به فروشگاه</a>
+      </div>`;
+      return;
+    }
+
+    const items = data.data || [];
+    const total = data.pagination?.total || 0;
+    document.getElementById('totalBadge').textContent = `${total} مورد`;
+
+    if (items.length === 0) {
+      area.innerHTML = `<div class="empty-state">
+        <div class="icon">📦</div>
+        <h3>هنوز خریدی ثبت نشده</h3>
+        <p>پرامپت‌های مورد علاقه‌ات رو از فروشگاه انتخاب کن و بخر.</p>
+        <a href="index.html" class="btn" style="background:var(--info);color:white;padding:0.6rem 1.4rem;border-radius:0.5rem;text-decoration:none;display:inline-flex;">مشاهده‌ی پرامپت‌ها</a>
+      </div>`;
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'purchases-grid';
+    grid.innerHTML = items.map(p => {
+      const thumbHTML = p.cover_image
+        ? `<img src="${resolveImageURL(p.cover_image)}" onerror="this.outerHTML='<div class=\\'placeholder\\'>🖼️</div>'">`
+        : '<div class="placeholder">🖼️</div>';
+
+      const metaChips = [
+        p.seller_name ? `<span>👤 ${esc(p.seller_name)}</span>` : '',
+      ].filter(Boolean).join('');
+
+      return `
+        <div class="purchase-card">
+          <div class="thumb-wrap">${thumbHTML}</div>
+          <div class="body">
+            <div class="title">${esc(p.title || 'بدون عنوان')}</div>
+            <div class="meta">${metaChips}</div>
+            <div class="price-row">
+              <span class="price">${fmtMoney(p.amount)}</span>
+              <span class="date">${esc(fmtDate(p.purchased_at))}</span>
+            </div>
+            <button class="btn-view" onclick="viewContent('${esc(p.order_id)}', '${esc(p.title || '')}')">
+              👁️ مشاهده محتوا
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+
+    area.innerHTML = '';
+    area.appendChild(grid);
+
+    const pg = data.pagination;
+    if (pg && pg.pages > 1) {
+      const pgEl = document.getElementById('pagination');
+      pgEl.style.display = 'flex';
+      pgEl.innerHTML = `
+        <button ${currentPage <= 1 ? 'disabled' : ''} onclick="loadPurchases(${currentPage - 1})">← قبلی</button>
+        <span>صفحه ${pg.page} از ${pg.pages}</span>
+        <button ${currentPage >= pg.pages ? 'disabled' : ''} onclick="loadPurchases(${currentPage + 1})">بعدی →</button>
+      `;
+    }
+  }
+
+  async function viewContent(orderId, title) {
+    const old = document.getElementById('contentModal');
+    if (old) old.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'contentModal';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = `<div class="modal-content">
+      <h2>📄 ${esc(title)} <button class="close-btn" onclick="document.getElementById('contentModal').remove()">✕</button></h2>
+      <div style="text-align:center;color:var(--text-muted);padding:2rem 0;">⏳ در حال بارگذاری محتوا...</div>
+    </div>`;
+
+    document.body.appendChild(overlay);
+
+    const { status, data } = await apiCall('GET', `/my-purchases/${orderId}/content`);
+
+    if (status !== 200) {
+      document.querySelector('#contentModal .modal-content').innerHTML = `
+        <h2>❌ خطا <button class="close-btn" onclick="document.getElementById('contentModal').remove()">✕</button></h2>
+        <div style="padding:1.5rem;text-align:center;color:#fca5a5;">${esc(data.error || 'خطا در دریافت محتوا')}</div>`;
+      return;
+    }
+
+    const c = data.data;
+    if (!c.available) {
+      document.querySelector('#contentModal .modal-content').innerHTML = `
+        <h2>⚠️ محتوا در دسترس نیست <button class="close-btn" onclick="document.getElementById('contentModal').remove()">✕</button></h2>
+        <div style="padding:1.5rem;text-align:center;color:#fde68a;">${esc(c.message || 'این پرامپت دیگر در دسترس نیست')}</div>`;
+      return;
+    }
+
+    const imagesHTML = (Array.isArray(c.images) && c.images.length > 0)
+      ? `<div class="img-grid">${c.images.map(u =>
+          `<img src="${resolveImageURL(u)}" onclick="openImageInNewTab('${esc(resolveImageURL(u))}')">`
+        ).join('')}</div>`
+      : '';
+
+    const coverHTML = c.cover_image
+      ? `<img src="${resolveImageURL(c.cover_image)}" style="max-width:100%;max-height:300px;border-radius:0.5rem;margin-bottom:1rem;cursor:zoom-in;" onclick="openImageInNewTab('${esc(resolveImageURL(c.cover_image))}')">`
+      : '';
+
+    document.querySelector('#contentModal .modal-content').innerHTML = `
+      <h2>📄 ${esc(c.title)} <button class="close-btn" onclick="document.getElementById('contentModal').remove()">✕</button></h2>
+
+      ${coverHTML}
+
+      ${c.description ? `
+      <div class="section">
+        <h4>📝 توضیحات</h4>
+        <div class="body">${esc(c.description)}</div>
+      </div>` : ''}
+
+      <div class="section">
+        <h4>🧠 محتوای پرامپت</h4>
+        <div class="body code" id="mainContent">${esc(c.content || '—')}</div>
+        <button class="copy-btn" onclick="copyText('mainContent')">📋 کپی محتوا</button>
+      </div>
+
+      ${c.instructions ? `
+      <div class="section">
+        <h4>📖 راهنمای استفاده</h4>
+        <div class="body" id="instructionsContent">${esc(c.instructions)}</div>
+        <button class="copy-btn" onclick="copyText('instructionsContent')">📋 کپی راهنما</button>
+      </div>` : ''}
+
+      ${c.demo_output ? `
+      <div class="section">
+        <h4>🎯 خروجی نمونه</h4>
+        <div class="body">${esc(c.demo_output)}</div>
+      </div>` : ''}
+
+      ${imagesHTML ? `
+      <div class="section">
+        <h4>🖼️ گالری تصاویر</h4>
+        ${imagesHTML}
+      </div>` : ''}
+
+      <div style="margin-top:1.5rem;text-align:center;color:var(--text-muted);font-size:0.75rem;">
+        ✅ شما به این محتوا دسترسی دائمی دارید.
+      </div>`;
+  }
+
+  function copyText(elId) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const text = el.textContent || '';
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => toast('✅ کپی شد', 'success'))
+        .catch(() => toast('❌ کپی ناموفق', 'error'));
+    } else {
+      toast('❌ مرورگر پشتیبانی نمی‌کند', 'error');
+    }
+  }
+
+  applyTheme(theme);
+  if (!accessToken) {
+    window.location.href = 'index.html';
+  } else {
+    loadPurchases(1);
+  }
+</script>
+
+</body>
+</html>

@@ -27,6 +27,7 @@ func NewAdminHandler(db *gorm.DB, redisClient *redis.Client) *AdminHandler {
 
 	viewRepo := repository.NewPromptViewRepository(db)
 	viewService := service.NewPromptViewService(viewRepo)
+	purchaseSvc := service.NewPurchaseService(orderRepo, promptRepo, userRepo)
 
 	appRepo := repository.NewAuthorApplicationRepository(db)
 	verifyRepo := repository.NewVerificationRepository(redisClient)
@@ -35,18 +36,20 @@ func NewAdminHandler(db *gorm.DB, redisClient *redis.Client) *AdminHandler {
 	reviewRepo := repository.NewReviewRepository(db)
 	reviewService := service.NewReviewService(reviewRepo, promptRepo, orderRepo)
 
+	// PromptService isn't used directly by AdminHandler, but if it is in
+	// your version, update the call below with the new signature:
+	_ = service.NewPromptService(promptRepo, userRepo, viewService, purchaseSvc)
+
 	adminService := service.NewAdminService(
 		adminRepo, userRepo, promptRepo, orderRepo,
 		appService, reviewService, db,
 	)
-	_ = viewService // admin doesn't need viewService yet
 
 	return &AdminHandler{
 		service:   adminService,
 		validator: validator.New(),
 	}
 }
-
 // ============================================================
 //  DASHBOARD
 // ============================================================

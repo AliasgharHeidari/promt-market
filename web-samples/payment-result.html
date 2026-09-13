@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نتیجه پرداخت · Prompt Market</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    [data-theme="light"] {
+      --bg-primary: #f1f5f9;
+      --bg-secondary: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .result-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 1.5rem;
+      max-width: 520px;
+      width: 100%;
+      padding: 3rem 2rem;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .result-icon { font-size: 4rem; margin-bottom: 1rem; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    .result-icon.success { color: var(--success); }
+    .result-icon.failed { color: var(--error); }
+    .result-icon.canceled { color: var(--warning); }
+
+    .result-card h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .result-card .message { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.5rem; }
+
+    .ref-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.7rem;
+      padding: 0.9rem 1.2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+    .ref-box .k { color: var(--text-muted); }
+    .ref-box .v {
+      color: var(--text-primary);
+      font-family: monospace;
+      direction: ltr;
+      font-size: 0.72rem;
+      word-break: break-all;
+      max-width: 60%;
+      text-align: left;
+    }
+
+    .actions { display: flex; flex-direction: column; gap: 0.7rem; }
+
+    .btn {
+      padding: 0.9rem 1.4rem;
+      border-radius: 0.7rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-success {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+    }
+    .btn-success:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-outline:hover { background: var(--bg-primary); }
+
+    .loading { font-size: 0.85rem; color: var(--text-secondary); }
+
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+
+  <div class="result-card" id="card">
+    <div class="loading">⏳ در حال دریافت نتیجه...</div>
+  </div>
+
+<script>
+  let theme = localStorage.getItem('theme') || 'dark';
+  function applyTheme(t) {
+    theme = t;
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = t === 'dark' ? '🌙' : '☀️';
+  }
+  function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
+  applyTheme(theme);
+
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('status') || 'failed';
+  const ref = params.get('ref') || '';
+  const reason = params.get('reason') || '';
+
+  function esc(v) {
+    if (v === null || v === undefined) return '';
+    return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  const card = document.getElementById('card');
+
+  if (status === 'success') {
+    card.innerHTML = `
+      <div class="result-icon success">✅</div>
+      <h1>پرداخت با موفقیت انجام شد</h1>
+      <p class="message">خرید شما با موفقیت ثبت شد. حالا می‌توانید محتوای کامل پرامپت‌هایی که خریدید را ببینید.</p>
+      ${ref ? `<div class="ref-box"><span class="k">شماره پیگیری</span><span class="v">${esc(ref)}</span></div>` : ''}
+      <div class="actions">
+        <a href="purchases.html" class="btn btn-success">📦 مشاهده خریدهای من</a>
+        <a href="index.html" class="btn btn-outline">ادامه‌ی خرید</a>
+      </div>
+    `;
+  } else if (status === 'canceled') {
+    card.innerHTML = `
+      <div class="result-icon canceled">⚠️</div>
+      <h1>پرداخت لغو شد</h1>
+      <p class="message">شما عملیات پرداخت را لغو کردید. سبد خرید شما همچنان محفوظ است و می‌توانید دوباره تلاش کنید.</p>
+      <div class="actions">
+        <a href="cart.html" class="btn btn-primary">🔁 تلاش مجدد</a>
+        <a href="index.html" class="btn btn-outline">بازگشت به فروشگاه</a>
+      </div>
+    `;
+  } else {
+    const detail = reason
+      ? `<br><span style="font-size:0.75rem;color:#7f1d1d;background:#fecaca;padding:0.2rem 0.5rem;border-radius:0.3rem;display:inline-block;margin-top:0.5rem;direction:ltr;">${esc(reason)}</span>`
+      : '';
+    card.innerHTML = `
+      <div class="result-icon failed">❌</div>
+      <h1>پرداخت انجام نشد</h1>
+      <p class="message">متأسفانه پرداخت شما تکمیل نشد. سبد خرید شما محفوظ است و می‌توانید دوباره تلاش کنید.${detail}</p>
+      <div class="actions">
+        <a href="cart.html" class="btn btn-primary">🔁 تلاش مجدد</a>
+        <a href="index.html" class="btn btn-outline">بازگشت به فروشگاه</a>
+      </div>
+    `;
+  }
+</script>
+
+</body>
+</html>

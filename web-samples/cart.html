@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سبد خرید · Prompt Market</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-elevated: #243244;
+      --bg-hover: #2d3a4f;
+      --bg-input: #2d3a4f;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --border-strong: #475569;
+      --badge-bg: #2d3a4f;
+      --success: #22c55e;
+      --success-bg: #064e3b;
+      --error: #ef4444;
+      --error-bg: #7f1d1d;
+      --info: #3b82f6;
+      --info-bg: #1e3a5f;
+      --warning: #f59e0b;
+      --warning-bg: #78350f;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    [data-theme="light"] {
+      --bg-primary: #f1f5f9;
+      --bg-secondary: #ffffff;
+      --bg-elevated: #f8fafc;
+      --bg-hover: #f1f5f9;
+      --bg-input: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --badge-bg: #f1f5f9;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 1.5rem;
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--bg-secondary);
+      padding: 1rem 2rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+    }
+    .header h1 {
+      font-weight: 700;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header .status {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      transition: 0.15s;
+      background: var(--bg-input);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-link.primary {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+
+    .theme-toggle {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      transition: 0.15s;
+    }
+    .theme-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .cart-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .cart-title h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cart-title .count-badge {
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      padding: 0.15rem 0.7rem;
+      border-radius: 999px;
+    }
+
+    .cart-list { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; }
+
+    .cart-row {
+      display: grid;
+      grid-template-columns: 90px 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.8rem;
+      padding: 0.9rem 1.1rem;
+      transition: 0.15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .cart-row:hover { border-color: var(--border-strong); }
+    .cart-row.unavailable { opacity: 0.65; border-color: #7f1d1d; }
+
+    .cart-row .thumb {
+      width: 90px;
+      height: 70px;
+      border-radius: 0.5rem;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      background: var(--bg-hover);
+      cursor: zoom-in;
+    }
+    .cart-row .thumb-placeholder {
+      width: 90px;
+      height: 70px;
+      border-radius: 0.5rem;
+      background: var(--bg-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .cart-row .info .title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+      color: var(--text-primary);
+    }
+    .cart-row .info .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.3rem;
+    }
+    .cart-row .info .meta span {
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+    }
+    .cart-row .info .warn {
+      font-size: 0.72rem;
+      color: #fca5a5;
+      background: var(--error-bg);
+      border: 1px solid #b91c1c;
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.4rem;
+      display: inline-block;
+      margin-top: 0.2rem;
+    }
+    .cart-row .info .purchased {
+      font-size: 0.72rem;
+      color: #93c5fd;
+      background: var(--info-bg);
+      border: 1px solid #3b82f6;
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.4rem;
+      display: inline-block;
+      margin-top: 0.2rem;
+    }
+
+    .cart-row .actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+    }
+    .cart-row .price {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--success);
+      white-space: nowrap;
+    }
+    .cart-row .price .old {
+      color: var(--text-muted);
+      text-decoration: line-through;
+      font-size: 0.72rem;
+      font-weight: 400;
+      margin-right: 0.3rem;
+    }
+    .btn-remove {
+      background: var(--error-bg);
+      color: #fecaca;
+      border: 1px solid #b91c1c;
+      padding: 0.35rem 0.85rem;
+      border-radius: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-remove:hover:not(:disabled) { background: #991b1b; }
+    .btn-remove:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .summary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+      padding: 1.3rem 1.6rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.6rem;
+    }
+    .summary-row.total {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--text-primary);
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.9rem;
+      margin-top: 0.9rem;
+    }
+    .summary-row.total .value { color: var(--success); }
+    .summary .actions { display: flex; gap: 0.7rem; margin-top: 1.3rem; flex-wrap: wrap; }
+
+    .btn {
+      background: var(--info);
+      color: white;
+      border: none;
+      padding: 0.7rem 1.6rem;
+      border-radius: 0.6rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-outline:hover { background: var(--bg-hover); }
+    .btn-pay {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      flex: 1;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+    }
+    .btn-pay:hover:not(:disabled) { opacity: 0.95; }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+    .empty-state h3 { font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .empty-state p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+    .loading { text-align: center; padding: 3rem 0; color: var(--text-muted); font-size: 0.9rem; }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: 0.7rem;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+      opacity: 0;
+      transform: translateY(1rem);
+      transition: 0.25s;
+      pointer-events: none;
+      z-index: 99999;
+      max-width: 400px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: var(--success-bg); border-color: #10b981; color: #a7f3d0; }
+    .toast.error { background: var(--error-bg); border-color: #ef4444; color: #fecaca; }
+    .toast.info { background: var(--info-bg); border-color: #3b82f6; color: #93c5fd; }
+
+    @media (max-width: 700px) {
+      .cart-row { grid-template-columns: 70px 1fr; gap: 0.8rem; }
+      .cart-row .thumb, .cart-row .thumb-placeholder { width: 70px; height: 60px; }
+      .cart-row .actions {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.7rem;
+        margin-top: 0.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <header class="header">
+    <h1>
+      🛒 سبد خرید
+      <span class="badge" style="background:var(--info-bg);color:#60a5fa;font-size:0.6rem;padding:0.1rem 0.7rem;border-radius:999px;font-weight:600;">Prompt Market</span>
+    </h1>
+    <div class="status">
+      <a href="index.html" class="nav-link">← فروشگاه</a>
+      <a href="purchases.html" class="nav-link">📦 خریدهای من</a>
+      <a href="dashboard.html" class="nav-link primary">📊 داشبورد</a>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    </div>
+  </header>
+
+  <div class="cart-title">
+    <h2>آیتم‌های سبد <span class="count-badge" id="cartCount">0</span></h2>
+    <button class="btn-remove" id="clearBtn" onclick="clearCart()" style="display:none;">🗑️ خالی کردن سبد</button>
+  </div>
+
+  <div id="cartArea">
+    <div class="loading">⏳ در حال بارگذاری سبد خرید...</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let accessToken = localStorage.getItem('accessToken') || '';
+  let refreshToken = localStorage.getItem('refreshToken') || '';
+  let theme = localStorage.getItem('theme') || 'dark';
+  let isRefreshing = false;
+  let refreshPromise = null;
+  let cartData = null;
+
+  const API_BASE = 'http://localhost:8080/api/v1';
+
+  function applyTheme(t) {
+    theme = t;
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = t === 'dark' ? '🌙' : '☀️';
+  }
+  function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
+
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    el.classList.add('show');
+    clearTimeout(el._hide);
+    el._hide = setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  function esc(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtMoney(n) { return Number(n || 0).toLocaleString('fa-IR') + ' تومان'; }
+  function resolveImageURL(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = API_BASE.replace(/\/api\/v1\/?$/, '');
+    return base + (url.startsWith('/') ? url : '/' + url);
+  }
+  function getHeaders(extra) {
+    const h = { 'Content-Type': 'application/json', ...extra };
+    if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+    return h;
+  }
+
+  function refreshAccessToken() {
+    if (!refreshToken) return Promise.reject(new Error('No refresh token'));
+    if (isRefreshing) return refreshPromise;
+    isRefreshing = true;
+    refreshPromise = fetch(API_BASE + '/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.access_token) {
+          accessToken = d.data.access_token;
+          if (d.data.refresh_token) refreshToken = d.data.refresh_token;
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
+          return accessToken;
+        }
+        throw new Error('Refresh failed');
+      })
+      .finally(() => { isRefreshing = false; refreshPromise = null; });
+    return refreshPromise;
+  }
+
+  async function apiCall(method, path, body, retry = true) {
+    const opts = { method, headers: getHeaders() };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API_BASE + path, opts);
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { error: text || 'Unknown error' }; }
+
+    if ((r.status === 401 || r.status === 403) && retry) {
+      try {
+        await refreshAccessToken();
+        return apiCall(method, path, body, false);
+      } catch {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = 'index.html';
+        return { status: r.status, data: { error: 'Session expired' } };
+      }
+    }
+    return { status: r.status, data };
+  }
+
+  async function loadCart() {
+    const area = document.getElementById('cartArea');
+    area.innerHTML = '<div class="loading">⏳ در حال بارگذاری...</div>';
+    const { status, data } = await apiCall('GET', '/cart');
+
+    if (status !== 200) {
+      area.innerHTML = `<div class="empty-state">
+        <div class="icon">⚠️</div>
+        <h3>خطا در دریافت سبد خرید</h3>
+        <p>${esc(data.error || 'لطفاً دوباره تلاش کنید')}</p>
+        <a href="index.html" class="btn btn-outline">بازگشت به فروشگاه</a>
+      </div>`;
+      return;
+    }
+
+    cartData = data;
+    document.getElementById('cartCount').textContent = data.count || 0;
+    const clearBtn = document.getElementById('clearBtn');
+    clearBtn.style.display = (data.count > 0) ? 'inline-block' : 'none';
+
+    if (!data.data || data.data.length === 0) {
+      area.innerHTML = `<div class="empty-state">
+        <div class="icon">🛒</div>
+        <h3>سبد خرید شما خالی است</h3>
+        <p>برای افزودن پرامپت، به فروشگاه بروید و روی پرامپت‌های موردنظرتان دکمه‌ی «افزودن به سبد» را بزنید.</p>
+        <a href="index.html" class="btn">مشاهده‌ی پرامپت‌ها</a>
+      </div>`;
+      return;
+    }
+
+    renderCart(data);
+  }
+
+  function renderCart(data) {
+    const area = document.getElementById('cartArea');
+
+    const rows = data.data.map(item => {
+      const thumbHTML = item.cover_image
+        ? `<img class="thumb" src="${resolveImageURL(item.cover_image)}"
+                onclick="openImageInNewTab('${esc(resolveImageURL(item.cover_image))}')"
+                onerror="this.outerHTML='<div class=\\'thumb-placeholder\\'>🖼️</div>'">`
+        : '<div class="thumb-placeholder">🖼️</div>';
+
+      const hasDiscount = item.discount_price > 0 && item.discount_price < item.price;
+      const priceHTML = hasDiscount
+        ? `<span class="old">${fmtMoney(item.price)}</span> ${fmtMoney(item.final_price)}`
+        : fmtMoney(item.final_price);
+
+      let statusHTML = '';
+      if (item.unavailable) {
+        statusHTML = `<div class="warn">⚠️ ${esc(item.unavailable_msg || 'این آیتم قابل خریداری نیست')}</div>`;
+      } else if (item.already_purchased) {
+        statusHTML = `<div class="purchased">✅ قبلاً خریداری شده — <a href="purchases.html" style="color:#93c5fd;">مشاهده</a></div>`;
+      }
+
+      const metaChips = [
+        item.seller_name ? `<span>👤 ${esc(item.seller_name)}</span>` : '',
+        item.category ? `<span>📁 ${esc(item.category)}</span>` : '',
+      ].filter(Boolean).join('');
+
+      return `
+        <div class="cart-row ${item.unavailable ? 'unavailable' : ''}">
+          ${thumbHTML}
+          <div class="info">
+            <div class="title">${esc(item.title)}</div>
+            <div class="meta">${metaChips}</div>
+            ${statusHTML}
+          </div>
+          <div class="actions">
+            <div class="price">${priceHTML}</div>
+            <button class="btn-remove" onclick="removeItem('${esc(item.prompt_id)}', this)">🗑️ حذف</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    const canPay = data.total_amount > 0;
+    const summaryHTML = `
+      <div class="summary">
+        <div class="summary-row">
+          <span>تعداد آیتم‌های قابل خرید</span>
+          <span>${data.data.filter(i => !i.unavailable && !i.already_purchased).length} عدد</span>
+        </div>
+        <div class="summary-row total">
+          <span>مبلغ قابل پرداخت</span>
+          <span class="value">${fmtMoney(data.total_amount)}</span>
+        </div>
+        <div class="actions">
+          <a href="index.html" class="btn btn-outline">← ادامه‌ی خرید</a>
+          <button class="btn btn-pay" ${canPay ? '' : 'disabled'} onclick="startCheckout()">
+            💳 پرداخت ${fmtMoney(data.total_amount)}
+          </button>
+        </div>
+        ${!canPay ? '<p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.8rem;text-align:center;">سبد شما آیتم قابل پرداخت ندارد.</p>' : ''}
+      </div>`;
+
+    area.innerHTML = `<div class="cart-list">${rows}</div>${summaryHTML}`;
+  }
+
+  async function removeItem(promptId, btnEl) {
+    if (btnEl) btnEl.disabled = true;
+    const { status, data } = await apiCall('DELETE', `/cart/items/${promptId}`);
+    if (status === 200) {
+      toast('🗑️ آیتم حذف شد', 'info');
+      await loadCart();
+    } else {
+      toast('❌ ' + (data.error || 'خطا در حذف'), 'error');
+      if (btnEl) btnEl.disabled = false;
+    }
+  }
+
+  async function clearCart() {
+    if (!confirm('کل سبد خرید خالی شود؟')) return;
+    const { status, data } = await apiCall('DELETE', '/cart');
+    if (status === 200) {
+      toast('✅ سبد خرید خالی شد', 'success');
+      await loadCart();
+    } else {
+      toast('❌ ' + (data.error || 'خطا'), 'error');
+    }
+  }
+
+  async function startCheckout() {
+    const btn = document.querySelector('.btn-pay');
+    if (btn) {
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = '⏳ در حال انتقال به درگاه...';
+      const restore = () => { btn.disabled = false; btn.textContent = original; };
+      try {
+        const { status, data } = await apiCall('POST', '/checkout');
+        if (status !== 200 || !data.data?.gateway_url) {
+          toast('❌ ' + (data.error || 'خطا در شروع پرداخت'), 'error');
+          restore();
+          return;
+        }
+        window.location.href = data.data.gateway_url;
+      } catch (e) {
+        toast('❌ ' + e.message, 'error');
+        restore();
+      }
+    }
+  }
+
+  function openImageInNewTab(src) { if (src) window.open(src, '_blank', 'noopener'); }
+
+  applyTheme(theme);
+  if (!accessToken) {
+    window.location.href = 'index.html';
+  } else {
+    loadCart();
+  }
+</script>
+
+</body>
+</html>

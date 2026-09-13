@@ -38,10 +38,17 @@ func (r *OrderRepository) Update(ctx context.Context, order *domain.Order) error
 	return r.db.WithContext(ctx).Save(order).Error
 }
 
+// Create inserts a new order.
+func (r *OrderRepository) Create(ctx context.Context, order *domain.Order) error {
+	return r.db.WithContext(ctx).Create(order).Error
+}
+
+// FindPaidOrder returns a paid order for the given (buyer, prompt) pair,
+// or nil if the user hasn't purchased the prompt.
 func (r *OrderRepository) FindPaidOrder(ctx context.Context, buyerID, promptID string) (*domain.Order, error) {
 	var order domain.Order
 	err := r.db.WithContext(ctx).
-		Where("buyer_id = ? AND prompt_id = ? AND status = ?", buyerID, promptID, "paid").
+		Where("buyer_id = ? AND prompt_id = ? AND status = ?", buyerID, promptID, domain.OrderStatusPaid).
 		First(&order).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -51,6 +58,98 @@ func (r *OrderRepository) FindPaidOrder(ctx context.Context, buyerID, promptID s
 	}
 	return &order, nil
 }
+
+// FindPaidOrderWithTx is like FindPaidOrder but uses a tx handle. Used to
+// check access inside the same transaction as a state mutation.
+func (r *OrderRepository) FindPaidOrderWithTx(tx *gorm.DB, buyerID, promptID string) (*domain.Order, error) {
+	var order domain.Order
+	err := tx.
+		Where("buyer_id = ? AND prompt_id = ? AND status = ?", buyerID, promptID, domain.OrderStatusPaid).
+		First(&order).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &order, nil
+}
+
+// ListPaidByBuyer returns all paid orders for a user, newest first, with the
+// Prompt preloaded. This powers the "my purchases" page.
+func (r *OrderRepository) ListPaidByBuyer(ctx context.Context, buyerID string, limit, offset int) ([]domain.Order, int64, error) {
+	var orders []domain.Order
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&domain.Order{}).
+		Where("buyer_id = ? AND status = ?", buyerID, domain.OrderStatusPaid)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := query.
+		Preload("Prompt").
+		Preload("Prompt.Seller").
+		Order("paid_at DESC NULLS LAST, created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&orders).Error
+
+	return orders, total, err
+}
+
+// FindOrdersByPaymentID returns all orders created under a single payment.
+// Used during verify to mark them all paid in one round-trip.
+func (r *OrderRepository) FindOrdersByPaymentID(ctx context.Context, paymentID string) ([]domain.Order, error) {
+	var orders []domain.Order
+	err := r.db.WithContext(ctx).
+		Where("payment_id = ?", paymentID).
+		Find(&orders).Error
+	return orders, err
+}
+
+// FindOrdersByPaymentIDWithTx is the tx-aware variant.
+func (r *OrderRepository) FindOrdersByPaymentIDWithTx(tx *gorm.DB, paymentID string) ([]domain.Order, error) {
+	var orders []domain.Order
+	err := tx.
+		Where("payment_id = ?", paymentID).
+		Find(&orders).Error
+	return orders, err
+}
+
+// MarkPaidWithTx flips all orders under a payment to "paid" and stamps
+// paid_at. Returns the affected rows count.
+func (r *OrderRepository) MarkPaidWithTx(tx *gorm.DB, paymentID string, paidAt time.Time) (int64, error) {
+	res := tx.Model(&domain.Order{}).
+		Where("payment_id = ? AND status <> ?", paymentID, domain.OrderStatusPaid).
+		Updates(map[string]interface{}{
+			"status":  domain.OrderStatusPaid,
+			"paid_at": paidAt,
+		})
+	return res.RowsAffected, res.Error
+}
+
+// MarkFailedWithTx flips all orders under a payment to "failed". Only
+// pending orders are touched so we don't clobber a paid order by mistake.
+func (r *OrderRepository) MarkFailedWithTx(tx *gorm.DB, paymentID string) (int64, error) {
+	res := tx.Model(&domain.Order{}).
+		Where("payment_id = ? AND status = ?", paymentID, domain.OrderStatusPending).
+		Update("status", domain.OrderStatusFailed)
+	return res.RowsAffected, res.Error
+}
+
+// IncrementSalesCountForPromptWithTx bumps Prompt.SalesCount by 1. Called
+// for each order that transitions to paid.
+func (r *OrderRepository) IncrementSalesCountForPromptWithTx(tx *gorm.DB, promptID string) error {
+	return tx.Model(&domain.Prompt{}).
+		Where("id = ?", promptID).
+		Update("sales_count", gorm.Expr("sales_count + 1")).Error
+}
+
+// ─────────────────────────────────────────────────────────
+//  Analytics (author dashboard)
+// ─────────────────────────────────────────────────────────
 
 // SellerStats is a small aggregate returned to the author dashboard.
 type SellerStats struct {
@@ -65,18 +164,16 @@ type SellerStats struct {
 func (r *OrderRepository) GetSellerStats(ctx context.Context, sellerID string, since time.Time) (*SellerStats, error) {
 	var stats SellerStats
 
-	// Lifetime totals
 	err := r.db.WithContext(ctx).
 		Model(&domain.Order{}).
 		Joins("JOIN prompts ON prompts.id = orders.prompt_id").
-		Where("prompts.seller_id = ? AND orders.status = ?", sellerID, "paid").
+		Where("prompts.seller_id = ? AND orders.status = ?", sellerID, domain.OrderStatusPaid).
 		Select("COUNT(*) AS total_sales, COALESCE(SUM(orders.amount - orders.commission), 0) AS total_revenue").
 		Scan(&stats).Error
 	if err != nil {
 		return nil, err
 	}
 
-	// Rolling window totals
 	var monthly struct {
 		Sales   int64
 		Revenue int64
@@ -84,7 +181,7 @@ func (r *OrderRepository) GetSellerStats(ctx context.Context, sellerID string, s
 	err = r.db.WithContext(ctx).
 		Model(&domain.Order{}).
 		Joins("JOIN prompts ON prompts.id = orders.prompt_id").
-		Where("prompts.seller_id = ? AND orders.status = ? AND orders.created_at >= ?", sellerID, "paid", since).
+		Where("prompts.seller_id = ? AND orders.status = ? AND orders.created_at >= ?", sellerID, domain.OrderStatusPaid, since).
 		Select("COUNT(*) AS sales, COALESCE(SUM(orders.amount - orders.commission), 0) AS revenue").
 		Scan(&monthly).Error
 	if err != nil {
@@ -112,10 +209,15 @@ func (r *OrderRepository) DailySalesSeries(ctx context.Context, sellerID string,
 		Model(&domain.Order{}).
 		Joins("JOIN prompts ON prompts.id = orders.prompt_id").
 		Where("prompts.seller_id = ? AND orders.status = ? AND orders.created_at >= ? AND orders.created_at < ?",
-			sellerID, "paid", from, to).
+			sellerID, domain.OrderStatusPaid, from, to).
 		Select("DATE(orders.created_at) AS date, COUNT(*) AS sales, COALESCE(SUM(orders.amount - orders.commission), 0) AS revenue").
 		Group("DATE(orders.created_at)").
 		Order("DATE(orders.created_at) ASC").
 		Scan(&rows).Error
 	return rows, err
+}
+
+// DB returns the underlying *gorm.DB for transactional work.
+func (r *OrderRepository) DB() *gorm.DB {
+	return r.db
 }

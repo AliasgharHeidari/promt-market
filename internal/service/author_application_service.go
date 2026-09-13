@@ -1,10 +1,12 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"mime/multipart"
 	"os"
@@ -14,12 +16,21 @@ import (
 
 	"promt-market/internal/domain"
 	"promt-market/internal/repository"
+	"promt-market/internal/utils"
 )
 
 const (
 	phoneOTPTTL      = 5 * time.Minute
 	phoneOTPCooldown = 60 * time.Second
-	idDocumentDir    = "./uploads/id_documents" // server-local disk, per user's choice
+
+	// idDocumentDir is DELIBERATELY outside ./uploads. ./uploads is served
+	// publicly via app.Static("/uploads", "./uploads") in routes.go, so
+	// anything placed under it is reachable by anyone who guesses/leaks a
+	// URL — completely wrong for a national ID document. Keeping ID
+	// documents in a separate, non-served directory means the only way to
+	// read one back is through a dedicated, authenticated handler (admin
+	// review), which does not exist yet as an HTTP-exposed route.
+	idDocumentDir = "./private/id_documents"
 )
 
 type AuthorApplicationService struct {
@@ -316,18 +327,74 @@ func validateNationalID(id string) error {
 	return nil
 }
 
+// idDocumentAllowedExts maps an accepted extension to how its content
+// should be verified. Images are verified via utils.ValidateImageContent
+// (decodes the real header); PDF is verified via its magic bytes below.
+var idDocumentAllowedExts = map[string]bool{
+	".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".pdf": true,
+}
+
+// pdfMagicBytes is the fixed 5-byte signature every valid PDF file starts
+// with ("%PDF-"). Checking this is the same class of validation as
+// image.DecodeConfig for images: it confirms the bytes are actually what
+// the extension claims, rather than trusting the filename.
+var pdfMagicBytes = []byte("%PDF-")
+
+// validateIDDocumentContent checks that data's real content matches the
+// claimed extension. This is a KYC document (national ID proof) — treating
+// its content with more suspicion than a decorative prompt-cover image is
+// warranted, since a mismatched/malicious file here could later be opened
+// by an admin reviewer.
+func validateIDDocumentContent(data []byte, ext string) error {
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".webp":
+		if _, err := utils.ValidateImageContent(data, ext); err != nil {
+			return err
+		}
+		return nil
+	case ".pdf":
+		if !bytes.HasPrefix(data, pdfMagicBytes) {
+			return errors.New("محتوای فایل یک PDF معتبر نیست")
+		}
+		return nil
+	default:
+		return fmt.Errorf("پسوند فایل مجاز نیست: %s", ext)
+	}
+}
+
 // saveIDDocument writes the uploaded file to local disk under
-// idDocumentDir/<userID>/<timestamp>_<originalname> and returns the
-// stored path. Only image-ish extensions are accepted.
+// idDocumentDir/<userID>/<timestamp><ext> and returns the stored path.
+// The file's actual content is validated against its claimed extension
+// before anything is written — see validateIDDocumentContent.
 func saveIDDocument(userID string, file *multipart.FileHeader) (string, error) {
 	ext := strings.ToLower(filepath.Ext(file.Filename))
-	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".pdf": true}
-	if !allowed[ext] {
+	if !idDocumentAllowedExts[ext] {
 		return "", errors.New("unsupported file type, use jpg/png/webp/pdf")
 	}
 	const maxSize = 8 << 20 // 8MB
 	if file.Size > maxSize {
 		return "", errors.New("file too large (max 8MB)")
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(io.LimitReader(src, maxSize+1)); err != nil {
+		return "", err
+	}
+	data := buf.Bytes()
+	if int64(len(data)) > maxSize {
+		// Defense in depth: FileHeader.Size can be client-reported in some
+		// multipart implementations, so re-check the bytes actually read.
+		return "", errors.New("file too large (max 8MB)")
+	}
+
+	if err := validateIDDocumentContent(data, ext); err != nil {
+		return "", fmt.Errorf("فایل نامعتبر است: %w", err)
 	}
 
 	userDir := filepath.Join(idDocumentDir, userID)
@@ -338,29 +405,8 @@ func saveIDDocument(userID string, file *multipart.FileHeader) (string, error) {
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	destPath := filepath.Join(userDir, filename)
 
-	src, err := file.Open()
-	if err != nil {
+	if err := os.WriteFile(destPath, data, 0o640); err != nil {
 		return "", err
-	}
-	defer src.Close()
-
-	dst, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o640)
-	if err != nil {
-		return "", err
-	}
-	defer dst.Close()
-
-	buf := make([]byte, 32*1024)
-	for {
-		n, readErr := src.Read(buf)
-		if n > 0 {
-			if _, writeErr := dst.Write(buf[:n]); writeErr != nil {
-				return "", writeErr
-			}
-		}
-		if readErr != nil {
-			break
-		}
 	}
 
 	return destPath, nil

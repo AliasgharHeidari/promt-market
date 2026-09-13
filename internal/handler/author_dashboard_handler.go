@@ -24,6 +24,12 @@ func NewAuthorDashboardHandler(db *gorm.DB) *AuthorDashboardHandler {
 	viewRepo := repository.NewPromptViewRepository(db)
 	editRepo := repository.NewPromptEditRepository(db)
 
+	viewService := service.NewPromptViewService(viewRepo)
+	purchaseSvc := service.NewPurchaseService(orderRepo, promptRepo, userRepo)
+
+	// Keep this if your handler actually uses PromptService; otherwise delete.
+	_ = service.NewPromptService(promptRepo, userRepo, viewService, purchaseSvc)
+
 	return &AuthorDashboardHandler{
 		service:   service.NewAuthorDashboardService(userRepo, promptRepo, orderRepo, viewRepo, editRepo),
 		sanitizer: bluemonday.StrictPolicy(),

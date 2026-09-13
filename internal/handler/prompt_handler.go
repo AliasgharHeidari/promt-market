@@ -21,8 +21,11 @@ func NewPromptHandler(db *gorm.DB) *PromptHandler {
 	promptRepo := repository.NewPromptRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	viewRepo := repository.NewPromptViewRepository(db)
+	orderRepo := repository.NewOrderRepository(db)
+
 	viewService := service.NewPromptViewService(viewRepo)
-	promptService := service.NewPromptService(promptRepo, userRepo, viewService)
+	purchaseSvc := service.NewPurchaseService(orderRepo, promptRepo, userRepo)
+	promptService := service.NewPromptService(promptRepo, userRepo, viewService, purchaseSvc)
 
 	return &PromptHandler{
 		service:   promptService,
@@ -59,10 +62,22 @@ func (h *PromptHandler) CreatePrompt(c *fiber.Ctx) error {
 	})
 }
 
+// GetPromptBySlug returns a public prompt with the viewer's access applied.
+//
+// The handler tries to read the viewer's userID from Locals if the request
+// came in with a valid Authorization header. This route is registered
+// WITHOUT JWTProtected, so anonymous viewers are also supported; the
+// middleware simply skips them and there's no userID in Locals.
+//
+// Content is stripped for viewers who don't own a paid order (and for
+// non-free prompts).
 func (h *PromptHandler) GetPromptBySlug(c *fiber.Ctx) error {
 	slug := c.Params("slug")
 
-	prompt, err := h.service.GetBySlug(c.Context(), slug)
+	// Optional viewer ID. Empty for anonymous visitors.
+	viewerID, _ := c.Locals("userID").(string)
+
+	prompt, err := h.service.GetBySlug(c.Context(), slug, viewerID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),
@@ -147,7 +162,6 @@ func (h *PromptHandler) DeletePrompt(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	promptID := c.Params("id")
 
-	// ✅ Ownership check for regular users
 	if err := h.service.Delete(c.Context(), promptID, userID); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -217,12 +231,10 @@ func (h *PromptHandler) GetCategories(c *fiber.Ctx) error {
 	})
 }
 
-
-// GetPromptByID returns a prompt by ID (for admin review)
+// GetPromptByID returns a prompt by ID (admin review).
 func (h *PromptHandler) GetPromptByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	// ✅ تغییر: استفاده از FindByIDForAdmin به جای FindByID
 	prompt, err := h.service.GetByIDForAdmin(c.Context(), id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -240,11 +252,7 @@ func (h *PromptHandler) GetPromptByID(c *fiber.Ctx) error {
 	})
 }
 
-// GetMyPromptByID returns a single prompt owned by the authenticated user,
-// regardless of its status (pending/approved/rejected/deleted). Used by the
-// author dashboard to preview their own drafts and rejected submissions.
-//
-// Admins should use the /admin/prompts/:id route via GetPromptByID instead.
+// GetMyPromptByID returns a single prompt owned by the authenticated user.
 func (h *PromptHandler) GetMyPromptByID(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	promptID := c.Params("id")
@@ -261,9 +269,6 @@ func (h *PromptHandler) GetMyPromptByID(c *fiber.Ctx) error {
 		})
 	}
 
-	// Ownership check: an author can only view their own prompt through
-	// this endpoint. Prevents sellers from peeking at other users' pending
-	// or rejected drafts.
 	if prompt.SellerID != userID {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "You are not the owner of this prompt",
