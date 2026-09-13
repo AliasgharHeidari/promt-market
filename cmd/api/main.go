@@ -1,4 +1,3 @@
-// cmd/api/main.go
 package main
 
 import (
@@ -12,11 +11,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"gorm.io/gorm"
 
 	"promt-market/internal/config"
 	"promt-market/internal/database"
-	"promt-market/internal/domain"
 	"promt-market/internal/routes"
 )
 
@@ -24,15 +21,14 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Connect to PostgreSQL
+	// Connect to PostgreSQL.
+	//
+	// NOTE: database.Connect already runs AutoMigrate internally. Do NOT
+	// run migrations again here — having two AutoMigrate callsites is a
+	// recipe for drift and duplicate work.
 	db, err := database.Connect(cfg.GetDSN(), cfg.DB.MaxConns)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
-	}
-
-	// Auto migrate
-	if err := autoMigrate(db); err != nil {
-		log.Fatal("Failed to migrate database:", err)
 	}
 
 	// Connect to Redis
@@ -50,10 +46,10 @@ func main() {
 		Prefork:      cfg.App.Env == "production",
 	})
 
-	//  CORS Middleware 
+	// CORS Middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5500, http://127.0.0.1:5500, http://localhost:3000, http://127.0.0.1:3000", // ✅ مشخص کردن دامنه‌ها
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowOrigins:     "http://localhost:5500, http://127.0.0.1:5500, http://localhost:3000, http://127.0.0.1:3000",
+		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-CSRF-Token",
 		ExposeHeaders:    "Content-Length, Content-Type",
 		AllowCredentials: true,
@@ -88,22 +84,4 @@ func main() {
 		log.Fatal("Server shutdown error:", err)
 	}
 	log.Println("Server stopped")
-}
-
-// autoMigrate creates all tables automatically
-func autoMigrate(db *gorm.DB) error {
-	log.Println("🔄 Running auto migration...")
-
-	if err := db.AutoMigrate(
-		&domain.User{},
-		&domain.Prompt{},
-		&domain.Order{},
-		&domain.Review{},
-		&domain.AdminLog{},
-	); err != nil {
-		return err
-	}
-
-	log.Println("✅ Database migrated successfully!")
-	return nil
 }

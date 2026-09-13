@@ -1,10 +1,9 @@
-// internal/handler/auth_handler.go
 package handler
 
 import (
-
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"promt-market/internal/repository"
@@ -16,9 +15,10 @@ type AuthHandler struct {
 	validator *validator.Validate
 }
 
-func NewAuthHandler(db *gorm.DB) *AuthHandler {
+func NewAuthHandler(db *gorm.DB, redisClient *redis.Client, emailService *service.EmailService) *AuthHandler {
 	userRepo := repository.NewUserRepository(db)
-	authService := service.NewAuthService(userRepo)
+	verifyRepo := repository.NewVerificationRepository(redisClient)
+	authService := service.NewAuthService(userRepo, verifyRepo, emailService)
 
 	return &AuthHandler{
 		service:   authService,
@@ -26,48 +26,47 @@ func NewAuthHandler(db *gorm.DB) *AuthHandler {
 	}
 }
 
-// Register handles user registration
-// @Summary Register new user
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body service.RegisterRequest true "Registration data"
-// @Success 201 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 409 {object} map[string]interface{}
-// @Router /auth/register [post]
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var req service.RegisterRequest
 
-	// Parse body
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
-	// Validate
-	if err := h.validator.Struct(req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	// Call service
 	user, err := h.service.Register(c.Context(), &req)
 	if err != nil {
-		if err.Error() == "user already exists with this email" {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+		msg := err.Error()
+
+		// Validation errors from the service start with Persian letters.
+		// We can distinguish them from internal errors by message prefix —
+		// a simpler alternative is a typed error, but this keeps the
+		// service layer dependency-free.
+		if isValidationError(msg) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": msg,
 			})
 		}
+
+		switch msg {
+		case "user already exists with this email":
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": msg,
+			})
+		case "user already registered but not verified. Please use the resend verification endpoint":
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": msg,
+			})
+		}
+
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to register user",
 		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "User registered successfully",
+		"message": "User registered successfully. Please check your email for verification code.",
 		"data": fiber.Map{
 			"id":        user.ID,
 			"email":     user.Email,
@@ -77,34 +76,90 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	})
 }
 
-// Login handles user login
-// @Summary Login user
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body service.LoginRequest true "Login credentials"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 401 {object} map[string]interface{}
-// @Router /auth/login [post]
-func (h *AuthHandler) Login(c *fiber.Ctx) error {
-	var req service.LoginRequest
+// isValidationError returns true when msg is a user-facing validation error
+// (written in Persian) rather than an internal/English error. This is a
+// pragmatic shortcut — for larger codebases, define a typed ValidationError
+// in the service package instead.
+func isValidationError(msg string) bool {
+	if msg == "" {
+		return false
+	}
+	// Persian Unicode range starts at U+0600. If the first rune is Persian,
+	// it's a validation error we authored ourselves.
+	r := []rune(msg)[0]
+	return r >= 0x0600 && r <= 0x06FF
+}
 
-	// Parse body
+func (h *AuthHandler) VerifyEmail(c *fiber.Ctx) error {
+	var req service.VerifyEmailRequest
+
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
-	// Validate
 	if err := h.validator.Struct(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	// Call service
+	if err := h.service.VerifyEmail(c.Context(), &req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Email verified successfully. You can now login.",
+	})
+}
+
+// ResendVerification issues a fresh verification code for a user who registered
+// but hasn't verified their email yet (e.g. the original email was lost, expired,
+// or never arrived).
+func (h *AuthHandler) ResendVerification(c *fiber.Ctx) error {
+	var req service.ResendVerificationRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if err := h.service.ResendVerification(c.Context(), &req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Verification code resent. Please check your email.",
+	})
+}
+
+func (h *AuthHandler) Login(c *fiber.Ctx) error {
+	var req service.LoginRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
 	tokenPair, user, err := h.service.Login(c.Context(), &req)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -127,34 +182,21 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	})
 }
 
-// RefreshToken handles token refresh
-// @Summary Refresh tokens
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body service.RefreshRequest true "Refresh token"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 401 {object} map[string]interface{}
-// @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	var req service.RefreshRequest
 
-	// Parse body
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
-	// Validate
 	if err := h.validator.Struct(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	// Call service
 	tokenPair, err := h.service.RefreshTokens(c.Context(), req.RefreshToken)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -168,7 +210,6 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	})
 }
 
-// GetProfile returns the current user's profile
 func (h *AuthHandler) GetProfile(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 

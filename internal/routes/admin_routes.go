@@ -10,7 +10,8 @@ import (
 )
 
 func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
-	adminHandler := handler.NewAdminHandler(db)
+	adminHandler := handler.NewAdminHandler(db, redisClient)
+	editHandler := handler.NewAuthorDashboardHandler(db)
 
 	admin := app.Group("/api/v1/admin",
 		middleware.JWTProtected(),
@@ -19,31 +20,27 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 		middleware.AuditLog(db),
 	)
 
-	// CSRF token endpoint.
-	// ⚠️ Moved inside the protected `admin` group: previously this was
-	// registered on `app` directly and bypassed JWTProtected/AdminOnly/
-	// AdminRateLimit/AuditLog entirely, letting anyone (even unauthenticated
-	// requests) mint a CSRF cookie tied to the admin panel.
+	// CSRF + Dashboard
 	admin.Get("/csrf-token", adminHandler.GetCSRFToken)
-
-	// Dashboard
 	admin.Get("/stats", adminHandler.GetDashboardStats)
 
 	// User management
 	admin.Get("/users", adminHandler.GetAllUsers)
 	admin.Put("/users/:id/status", adminHandler.UpdateUserStatus)
 
-	// Prompt management
+	// Prompt management — listing
 	admin.Get("/prompts/pending", adminHandler.GetPendingPrompts)
 	admin.Get("/prompts/approved", adminHandler.GetApprovedPrompts)
 	admin.Get("/prompts/rejected", adminHandler.GetRejectedPrompts)
 	admin.Get("/prompts/deleted", adminHandler.GetDeletedPrompts)
 	admin.Get("/prompts/all", adminHandler.GetAllPromptsAdmin)
 
+	// Prompt management — moderation & editing
 	admin.Put("/prompts/:id/approve", adminHandler.ApprovePrompt)
-	admin.Put("/prompts/:id/reject", adminHandler.RejectPrompt)
-	
-	// ✅ مسیر درست برای ادمین
+	admin.Put("/prompts/:id/reject", adminHandler.RejectPromptWithNote)
+	admin.Patch("/prompts/:id", adminHandler.AdminUpdatePrompt)
+	admin.Delete("/prompts/:id/images/:index", adminHandler.RemovePromptImage)
+	admin.Delete("/prompts/:id/cover", adminHandler.RemovePromptCover)
 	admin.Delete("/prompts/:id", adminHandler.DeletePromptAdmin)
 
 	// Order management
@@ -53,4 +50,22 @@ func SetupAdminRoutes(app *fiber.App, db *gorm.DB, redisClient *redis.Client) {
 
 	// Audit logs
 	admin.Get("/logs", adminHandler.GetAdminLogs)
+
+	// Author applications
+	admin.Get("/author-applications", adminHandler.GetAuthorApplications)
+	admin.Get("/author-applications/:id", adminHandler.GetAuthorApplicationDetail)
+	admin.Get("/author-applications/:id/document", adminHandler.GetAuthorApplicationDocument)
+	admin.Put("/author-applications/:id/approve", adminHandler.ApproveAuthorApplication)
+	admin.Put("/author-applications/:id/reject", adminHandler.RejectAuthorApplication)
+
+	// Review moderation (approve / reject / delete only — no edit).
+	admin.Get("/reviews", adminHandler.GetReviews)
+	admin.Put("/reviews/:id/approve", adminHandler.ApproveReview)
+	admin.Put("/reviews/:id/reject", adminHandler.RejectReview)
+	admin.Delete("/reviews/:id", adminHandler.DeleteReview)
+
+	// Prompt edit proposals — authors propose changes; admins approve/reject.
+	admin.Get("/prompt-edits", editHandler.AdminListEdits)
+	admin.Put("/prompt-edits/:id/approve", editHandler.AdminApproveEdit)
+	admin.Put("/prompt-edits/:id/reject", editHandler.AdminRejectEdit)
 }

@@ -55,3 +55,12 @@ func (r *UserRepository) UpdateWalletBalance(ctx context.Context, userID string,
 		Where("id = ?", userID).
 		Update("wallet_balance", gorm.Expr("wallet_balance + ?", amount)).Error
 }
+// UpdateFields applies a partial update to a user. Used by the profile editor
+// so we don't overwrite fields like Role / IsVerified that shouldn't be
+// touched by a simple profile save.
+func (r *UserRepository) UpdateFields(ctx context.Context, userID string, fields map[string]interface{}) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.User{}).
+		Where("id = ?", userID).
+		Updates(fields).Error
+}

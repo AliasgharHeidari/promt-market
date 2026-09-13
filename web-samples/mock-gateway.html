@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>درگاه پرداخت (شبیه‌ساز)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-hover: #2d3a4f;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --warning-bg: #78350f;
+      --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    [data-theme="light"] {
+      --bg-primary: #f1f5f9;
+      --bg-secondary: #ffffff;
+      --bg-hover: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .gateway-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 1.5rem;
+      max-width: 520px;
+      width: 100%;
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .gateway-header { text-align: center; margin-bottom: 2rem; }
+    .gateway-header .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+    .gateway-header h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .gateway-header .sub { font-size: 0.8rem; color: var(--text-secondary); }
+    .gateway-header .warning-badge {
+      display: inline-block;
+      background: var(--warning-bg);
+      border: 1px solid #b45309;
+      color: #fde68a;
+      font-size: 0.7rem;
+      padding: 0.25rem 0.9rem;
+      border-radius: 999px;
+      margin-top: 0.7rem;
+      font-weight: 500;
+    }
+
+    .amount-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.9rem;
+      padding: 1.2rem 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .amount-box .label { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.3rem; }
+    .amount-box .value { font-size: 1.8rem; font-weight: 700; color: var(--success); }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      font-size: 0.78rem;
+      border-bottom: 1px dashed var(--border-color);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .k { color: var(--text-muted); }
+    .info-row .v {
+      color: var(--text-primary);
+      font-family: monospace;
+      font-size: 0.72rem;
+      direction: ltr;
+      max-width: 60%;
+      text-align: left;
+      word-break: break-all;
+    }
+
+    .info-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.7rem;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .actions { display: flex; flex-direction: column; gap: 0.7rem; }
+
+    .btn {
+      padding: 0.9rem 1.4rem;
+      border: none;
+      border-radius: 0.7rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-success {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+    .btn-success:hover:not(:disabled) { opacity: 0.95; transform: translateY(-1px); }
+    .btn-cancel {
+      background: #7f1d1d;
+      color: #fecaca;
+      border: 1px solid #b91c1c;
+    }
+    .btn-cancel:hover:not(:disabled) { background: #991b1b; }
+
+    .footer-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .error-box {
+      background: #7f1d1d;
+      border: 1px solid #b91c1c;
+      color: #fecaca;
+      padding: 1rem;
+      border-radius: 0.7rem;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+
+  <div class="gateway-card" id="gatewayCard">
+    <div class="gateway-header">
+      <div class="icon">🏦</div>
+      <h1>درگاه پرداخت</h1>
+      <div class="sub">Prompt Market</div>
+      <div class="warning-badge">🧪 شبیه‌ساز — تراکنش واقعی انجام نمی‌شود</div>
+    </div>
+
+    <div id="content">
+      <div class="amount-box">
+        <div class="label">مبلغ قابل پرداخت</div>
+        <div class="value" id="amountDisplay">—</div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-row">
+          <span class="k">کد پیگیری</span>
+          <span class="v" id="authorityDisplay">—</span>
+        </div>
+        <div class="info-row">
+          <span class="k">پذیرنده</span>
+          <span class="v">Prompt Market</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-success" id="payBtn" onclick="paySuccess()">✅ پرداخت موفق</button>
+        <button class="btn btn-cancel" id="cancelBtn" onclick="payCancel()">❌ انصراف و بازگشت</button>
+      </div>
+
+      <div class="footer-note">
+        این صفحه بخشی از درگاه شبیه‌سازی‌شده است.<br>
+        در محیط واقعی، این صفحه توسط درگاه بانکی نمایش داده می‌شود.
+      </div>
+    </div>
+
+    <div id="errorArea" style="display:none;"></div>
+  </div>
+
+<script>
+  let theme = localStorage.getItem('theme') || 'dark';
+  function applyTheme(t) {
+    theme = t;
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = t === 'dark' ? '🌙' : '☀️';
+  }
+  function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
+
+  const params = new URLSearchParams(window.location.search);
+  const authority = params.get('authority') || '';
+  const amount = params.get('amount') || '0';
+  const callback = params.get('callback') || 'http://localhost:8080/api/v1/payment/callback';
+
+  function fmtMoney(n) { return Number(n || 0).toLocaleString('fa-IR') + ' تومان'; }
+  function esc(v) {
+    if (v === null || v === undefined) return '';
+    return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  document.getElementById('amountDisplay').textContent = fmtMoney(amount);
+  document.getElementById('authorityDisplay').textContent = authority || '—';
+
+  function disableButtons() {
+    document.getElementById('payBtn').disabled = true;
+    document.getElementById('cancelBtn').disabled = true;
+  }
+
+  function showError(msg) {
+    disableButtons();
+    document.getElementById('content').style.display = 'none';
+    const err = document.getElementById('errorArea');
+    err.style.display = 'block';
+    err.innerHTML = `<div class="error-box">
+      ❌ ${esc(msg)}
+      <div style="margin-top:0.8rem;">
+        <a href="cart.html" style="color:#fecaca;text-decoration:underline;font-size:0.8rem;">بازگشت به سبد خرید</a>
+      </div>
+    </div>`;
+  }
+
+  function goToCallback(status) {
+    if (!authority) { showError('کد پیگیری یافت نشد'); return; }
+    disableButtons();
+    const sep = callback.includes('?') ? '&' : '?';
+    const url = `${callback}${sep}authority=${encodeURIComponent(authority)}&status=${status}`;
+    window.location.href = url;
+  }
+
+  function paySuccess() { goToCallback('OK'); }
+  function payCancel() { goToCallback('NOK'); }
+
+  applyTheme(theme);
+
+  if (!authority) showError('این صفحه بدون کد پیگیری معتبر باز شده است.');
+  if (!amount || Number(amount) <= 0) showError('مبلغ پرداخت نامعتبر است.');
+</script>
+
+</body>
+</html>

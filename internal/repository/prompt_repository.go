@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+
 	"promt-market/internal/domain"
 )
 
@@ -41,8 +42,6 @@ func (r *PromptRepository) FindByID(ctx context.Context, id string) (*domain.Pro
 }
 
 // FindByIDForAdmin returns a prompt by ID regardless of soft-delete status.
-// Used by admin flows (e.g. approving/rejecting/deleting) where the record
-// must be found even if it was already soft-deleted.
 func (r *PromptRepository) FindByIDForAdmin(ctx context.Context, id string) (*domain.Prompt, error) {
 	var prompt domain.Prompt
 	err := r.db.WithContext(ctx).
@@ -73,11 +72,15 @@ func (r *PromptRepository) FindBySlug(ctx context.Context, slug string) (*domain
 	return &prompt, nil
 }
 
+// FindAll returns approved, non-paused, non-deleted prompts for the public
+// listing. Paused prompts are intentionally hidden — the owner toggled
+// them off and the storefront should honor that.
 func (r *PromptRepository) FindAll(ctx context.Context, limit, offset int) ([]domain.Prompt, int64, error) {
 	var prompts []domain.Prompt
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&domain.Prompt{}).Where("status = ?", "approved")
+	query := r.db.WithContext(ctx).Model(&domain.Prompt{}).
+		Where("status = ? AND is_paused = ? AND deleted_at IS NULL", "approved", false)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -93,8 +96,9 @@ func (r *PromptRepository) FindAll(ctx context.Context, limit, offset int) ([]do
 	return prompts, total, err
 }
 
-// FindBySeller returns a seller's prompts, excluding soft-deleted ones, so a
-// deleted/moderated-away prompt disappears from the seller's own dashboard.
+// FindBySeller returns a seller's prompts excluding soft-deleted ones.
+// Unlike FindAll, this includes paused and pending prompts so the owner
+// can manage everything from their dashboard.
 func (r *PromptRepository) FindBySeller(ctx context.Context, sellerID string, limit, offset int) ([]domain.Prompt, int64, error) {
 	var prompts []domain.Prompt
 	var total int64
@@ -120,16 +124,8 @@ func (r *PromptRepository) Update(ctx context.Context, prompt *domain.Prompt) er
 	return r.db.WithContext(ctx).Save(prompt).Error
 }
 
-// Delete performs a soft delete: it stamps DeletedAt instead of removing the
-// row. This matters because Order.PromptID references prompts and existing
-// orders must still be able to display prompt info (title, etc.) after a
-// prompt is deleted/moderated away. A hard delete here would either violate
-// the FK relationship used by Order.Prompt or silently break order history.
-//
-// NOTE: Prompt.DeletedAt is a plain *time.Time (not gorm.DeletedAt), so GORM
-// does NOT treat this model as soft-delete-enabled automatically — calling
-// db.Delete(&Prompt{}, ...) directly would hard-delete the row despite the
-// DeletedAt column existing. We set it explicitly instead.
+// Delete performs a soft delete: stamps DeletedAt and flips status to
+// "deleted" instead of removing the row.
 func (r *PromptRepository) Delete(ctx context.Context, id string) error {
 	now := time.Now()
 	return r.db.WithContext(ctx).
@@ -151,43 +147,42 @@ func (r *PromptRepository) Search(ctx context.Context, filter *domain.PromptFilt
 	var prompts []domain.Prompt
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&domain.Prompt{})
+	query := r.db.WithContext(ctx).Model(&domain.Prompt{}).
+		Where("deleted_at IS NULL")
 
-	if filter.Status == "approved" {
-		query = query.Where("status = ?", "approved")
+	// Public search defaults to approved prompts. When the filter asks for
+	// approved (the default), we also hide paused ones. Non-approved
+	// statuses are admin-only and shouldn't be filtered by is_paused.
+	if filter.Status == "approved" || filter.Status == "" {
+		query = query.Where("status = ? AND is_paused = ?", "approved", false)
+	} else if filter.Status != "all" {
+		query = query.Where("status = ?", filter.Status)
 	}
 
 	if filter.Category != "" {
 		query = query.Where("category = ?", filter.Category)
 	}
-
 	if filter.SubCategory != "" {
 		query = query.Where("sub_category = ?", filter.SubCategory)
 	}
-
 	if filter.MinPrice > 0 {
 		query = query.Where("price >= ?", filter.MinPrice)
 	}
 	if filter.MaxPrice > 0 {
 		query = query.Where("price <= ?", filter.MaxPrice)
 	}
-
 	if filter.Difficulty != "" {
 		query = query.Where("difficulty = ?", filter.Difficulty)
 	}
-
 	if filter.Language != "" {
 		query = query.Where("language = ?", filter.Language)
 	}
-
 	if filter.MinRating > 0 {
 		query = query.Where("rating >= ?", filter.MinRating)
 	}
-
 	if len(filter.Tags) > 0 {
 		query = query.Where("tags && ?", filter.Tags)
 	}
-
 	if filter.Search != "" {
 		searchTerm := strings.TrimSpace(filter.Search)
 		query = query.Where(
@@ -210,7 +205,6 @@ func (r *PromptRepository) Search(ctx context.Context, filter *domain.PromptFilt
 	if !validSortFields[sortField] {
 		sortField = "created_at"
 	}
-
 	if sortOrder != "asc" && sortOrder != "desc" {
 		sortOrder = "desc"
 	}
@@ -230,7 +224,38 @@ func (r *PromptRepository) Search(ctx context.Context, filter *domain.PromptFilt
 func (r *PromptRepository) GetCategories(ctx context.Context, categories *[]string) error {
 	return r.db.WithContext(ctx).
 		Model(&domain.Prompt{}).
-		Where("status = ?", "approved").
+		Where("status = ? AND is_paused = ?", "approved", false).
 		Distinct("category").
 		Pluck("category", categories).Error
+}
+
+// UpdateFields applies a partial update to a prompt identified by id.
+func (r *PromptRepository) UpdateFields(ctx context.Context, id string, fields map[string]interface{}) error {
+	fields["updated_at"] = time.Now()
+	return r.db.WithContext(ctx).
+		Model(&domain.Prompt{}).
+		Where("id = ?", id).
+		Updates(fields).Error
+}
+
+// SetPaused toggles the IsPaused flag on a prompt.
+func (r *PromptRepository) SetPaused(ctx context.Context, id string, paused bool) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Prompt{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"is_paused":  paused,
+			"updated_at": time.Now(),
+		}).Error
+}
+
+// SetHasPendingEdit toggles the HasPendingEdit flag on a prompt.
+func (r *PromptRepository) SetHasPendingEdit(ctx context.Context, id string, pending bool) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Prompt{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"has_pending_edit": pending,
+			"updated_at":       time.Now(),
+		}).Error
 }

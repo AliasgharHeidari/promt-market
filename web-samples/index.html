@@ -3,35 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prompt Market</title>
+  <title>Prompt Market · فروشگاه</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
 
   <style>
-    /* ─── CSS Variables ─── */
     :root {
       --bg-primary: #0f172a;
       --bg-secondary: #1e293b;
-      --bg-card: #1e293b;
+      --bg-elevated: #243244;
       --bg-hover: #2d3a4f;
       --bg-input: #2d3a4f;
       --text-primary: #f1f5f9;
       --text-secondary: #94a3b8;
       --text-muted: #64748b;
       --border-color: #334155;
-      --shadow-color: rgba(0, 0, 0, 0.3);
+      --border-strong: #475569;
       --badge-bg: #2d3a4f;
       --scrollbar-track: #1e293b;
       --scrollbar-thumb: #475569;
       --success: #22c55e;
+      --success-bg: #064e3b;
       --error: #ef4444;
+      --error-bg: #7f1d1d;
       --info: #3b82f6;
+      --info-bg: #1e3a5f;
       --warning: #f59e0b;
+      --warning-bg: #78350f;
+      --accent: #8b5cf6;
+      --accent-bg: #4c1d95;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f1f5f9;
+      --bg-secondary: #ffffff;
+      --bg-elevated: #f8fafc;
+      --bg-hover: #f1f5f9;
+      --bg-input: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --badge-bg: #f1f5f9;
+      --scrollbar-track: #f1f5f9;
+      --scrollbar-thumb: #cbd5e1;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { transition: background 0.3s ease; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -39,12 +68,13 @@
       color: var(--text-primary);
       padding: 1.5rem;
       min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
     .container { max-width: 1400px; margin: 0 auto; }
 
@@ -59,53 +89,96 @@
       padding: 1rem 2rem;
       border-radius: 1rem;
       border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
       margin-bottom: 1.5rem;
     }
     .header h1 {
       font-weight: 700;
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
     }
     .header .badge {
-      background: #1e3a5f;
+      background: var(--info-bg);
       color: #60a5fa;
-      font-size: 0.6rem;
-      padding: 0.1rem 0.7rem;
+      font-size: 0.62rem;
+      padding: 0.15rem 0.7rem;
       border-radius: 999px;
       font-weight: 600;
+      letter-spacing: 0.02em;
     }
     .header .status {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.6rem;
       font-size: 0.85rem;
       color: var(--text-secondary);
+      flex-wrap: wrap;
     }
-    .header .status .dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 0.3rem;
-    }
-    .dot.online { background: var(--success); }
-    .dot.offline { background: var(--error); }
 
     .theme-toggle {
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 0.6rem;
-      padding: 0.3rem 0.8rem;
+      padding: 0.4rem 0.9rem;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       color: var(--text-secondary);
-      transition: 0.15s;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
     }
-    .theme-toggle:hover { background: var(--bg-hover); }
+    .theme-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-    /* ─── Grid ─── */
+    /* ─── Nav links ─── */
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      transition: 0.15s;
+      background: var(--bg-input);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .nav-link:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-strong); }
+    .nav-link.primary {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+    .nav-link.primary:hover { opacity: 0.9; }
+
+    .cart-btn { position: relative; }
+    .cart-btn .badge-count {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-size: 0.62rem;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+    }
+    .cart-btn .badge-count.hidden { display: none; }
+
+    /* ─── Layout ─── */
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -114,15 +187,15 @@
     }
     @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
 
-    /* ─── Cards ─── */
     .card {
       background: var(--bg-secondary);
       border-radius: 1rem;
       padding: 1.5rem 1.75rem;
       border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
       transition: 0.2s;
     }
-    .card:hover { border-color: #475569; }
+    .card:hover { border-color: var(--border-strong); }
     .card h3 {
       font-weight: 600;
       font-size: 1rem;
@@ -130,7 +203,6 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: var(--text-primary);
     }
     .card .sub {
       color: var(--text-muted);
@@ -144,31 +216,45 @@
       font-size: 0.75rem;
       font-weight: 500;
       margin-top: 0.8rem;
-      margin-bottom: 0.2rem;
+      margin-bottom: 0.25rem;
       color: var(--text-secondary);
     }
     input, textarea, select {
       width: 100%;
-      padding: 0.5rem 0.8rem;
+      padding: 0.55rem 0.85rem;
       border: 1px solid var(--border-color);
       border-radius: 0.5rem;
       font-size: 0.85rem;
       background: var(--bg-input);
       color: var(--text-primary);
       transition: 0.15s;
+      font-family: inherit;
     }
     input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: var(--info);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
     }
     textarea { resize: vertical; min-height: 60px; font-family: inherit; }
 
-    .row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.8rem;
+    input[type="file"] {
+      padding: 0.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
     }
+    input[type="file"]::file-selector-button {
+      background: var(--info);
+      color: white;
+      border: none;
+      padding: 0.35rem 0.9rem;
+      border-radius: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-left: 0.6rem;
+    }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
 
     /* ─── Buttons ─── */
     .btn {
@@ -183,50 +269,223 @@
       transition: 0.15s;
       margin-top: 1rem;
       width: 100%;
+      font-family: inherit;
     }
-    .btn:hover { opacity: 0.85; transform: scale(0.98); }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: scale(0.98); }
     .btn-outline {
       background: transparent;
       color: var(--text-primary);
       border: 1px solid var(--border-color);
     }
     .btn-outline:hover { background: var(--bg-hover); }
-    .btn-sm {
-      width: auto;
-      padding: 0.3rem 1rem;
-      margin-top: 0;
-      font-size: 0.75rem;
-    }
+    .btn-sm { width: auto; padding: 0.35rem 1rem; margin-top: 0; font-size: 0.75rem; }
     .btn-success { background: var(--success); }
     .btn-danger { background: var(--error); }
     .btn-warning { background: var(--warning); color: #0f172a; }
 
-    /* ─── Output / Result Box ─── */
+    /* ─── Output ─── */
     .output {
       margin-top: 1rem;
       background: var(--bg-primary);
       border-radius: 0.6rem;
       padding: 0.8rem 1rem;
       font-size: 0.8rem;
-      max-height: 280px;
+      max-height: 340px;
       overflow-y: auto;
       border: 1px solid var(--border-color);
-      font-family: 'Inter', monospace;
       color: var(--text-secondary);
-      white-space: pre-wrap;
       word-break: break-word;
       line-height: 1.6;
     }
-    .output .ok { color: var(--success); }
-    .output .err { color: var(--error); }
-    .output .info { color: var(--info); }
-    .output .warn { color: var(--warning); }
+    .output .placeholder { color: var(--text-muted); }
 
-    /* ─── Token Display ─── */
+    .result-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 0.7rem;
+    }
+    .result-banner.ok { color: var(--success); }
+    .result-banner.err { color: var(--error); }
+    .result-banner.info { color: var(--info); }
+
+    .data-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.45rem 0.9rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.6rem;
+      padding: 0.8rem 1rem;
+    }
+    .data-card .k {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .data-card .v {
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      align-self: center;
+      word-break: break-word;
+    }
+    .data-card .v.mono {
+      font-family: monospace;
+      font-size: 0.72rem;
+      background: var(--bg-primary);
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.3rem;
+      display: inline-block;
+      word-break: break-all;
+    }
+    .data-card .v .chip {
+      display: inline-block;
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    /* ─── Prompt list ─── */
+    .prompt-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .prompt-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 0.7rem;
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .prompt-item:hover {
+      border-color: var(--info);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(59, 130, 246, 0.15);
+    }
+    .prompt-item .pi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+    .prompt-item .pi-title {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--text-primary);
+    }
+    .prompt-item .pi-price {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--success);
+      white-space: nowrap;
+    }
+    .prompt-item .pi-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+    }
+    .prompt-item .pi-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .prompt-item .pi-hint {
+      font-size: 0.7rem;
+      color: var(--info);
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 1rem 0;
+    }
+
+    /* ─── My Prompts (author) ─── */
+    .my-prompts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 0.5rem;
+    }
+    .my-prompt-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 0.7rem;
+      padding: 0.8rem 1rem;
+      transition: 0.15s;
+    }
+    .my-prompt-item:hover { border-color: var(--border-strong); }
+    .mpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .mpi-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+    .mpi-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
+    .rejection-note {
+      background: var(--error-bg);
+      border: 1px solid #b91c1c;
+      color: #fecaca;
+      padding: 0.5rem 0.8rem;
+      border-radius: 0.5rem;
+      font-size: 0.78rem;
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: var(--badge-bg);
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .status-badge.status-pending  { background: var(--warning-bg); border-color: #b45309; color: #fde68a; }
+    .status-badge.status-approved { background: var(--success-bg); border-color: #047857; color: #a7f3d0; }
+    .status-badge.status-rejected { background: var(--error-bg); border-color: #b91c1c; color: #fecaca; }
+    .status-badge.status-deleted  { background: var(--bg-hover); color: var(--text-muted); }
+
+    .chip {
+      display: inline-block;
+      background: var(--badge-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      padding: 0.15rem 0.65rem;
+      border-radius: 999px;
+    }
+
     .token-box {
       margin-top: 1.5rem;
       background: var(--bg-secondary);
-      border-radius: 0.6rem;
+      border-radius: 0.7rem;
       padding: 0.8rem 1.2rem;
       border: 1px solid var(--border-color);
       display: flex;
@@ -241,33 +500,121 @@
       word-break: break-all;
       color: var(--text-primary);
       background: var(--bg-primary);
-      padding: 0.2rem 0.6rem;
+      padding: 0.25rem 0.6rem;
       border-radius: 0.3rem;
       flex: 1;
     }
 
-    /* ─── Status Badge ─── */
-    .status-badge {
-      display: inline-block;
-      background: var(--badge-bg);
-      padding: 0.15rem 0.7rem;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-      border: 1px solid var(--border-color);
+    .preview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
     }
+    .preview-row img {
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      object-fit: cover;
+    }
+    .preview-row .cover-preview { width: 130px; height: 90px; }
+    .preview-row .gallery-preview { width: 62px; height: 62px; }
 
     .flex { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
-    .mt-1 { margin-top: 1rem; }
-    .mb-1 { margin-bottom: 0.5rem; }
+
+    /* ─── Reviews ─── */
+    .star-input {
+      display: flex;
+      gap: 0.3rem;
+      font-size: 1.6rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .star-input span {
+      color: var(--text-muted);
+      transition: 0.15s;
+    }
+    .star-input span.active { color: #fbbf24; }
+
+    /* ─── Cart action buttons in overlay ─── */
+    .cart-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.5rem;
+      border-radius: 0.6rem;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+      transition: 0.15s;
+      width: auto;
+    }
+    .cart-action-btn.add {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    .cart-action-btn.add:hover { opacity: 0.95; transform: translateY(-1px); }
+    .cart-action-btn.add:disabled {
+      background: var(--bg-hover);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      opacity: 0.7;
+    }
+    .cart-action-btn.remove {
+      background: var(--error-bg);
+      color: #fecaca;
+      border: 1px solid #b91c1c;
+    }
+    .cart-action-btn.remove:hover { background: #991b1b; }
+    .cart-action-btn.owned {
+      background: var(--success-bg);
+      color: #a7f3d0;
+      border: 1px solid #047857;
+    }
+    .cart-action-btn.owned:hover { background: #065f46; }
+    .cart-action-btn.paywall {
+      background: var(--warning-bg);
+      color: #fde68a;
+      border: 1px solid #b45309;
+      cursor: default;
+    }
+
+    /* ─── Toast ─── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: 0.7rem;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+      opacity: 0;
+      transform: translateY(1rem);
+      transition: 0.25s;
+      pointer-events: none;
+      z-index: 99999;
+      max-width: 400px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: var(--success-bg); border-color: #10b981; color: #a7f3d0; }
+    .toast.error { background: var(--error-bg); border-color: #ef4444; color: #fecaca; }
+    .toast.info { background: var(--info-bg); border-color: #3b82f6; color: #93c5fd; }
 
     @media (max-width: 600px) {
       body { padding: 0.8rem; }
-      .header { flex-direction: column; align-items: stretch; }
+      .header { flex-direction: column; align-items: stretch; padding: 1rem; }
+      .header .status { justify-content: center; }
       .row-2 { grid-template-columns: 1fr; }
       .grid-2 { grid-template-columns: 1fr; }
+      .card { padding: 1.2rem; }
     }
   </style>
 </head>
@@ -275,36 +622,31 @@
 
 <div class="container">
 
-  <!-- ═══ HEADER ═══ -->
+  <!-- HEADER -->
   <header class="header">
     <h1>
       🧪 Prompt Market
-      <span class="badge">v0.3</span>
-      <span id="serverStatus" class="status-badge" style="background:#1e3a5f;color:#60a5fa;">● Online</span>
+      <span class="badge">v1.0</span>
     </h1>
     <div class="status">
       <span>🔑 <span id="tokenStatus" style="color:var(--text-muted);">بدون توکن</span></span>
-      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-      <button class="btn btn-sm" onclick="checkHealth()">🔄 Health</button>
+
+      <a href="cart.html" class="nav-link cart-btn" title="سبد خرید">
+        🛒 سبد خرید
+        <span class="badge-count hidden" id="cartBadge">0</span>
+      </a>
+
+      <a href="purchases.html" class="nav-link">📦 خریدهای من</a>
+      <a href="dashboard.html" class="nav-link primary">📊 داشبورد نویسنده</a>
+
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
     </div>
   </header>
 
-  <!-- ═══ STATUS LINE ═══ -->
-  <div class="card" style="margin-bottom:1.5rem; background:var(--bg-primary); border-color:var(--border-color);">
-    <div class="flex-between">
-      <span style="color:var(--text-secondary); font-size:0.85rem;">
-        🟢 <span id="healthOutput">سرور در حال اجرا است</span>
-      </span>
-      <span style="color:var(--text-muted); font-size:0.75rem;">
-        API: <code style="background:var(--bg-input);padding:0.1rem 0.5rem;border-radius:0.3rem;">http://localhost:8080</code>
-      </span>
-    </div>
-  </div>
-
-  <!-- ═══ GRID ═══ -->
+  <!-- GRID -->
   <div class="grid-2">
 
-    <!-- ─── AUTH ─── -->
+    <!-- AUTH -->
     <div class="card">
       <h3>🔐 احراز هویت</h3>
       <label>ایمیل</label>
@@ -314,7 +656,7 @@
       <label>نام کامل</label>
       <input id="authName" value="Test User">
 
-      <div class="row-2" style="margin-top:0.5rem;">
+      <div class="row-2" style="margin-top:0.6rem;">
         <button class="btn btn-sm btn-outline" onclick="registerUser()">📝 ثبت‌نام</button>
         <button class="btn btn-sm" onclick="loginUser()">🔑 ورود</button>
       </div>
@@ -323,23 +665,47 @@
         <button class="btn btn-sm btn-outline" onclick="getProfile()">👤 پروفایل</button>
       </div>
 
-      <div class="output" id="authOutput">↳ نتیجه احراز هویت</div>
+      <label style="margin-top:1.2rem;">کد تایید ایمیل (۶ رقمی)</label>
+      <input id="verifyCode" maxlength="6" placeholder="123456">
+      <div class="row-2">
+        <button class="btn btn-sm btn-success" onclick="verifyEmail()">✅ تایید ایمیل</button>
+        <button class="btn btn-sm btn-warning" onclick="resendVerification()">📨 ارسال مجدد</button>
+      </div>
+
+      <div class="output" id="authOutput"><span class="placeholder">↳ نتیجه احراز هویت</span></div>
     </div>
 
-    <!-- ─── PROMPT ─── -->
+    <!-- PROMPT -->
     <div class="card">
       <h3>📄 مدیریت پرامپت</h3>
       <label>عنوان</label>
       <input id="promptTitle" value="Professional SEO Content Prompt">
       <label>توضیحات</label>
       <input id="promptDesc" value="Generate SEO-optimized blog content">
-      <label>دسته‌بندی</label>
-      <input id="promptCategory" value="Content Creation">
+
+      <div class="row-2">
+        <div>
+          <label>دسته‌بندی</label>
+          <input id="promptCategory" value="Content Creation">
+        </div>
+        <div>
+          <label>زیردسته (اختیاری)</label>
+          <input id="promptSubCategory" placeholder="Blog, SEO">
+        </div>
+      </div>
+
       <div class="row-2">
         <div>
           <label>قیمت (تومان)</label>
           <input id="promptPrice" type="number" value="50000">
         </div>
+        <div>
+          <label>قیمت با تخفیف (اختیاری)</label>
+          <input id="promptDiscountPrice" type="number" placeholder="0">
+        </div>
+      </div>
+
+      <div class="row-2">
         <div>
           <label>سطح</label>
           <select id="promptDifficulty">
@@ -348,11 +714,37 @@
             <option value="advanced">پیشرفته</option>
           </select>
         </div>
+        <div>
+          <label>زبان</label>
+          <select id="promptLanguage">
+            <option value="english" selected>انگلیسی</option>
+            <option value="persian">فارسی</option>
+            <option value="both">هر دو</option>
+          </select>
+        </div>
       </div>
-      <label>محتوای پرامپت</label>
-      <textarea id="promptContent" rows="2">You are an expert SEO writer. Create a blog post about AI...</textarea>
 
-      <div class="row-2">
+      <label>محتوای پرامپت</label>
+      <textarea id="promptContent" rows="3">You are an expert SEO writer. Create a blog post about AI...</textarea>
+
+      <label>خروجی نمونه (اختیاری)</label>
+      <textarea id="promptDemoOutput" rows="2" placeholder="نمونه خروجی..."></textarea>
+
+      <label>راهنمای استفاده (اختیاری)</label>
+      <textarea id="promptInstructions" rows="2" placeholder="نکات و ترفندها..."></textarea>
+
+      <label>تگ‌ها (با کاما جدا کن)</label>
+      <input id="promptTags" value="seo, content" placeholder="seo, content, blog">
+
+      <label>🖼️ تصویر کاور (حداکثر ۵ مگابایت)</label>
+      <input id="promptCoverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+      <div id="promptCoverPreview" class="preview-row"></div>
+
+      <label>🖼️ گالری تصاویر (چندتایی — حداکثر ۱۰ عدد)</label>
+      <input id="promptImages" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+      <div id="promptImagesPreview" class="preview-row"></div>
+
+      <div class="row-2" style="margin-top:0.8rem;">
         <button class="btn btn-sm" onclick="createPrompt()">➕ ایجاد</button>
         <button class="btn btn-sm btn-outline" onclick="listPrompts()">📋 لیست</button>
       </div>
@@ -361,31 +753,72 @@
         <button class="btn btn-sm btn-outline" onclick="getMyPrompts()">📁 پرامپت‌های من</button>
       </div>
 
-      <div class="output" id="promptOutput">↳ نتیجه عملیات</div>
+      <label style="margin-top:1.2rem; font-size:0.85rem;">📊 پرامپت‌های من با وضعیت</label>
+      <button class="btn btn-sm btn-outline" style="width:100%;" onclick="loadMyPromptsWithStatus()">
+        🔄 بارگذاری پرامپت‌های من
+      </button>
+      <div id="myPromptsList"></div>
+
+      <div class="output" id="promptOutput"><span class="placeholder">↳ نتیجه عملیات</span></div>
     </div>
   </div>
 
-  <!-- ═══ SEARCH BAR ═══ -->
+  <!-- AUTHOR APPLICATION -->
+  <div class="card" style="margin-top:1.5rem;">
+    <h3>🪪 ارتقا به نویسنده پرامپت</h3>
+    <div class="sub">برای ساخت پرامپت، شماره موبایل و مدارک هویتی رو تایید کن.</div>
+
+    <div class="row-2" style="margin-top:0.8rem;">
+      <div>
+        <label>گام ۱ — شماره موبایل</label>
+        <input id="authorPhone" placeholder="09121234567">
+      </div>
+      <div>
+        <label>گام ۲ — کد تایید (۶ رقمی)</label>
+        <input id="authorPhoneCode" maxlength="6" placeholder="کد از ترمینال سرور">
+      </div>
+    </div>
+    <div class="row-2">
+      <button class="btn btn-sm btn-outline" onclick="sendPhoneOtp()">📲 ارسال کد</button>
+      <button class="btn btn-sm btn-success" onclick="verifyPhoneOtp()">✅ تایید شماره</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--border-color);margin:1.2rem 0;">
+
+    <label>گام ۳ — تخصص شما</label>
+    <input id="authorExpertise" placeholder="تولید محتوا، برنامه‌نویسی...">
+    <label>گام ۳ — کد ملی (۱۰ رقمی)</label>
+    <input id="authorNationalId" maxlength="10" placeholder="0012345678">
+    <label>گام ۴ — عکس کارت ملی یا شناسنامه</label>
+    <input id="authorIdDocument" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf">
+
+    <button class="btn btn-sm" style="width:100%;margin-top:0.8rem;" onclick="submitAuthorApplication()">📤 ارسال درخواست</button>
+    <button class="btn btn-sm btn-outline" style="width:100%;margin-top:0.5rem;" onclick="getMyAuthorApplication()">📋 وضعیت درخواست من</button>
+
+    <div class="output" id="authorOutput"><span class="placeholder">↳ نتیجه احراز هویت نویسنده</span></div>
+  </div>
+
+  <!-- SEARCH BAR -->
   <div class="card" style="margin-top:1.5rem;">
     <div class="flex-between">
       <h3 style="margin:0; font-weight:600; font-size:1rem;">🔎 جستجوی پیشرفته</h3>
       <div class="flex">
-        <input id="searchQuery" placeholder="جستجو..." style="width:160px;">
-        <select id="searchCategory" style="width:130px;">
+        <input id="searchQuery" placeholder="جستجو..." style="width:180px;">
+        <select id="searchCategory" style="width:150px;">
           <option value="">همه دسته‌ها</option>
           <option value="Content Creation">Content Creation</option>
           <option value="Programming">Programming</option>
           <option value="Data Science">Data Science</option>
           <option value="Marketing">Marketing</option>
         </select>
-        <input id="searchMinPrice" placeholder="قیمت از" type="number" style="width:90px;">
-        <input id="searchMaxPrice" placeholder="تا" type="number" style="width:90px;">
-        <button class="btn btn-sm" onclick="searchPrompts()">🔍 برو</button>
+        <input id="searchMinPrice" placeholder="قیمت از" type="number" style="width:100px;">
+        <input id="searchMaxPrice" placeholder="تا" type="number" style="width:100px;">
+        <button class="btn btn-sm" onclick="searchPrompts()" style="margin-top:0;">🔍 برو</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ TOKEN DISPLAY ═══ -->
+  <!-- TOKEN DISPLAY -->
   <div class="token-box">
     <span class="label">🔑 Access Token:</span>
     <span class="value" id="displayAccessToken">—</span>
@@ -394,6 +827,8 @@
   </div>
 
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
   // ═══════════════════════════════════════════════
@@ -404,30 +839,30 @@
   let theme = localStorage.getItem('theme') || 'dark';
 
   const API_BASE = 'http://localhost:8080/api/v1';
+  const promptCache = {};
+  let cartPromptIDs = new Set();
 
   // ═══════════════════════════════════════════════
   //  THEME
   // ═══════════════════════════════════════════════
   function applyTheme(t) {
     theme = t;
-    document.documentElement.style.setProperty('--bg-primary', t === 'dark' ? '#0f172a' : '#f8fafc');
-    document.documentElement.style.setProperty('--bg-secondary', t === 'dark' ? '#1e293b' : '#ffffff');
-    document.documentElement.style.setProperty('--bg-card', t === 'dark' ? '#1e293b' : '#ffffff');
-    document.documentElement.style.setProperty('--bg-hover', t === 'dark' ? '#2d3a4f' : '#f1f5f9');
-    document.documentElement.style.setProperty('--bg-input', t === 'dark' ? '#2d3a4f' : '#ffffff');
-    document.documentElement.style.setProperty('--text-primary', t === 'dark' ? '#f1f5f9' : '#0f172a');
-    document.documentElement.style.setProperty('--text-secondary', t === 'dark' ? '#94a3b8' : '#475569');
-    document.documentElement.style.setProperty('--text-muted', t === 'dark' ? '#64748b' : '#94a3b8');
-    document.documentElement.style.setProperty('--border-color', t === 'dark' ? '#334155' : '#e9edf2');
-    document.documentElement.style.setProperty('--badge-bg', t === 'dark' ? '#2d3a4f' : '#f1f5f9');
-    document.documentElement.style.setProperty('--scrollbar-track', t === 'dark' ? '#1e293b' : '#f1f5f9');
-    document.documentElement.style.setProperty('--scrollbar-thumb', t === 'dark' ? '#475569' : '#cbd5e1');
+    document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('theme', t);
-    document.querySelector('.theme-toggle').textContent = t === 'dark' ? '☀️' : '🌙';
+    document.getElementById('themeBtn').textContent = t === 'dark' ? '🌙' : '☀️';
   }
+  function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
 
-  function toggleTheme() {
-    applyTheme(theme === 'dark' ? 'light' : 'dark');
+  // ═══════════════════════════════════════════════
+  //  TOAST
+  // ═══════════════════════════════════════════════
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type;
+    el.classList.add('show');
+    clearTimeout(el._hide);
+    el._hide = setTimeout(() => el.classList.remove('show'), 3200);
   }
 
   // ═══════════════════════════════════════════════
@@ -438,13 +873,15 @@
     if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
     return h;
   }
+  function authHeadersOnly() {
+    const h = {};
+    if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+    return h;
+  }
 
-  function renderAuthOutput(html) {
-    document.getElementById('authOutput').innerHTML = html;
-  }
-  function renderPromptOutput(html) {
-    document.getElementById('promptOutput').innerHTML = html;
-  }
+  function renderAuthOutput(html) { document.getElementById('authOutput').innerHTML = html; }
+  function renderPromptOutput(html) { document.getElementById('promptOutput').innerHTML = html; }
+  function renderAuthorOutput(html) { document.getElementById('authorOutput').innerHTML = html; }
 
   function updateTokenDisplay() {
     document.getElementById('displayAccessToken').textContent = accessToken ? accessToken.slice(0, 35) + '…' : '—';
@@ -455,26 +892,39 @@
     localStorage.setItem('refreshToken', refreshToken);
   }
 
-  function formatJSON(data) {
-    return JSON.stringify(data, null, 2);
+  function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
-
-  // ═══════════════════════════════════════════════
-  //  HEALTH
-  // ═══════════════════════════════════════════════
-  function checkHealth() {
-    fetch(API_BASE + '/health')
-      .then(r => r.json())
-      .then(d => {
-        document.getElementById('serverStatus').textContent = '● Online';
-        document.getElementById('serverStatus').style.color = 'var(--success)';
-        document.getElementById('healthOutput').textContent = '✅ ' + d.message + ' (status: ' + d.status + ')';
-      })
-      .catch(() => {
-        document.getElementById('serverStatus').textContent = '● Offline';
-        document.getElementById('serverStatus').style.color = 'var(--error)';
-        document.getElementById('healthOutput').textContent = '⚠️ اتصال به سرور برقرار نیست';
-      });
+  function banner(kind, text) {
+    const icon = kind === 'ok' ? '✅' : kind === 'err' ? '❌' : 'ℹ️';
+    return `<div class="result-banner ${kind}">${icon} ${esc(text)}</div>`;
+  }
+  function dataCard(rows) {
+    const body = rows
+      .filter(r => r[1] !== undefined && r[1] !== null && r[1] !== '')
+      .map(([label, value, opts = {}]) => {
+        let v = esc(value);
+        if (opts.mono) v = `<span class="v mono">${v}</span>`;
+        else if (opts.chip) v = `<span class="chip">${v}</span>`;
+        return `<div class="k">${esc(label)}</div><div class="v">${v}</div>`;
+      }).join('');
+    return `<div class="data-card">${body}</div>`;
+  }
+  function errorCard(message) { return banner('err', message || 'خطای نامشخص'); }
+  function fieldErrorMessage(d, fallback) {
+    if (d && typeof d.error === 'string') return d.error;
+    return fallback || 'خطایی رخ داد';
+  }
+  function resolveImageURL(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = API_BASE.replace(/\/api\/v1\/?$/, '');
+    return base + (url.startsWith('/') ? url : '/' + url);
+  }
+  function openImageInNewTab(src) {
+    if (src) window.open(src, '_blank', 'noopener');
   }
 
   // ═══════════════════════════════════════════════
@@ -492,17 +942,58 @@
     })
       .then(r => r.json())
       .then(d => {
-        const isOk = d.data?.id || d.message?.includes('success');
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ ثبت‌نام موفق' : '❌ خطا'}</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        if (d.data?.id) {
+          renderAuthOutput(banner('ok', 'ثبت‌نام موفق — کد تایید به ایمیل ارسال شد') +
+            dataCard([
+              ['شناسه', d.data.id, { mono: true }],
+              ['ایمیل', d.data.email],
+              ['نام کامل', d.data.full_name],
+              ['نقش', d.data.role, { chip: true }],
+            ]));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ثبت‌نام ناموفق بود')));
+        }
+      }).catch(e => renderAuthOutput(errorCard(e.message)));
+  }
+
+  function verifyEmail() {
+    const email = document.getElementById('authEmail').value;
+    const code = document.getElementById('verifyCode').value;
+    fetch(API_BASE + '/auth/verify-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.message === 'string' && !d.error) {
+          renderAuthOutput(banner('ok', d.message || 'ایمیل تایید شد'));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'تایید ایمیل ناموفق بود')));
+        }
+      }).catch(e => renderAuthOutput(errorCard(e.message)));
+  }
+
+  function resendVerification() {
+    const email = document.getElementById('authEmail').value;
+    fetch(API_BASE + '/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.message === 'string' && !d.error) {
+          renderAuthOutput(banner('ok', d.message || 'کد مجدداً ارسال شد'));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ارسال مجدد ناموفق')));
+        }
+      }).catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   function loginUser() {
     const email = document.getElementById('authEmail').value;
     const password = document.getElementById('authPass').value;
-
     fetch(API_BASE + '/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -514,19 +1005,27 @@
           accessToken = d.data.tokens.access_token;
           refreshToken = d.data.tokens.refresh_token;
           updateTokenDisplay();
+          loadCartSummary();
         }
-        const isOk = d.data?.tokens?.access_token;
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ ورود موفق' : '❌ خطا'}</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        if (d.data?.tokens?.access_token) {
+          const u = d.data.user;
+          renderAuthOutput(banner('ok', 'ورود موفق') +
+            dataCard([
+              ['شناسه', u.id, { mono: true }],
+              ['ایمیل', u.email],
+              ['نام کامل', u.full_name],
+              ['نقش', u.role, { chip: true }],
+              ['امتیاز', u.rating],
+            ]));
+          toast('✅ ورود موفق', 'success');
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'ورود ناموفق بود')));
+        }
+      }).catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   function refreshTokenFunc() {
-    if (!refreshToken) {
-      renderAuthOutput('<span class="err">❌ Refresh Token موجود نیست</span>');
-      return;
-    }
+    if (!refreshToken) { renderAuthOutput(errorCard('Refresh Token موجود نیست')); return; }
     fetch(API_BASE + '/auth/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -538,48 +1037,299 @@
           accessToken = d.data.access_token;
           if (d.data.refresh_token) refreshToken = d.data.refresh_token;
           updateTokenDisplay();
+          loadCartSummary();
         }
-        const isOk = d.data?.access_token;
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ توکن جدید دریافت شد' : '❌ خطا'}</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        if (d.data?.access_token) {
+          renderAuthOutput(banner('ok', 'توکن جدید دریافت شد'));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت توکن ناموفق')));
+        }
+      }).catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   function getProfile() {
-    if (!accessToken) {
-      renderAuthOutput('<span class="err">❌ ابتدا وارد شوید</span>');
-      return;
-    }
+    if (!accessToken) { renderAuthOutput(errorCard('ابتدا وارد شوید')); return; }
     fetch(API_BASE + '/profile', { method: 'GET', headers: getHeaders() })
       .then(r => r.json())
       .then(d => {
-        const isOk = d.data?.email;
-        const cls = isOk ? 'ok' : 'err';
-        renderAuthOutput(`<span class="${cls}">${isOk ? '✅ پروفایل' : '❌ خطا'}</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderAuthOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        if (d.data?.email) {
+          const u = d.data;
+          renderAuthOutput(banner('ok', 'پروفایل کاربر') +
+            dataCard([
+              ['شناسه', u.id, { mono: true }],
+              ['ایمیل', u.email],
+              ['نام کامل', u.full_name],
+              ['نقش', u.role, { chip: true }],
+              ['تخصص', u.expertise],
+              ['بیوگرافی', u.bio],
+              ['امتیاز', u.rating],
+              ['تعداد فروش', u.total_sales],
+              ['موجودی کیف پول', u.wallet_balance],
+            ]));
+        } else {
+          renderAuthOutput(errorCard(fieldErrorMessage(d, 'دریافت پروفایل ناموفق')));
+        }
+      }).catch(e => renderAuthOutput(errorCard(e.message)));
   }
 
   // ═══════════════════════════════════════════════
-  //  PROMPT
+  //  CART
   // ═══════════════════════════════════════════════
-  function createPrompt() {
+  function updateCartBadge(count) {
+    const badge = document.getElementById('cartBadge');
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+
+  async function loadCartSummary() {
     if (!accessToken) {
-      renderPromptOutput('<span class="err">❌ ابتدا وارد شوید</span>');
+      cartPromptIDs = new Set();
+      updateCartBadge(0);
       return;
     }
+    try {
+      const [idsRes, cartRes] = await Promise.all([
+        fetch(API_BASE + '/cart/prompt-ids', { headers: getHeaders() }),
+        fetch(API_BASE + '/cart', { headers: getHeaders() }),
+      ]);
+      const idsData = await idsRes.json().catch(() => ({}));
+      const cartData = await cartRes.json().catch(() => ({}));
+      cartPromptIDs = new Set(idsData.data || []);
+      updateCartBadge(cartData.count || 0);
+    } catch (_) {}
+  }
+
+  async function addToCart(promptId, btnEl) {
+    if (!accessToken) { toast('ابتدا وارد شوید', 'error'); return; }
+    if (btnEl) btnEl.disabled = true;
+    try {
+      const res = await fetch(API_BASE + '/cart/items', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ prompt_id: promptId }),
+      });
+      const d = await res.json();
+      if (res.ok) {
+        cartPromptIDs.add(promptId);
+        updateCartBadge(d.count || cartPromptIDs.size);
+        toast('🛒 به سبد اضافه شد', 'success');
+        if (btnEl) {
+          btnEl.textContent = '🗑️ حذف از سبد خرید';
+          btnEl.className = 'cart-action-btn remove';
+          btnEl.disabled = false;
+          btnEl.onclick = () => removeFromCart(promptId, btnEl);
+        }
+      } else {
+        if (btnEl) btnEl.disabled = false;
+        toast('❌ ' + (d.error || 'خطا در افزودن به سبد'), 'error');
+      }
+    } catch (e) {
+      if (btnEl) btnEl.disabled = false;
+      toast('❌ ' + e.message, 'error');
+    }
+  }
+
+  async function removeFromCart(promptId, btnEl) {
+    if (!accessToken) return;
+    if (btnEl) btnEl.disabled = true;
+    try {
+      const res = await fetch(API_BASE + `/cart/items/${promptId}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      const d = await res.json();
+      if (res.ok) {
+        cartPromptIDs.delete(promptId);
+        updateCartBadge(d.count || cartPromptIDs.size);
+        toast('🗑️ از سبد حذف شد', 'info');
+        if (btnEl) {
+          btnEl.textContent = '🛒 افزودن به سبد خرید';
+          btnEl.className = 'cart-action-btn add';
+          btnEl.disabled = false;
+          btnEl.onclick = () => addToCart(promptId, btnEl);
+        }
+      } else {
+        if (btnEl) btnEl.disabled = false;
+        toast('❌ ' + (d.error || 'خطا در حذف'), 'error');
+      }
+    } catch (e) {
+      if (btnEl) btnEl.disabled = false;
+      toast('❌ ' + e.message, 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  UPLOAD
+  // ═══════════════════════════════════════════════
+  async function uploadSingleImage(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(API_BASE + '/upload/prompt-image', {
+      method: 'POST',
+      headers: authHeadersOnly(),
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.data?.url) {
+      throw new Error(data.error || ('آپلود ناموفق بود (status ' + res.status + ')'));
+    }
+    return data.data.url;
+  }
+
+  async function uploadMultipleImages(files) {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f);
+    const res = await fetch(API_BASE + '/upload/prompt-images', {
+      method: 'POST',
+      headers: authHeadersOnly(),
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !Array.isArray(data.data)) {
+      throw new Error(data.error || ('آپلود ناموفق بود (status ' + res.status + ')'));
+    }
+    return data.data.map(x => x.url);
+  }
+
+  function setupImagePreviews() {
+    const coverInput = document.getElementById('promptCoverImage');
+    coverInput.addEventListener('change', () => {
+      const wrap = document.getElementById('promptCoverPreview');
+      wrap.innerHTML = '';
+      const f = coverInput.files[0];
+      if (!f) return;
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.className = 'cover-preview';
+      img.onload = () => URL.revokeObjectURL(img.src);
+      wrap.appendChild(img);
+    });
+    const imagesInput = document.getElementById('promptImages');
+    imagesInput.addEventListener('change', () => {
+      const wrap = document.getElementById('promptImagesPreview');
+      wrap.innerHTML = '';
+      Array.from(imagesInput.files).forEach(f => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        img.className = 'gallery-preview';
+        img.onload = () => URL.revokeObjectURL(img.src);
+        wrap.appendChild(img);
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PROMPT LIST
+  // ═══════════════════════════════════════════════
+  function promptList(prompts) {
+    if (!prompts || prompts.length === 0) {
+      return '<div class="empty-state">هیچ پرامپتی یافت نشد</div>';
+    }
+    const items = prompts.map(p => {
+      if (p.id) promptCache[p.id] = p;
+      const price = (p.price !== undefined && p.price !== null)
+        ? Number(p.price).toLocaleString('fa-IR') + ' تومان' : '';
+      return `
+        <div class="prompt-item" onclick="previewFromCache('${esc(p.id)}')">
+          <div class="pi-top">
+            <span class="pi-title">${esc(p.title || 'بدون عنوان')}</span>
+            ${price ? `<span class="pi-price">${esc(price)}</span>` : ''}
+          </div>
+          ${p.description ? `<div class="pi-desc">${esc(p.description)}</div>` : ''}
+          <div class="pi-meta">
+            ${p.category ? `<span class="chip">${esc(p.category)}</span>` : ''}
+            ${p.difficulty ? `<span class="chip">${esc(p.difficulty)}</span>` : ''}
+            ${p.language ? `<span class="chip">${esc(p.language)}</span>` : ''}
+            ${p.status ? `<span class="chip">${esc(p.status)}</span>` : ''}
+            ${p.rating ? `<span class="chip">⭐ ${Number(p.rating).toFixed(1)}</span>` : ''}
+          </div>
+          <div class="pi-hint">👁️ برای مشاهده جزئیات کلیک کنید</div>
+        </div>`;
+    }).join('');
+    return `<div class="prompt-list">${items}</div>`;
+  }
+
+  async function previewFromCache(promptId) {
+    const cached = promptCache[promptId];
+
+    if (cached && cached.slug) {
+      try {
+        const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+        const res = await fetch(API_BASE + '/prompts/' + cached.slug, { headers });
+        if (res.ok) {
+          const d = await res.json();
+          if (d.data) {
+            promptCache[promptId] = d.data;
+            openPreviewOverlay(d.data);
+            return;
+          }
+        }
+      } catch (_) {}
+      openPreviewOverlay(cached);
+      return;
+    }
+    if (cached) { openPreviewOverlay(cached); return; }
+
+    fetch(API_BASE + '/prompts/id/' + promptId, { headers: getHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data) {
+          promptCache[promptId] = d.data;
+          openPreviewOverlay(d.data);
+        } else {
+          toast('خطا: ' + (d.error || 'دریافت پرامپت ناموفق'), 'error');
+        }
+      }).catch(e => toast('خطا: ' + e.message, 'error'));
+  }
+
+  // ═══════════════════════════════════════════════
+  //  CREATE PROMPT
+  // ═══════════════════════════════════════════════
+  async function createPrompt() {
+    if (!accessToken) { renderPromptOutput(errorCard('ابتدا وارد شوید')); return; }
+    const coverFile = document.getElementById('promptCoverImage').files[0];
+    const galleryFiles = document.getElementById('promptImages').files;
+    let coverURL = '';
+    let galleryURLs = [];
+
+    if (coverFile || (galleryFiles && galleryFiles.length > 0)) {
+      renderPromptOutput(banner('info', '⏳ در حال آپلود تصاویر...'));
+      try {
+        if (coverFile) coverURL = await uploadSingleImage(coverFile);
+        if (galleryFiles && galleryFiles.length > 0) galleryURLs = await uploadMultipleImages(Array.from(galleryFiles));
+      } catch (e) {
+        renderPromptOutput(errorCard('آپلود ناموفق: ' + e.message));
+        return;
+      }
+    }
+
+    const tagsRaw = document.getElementById('promptTags').value || '';
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const discountRaw = document.getElementById('promptDiscountPrice').value;
+
     const body = {
       title: document.getElementById('promptTitle').value,
       description: document.getElementById('promptDesc').value,
       category: document.getElementById('promptCategory').value,
+      sub_category: document.getElementById('promptSubCategory').value || '',
       content: document.getElementById('promptContent').value,
+      demo_output: document.getElementById('promptDemoOutput').value || '',
+      instructions: document.getElementById('promptInstructions').value || '',
+      cover_image: coverURL,
+      images: galleryURLs,
       price: parseInt(document.getElementById('promptPrice').value) || 0,
+      discount_price: discountRaw ? parseInt(discountRaw) : 0,
       difficulty: document.getElementById('promptDifficulty').value,
-      language: 'english',
-      tags: ['seo', 'content'],
+      language: document.getElementById('promptLanguage').value,
+      tags: tags,
     };
 
+    renderPromptOutput(banner('info', '⏳ در حال ایجاد پرامپت...'));
     fetch(API_BASE + '/prompts', {
       method: 'POST',
       headers: getHeaders(),
@@ -587,21 +1337,34 @@
     })
       .then(r => r.json())
       .then(d => {
-        const isOk = d.data?.id || d.message?.includes('success');
-        const cls = isOk ? 'ok' : 'err';
-        renderPromptOutput(`<span class="${cls}">${isOk ? '✅ پرامپت ایجاد شد' : '❌ خطا'}</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        if (d.data?.id) {
+          if (d.data.id) promptCache[d.data.id] = d.data;
+          renderPromptOutput(banner('ok', 'پرامپت ساخته شد (در انتظار تایید ادمین)') +
+            dataCard([
+              ['شناسه', d.data.id, { mono: true }],
+              ['عنوان', d.data.title],
+              ['دسته‌بندی', d.data.category, { chip: true }],
+              ['قیمت', d.data.price !== undefined ? Number(d.data.price).toLocaleString('fa-IR') + ' تومان' : ''],
+              ['وضعیت', d.data.status, { chip: true }],
+            ]));
+          document.getElementById('promptCoverImage').value = '';
+          document.getElementById('promptImages').value = '';
+          document.getElementById('promptCoverPreview').innerHTML = '';
+          document.getElementById('promptImagesPreview').innerHTML = '';
+        } else {
+          renderPromptOutput(errorCard(fieldErrorMessage(d, 'ایجاد پرامپت ناموفق بود')));
+        }
+      }).catch(e => renderPromptOutput(errorCard(e.message)));
   }
 
   function listPrompts() {
     fetch(API_BASE + '/prompts?page=1&limit=10')
       .then(r => r.json())
       .then(d => {
+        if (d.error) { renderPromptOutput(errorCard(d.error)); return; }
         const count = d.data?.length || 0;
-        renderPromptOutput(`<span class="info">📋 ${count} پرامپت یافت شد</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        renderPromptOutput(banner('info', `${count} پرامپت یافت شد`) + promptList(d.data));
+      }).catch(e => renderPromptOutput(errorCard(e.message)));
   }
 
   function searchPrompts() {
@@ -609,7 +1372,6 @@
     const cat = document.getElementById('searchCategory').value || '';
     const min = document.getElementById('searchMinPrice').value || '';
     const max = document.getElementById('searchMaxPrice').value || '';
-
     let url = '/prompts/search?';
     if (q) url += `search=${encodeURIComponent(q)}&`;
     if (cat) url += `category=${encodeURIComponent(cat)}&`;
@@ -620,24 +1382,410 @@
     fetch(API_BASE + url)
       .then(r => r.json())
       .then(d => {
+        if (d.error) { renderPromptOutput(errorCard(d.error)); return; }
         const count = d.data?.length || 0;
-        renderPromptOutput(`<span class="info">🔍 ${count} نتیجه یافت شد</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        renderPromptOutput(banner('info', `${count} نتیجه یافت شد`) + promptList(d.data));
+      }).catch(e => renderPromptOutput(errorCard(e.message)));
   }
 
   function getMyPrompts() {
-    if (!accessToken) {
-      renderPromptOutput('<span class="err">❌ ابتدا وارد شوید</span>');
-      return;
-    }
+    if (!accessToken) { renderPromptOutput(errorCard('ابتدا وارد شوید')); return; }
     fetch(API_BASE + '/my-prompts?page=1&limit=10', { method: 'GET', headers: getHeaders() })
       .then(r => r.json())
       .then(d => {
+        if (d.error) { renderPromptOutput(errorCard(d.error)); return; }
         const count = d.data?.length || 0;
-        renderPromptOutput(`<span class="info">📁 ${count} پرامپت از شما</span>\n${formatJSON(d)}`);
-      })
-      .catch(e => renderPromptOutput(`<span class="err">❌ خطا</span>\n${e.message}`));
+        renderPromptOutput(banner('info', `${count} پرامپت از شما`) + promptList(d.data));
+      }).catch(e => renderPromptOutput(errorCard(e.message)));
+  }
+
+  async function loadMyPromptsWithStatus() {
+    if (!accessToken) { renderPromptOutput(errorCard('ابتدا وارد شوید')); return; }
+    try {
+      const res = await fetch(API_BASE + '/my-prompts?page=1&limit=50', { headers: getHeaders() });
+      const d = await res.json();
+      if (!res.ok || d.error) { renderPromptOutput(errorCard(d.error || 'خطا')); return; }
+      (d.data || []).forEach(p => { if (p.id) promptCache[p.id] = p; });
+      renderMyPromptsList(d.data || []);
+    } catch (e) { renderPromptOutput(errorCard(e.message)); }
+  }
+
+  function renderMyPromptsList(prompts) {
+    const wrap = document.getElementById('myPromptsList');
+    if (!prompts || prompts.length === 0) {
+      wrap.innerHTML = '<div class="empty-state">هنوز پرامپتی نساخته‌اید</div>';
+      return;
+    }
+    const statusMap = {
+      pending:  { label: '⏳ در انتظار تایید', cls: 'status-pending' },
+      approved: { label: '✅ تایید شده',       cls: 'status-approved' },
+      rejected: { label: '❌ رد شده',          cls: 'status-rejected' },
+      deleted:  { label: '🗑️ حذف شده',         cls: 'status-deleted' },
+    };
+    const html = prompts.map(p => {
+      const st = statusMap[p.status] || { label: p.status, cls: '' };
+      const note = (p.status === 'rejected' && p.rejection_note)
+        ? `<div class="rejection-note">❌ دلیل رد: ${esc(p.rejection_note)}</div>` : '';
+      const paused = p.is_paused
+        ? `<span class="status-badge" style="background:var(--warning-bg);border-color:#b45309;color:#fde68a;">⏸️ پنهان</span>` : '';
+      const pendingEdit = p.has_pending_edit
+        ? `<span class="status-badge" style="background:var(--info-bg);border-color:#3b82f6;color:#93c5fd;">✏️ ویرایش در انتظار</span>` : '';
+
+      return `
+        <div class="my-prompt-item">
+          <div class="mpi-header">
+            <span class="mpi-title">${esc(p.title)}</span>
+            <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+              ${paused}${pendingEdit}
+              <span class="status-badge ${st.cls}">${st.label}</span>
+            </div>
+          </div>
+          <div class="mpi-meta">
+            ${p.category ? `<span class="chip">${esc(p.category)}</span>` : ''}
+            ${p.price ? `<span class="chip">${Number(p.price).toLocaleString('fa-IR')} تومان</span>` : ''}
+            ${p.rating ? `<span class="chip">⭐ ${Number(p.rating).toFixed(1)} (${p.review_count || 0})</span>` : ''}
+          </div>
+          ${note}
+          <button class="btn btn-sm btn-outline" style="width:100%;margin-top:0.4rem;"
+                  onclick="previewMyPrompt('${esc(p.id)}')">👁️ پیش‌نمایش کامل</button>
+        </div>`;
+    }).join('');
+    wrap.innerHTML = `<div class="my-prompts-list">${html}</div>`;
+  }
+
+  async function previewMyPrompt(promptId) {
+    if (!accessToken) return;
+    const cached = promptCache[promptId];
+    if (cached) { openPreviewOverlay(cached); return; }
+    try {
+      const res = await fetch(API_BASE + '/my-prompts/' + promptId, { headers: getHeaders() });
+      const d = await res.json();
+      if (!res.ok || !d.data) { toast('خطا: ' + (d.error || 'دریافت ناموفق'), 'error'); return; }
+      promptCache[promptId] = d.data;
+      openPreviewOverlay(d.data);
+    } catch (e) { toast('خطا: ' + e.message, 'error'); }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PREVIEW OVERLAY
+  // ═══════════════════════════════════════════════
+  function openPreviewOverlay(p) {
+    const prev = document.getElementById('previewOverlay');
+    if (prev) prev.remove();
+
+    const statusMap = {
+      pending:  '⏳ در انتظار تایید',
+      approved: '✅ تایید شده',
+      rejected: '❌ رد شده',
+      deleted:  '🗑️ حذف شده',
+    };
+    const statusLabel = statusMap[p.status] || p.status;
+
+    const isFree = !p.price || p.price === 0;
+    const inCart = cartPromptIDs.has(p.id);
+    const hasAccess = p.has_access === true;
+    const alreadyPurchased = p.already_purchased === true;
+    const isApproved = p.status === 'approved' && !p.is_paused;
+    const canSeeContent = hasAccess || isFree;
+
+    let actionHTML = '';
+    if (!accessToken) {
+      actionHTML = `<button class="cart-action-btn paywall" disabled>🔒 برای خرید وارد شوید</button>`;
+    } else if (!isApproved) {
+      actionHTML = '';
+    } else if (canSeeContent || alreadyPurchased) {
+      actionHTML = `<button class="cart-action-btn owned" onclick="document.getElementById('previewContent').scrollIntoView({behavior:'smooth'})">📖 محتوای کامل در پایین صفحه</button>`;
+    } else if (inCart) {
+      actionHTML = `<button class="cart-action-btn remove" onclick="removeFromCart('${esc(p.id)}', this)">🗑️ حذف از سبد خرید</button>`;
+    } else {
+      actionHTML = `<button class="cart-action-btn add" onclick="addToCart('${esc(p.id)}', this)">🛒 افزودن به سبد خرید</button>`;
+    }
+
+    const coverHTML = p.cover_image
+      ? `<img src="${resolveImageURL(p.cover_image)}" style="max-width:100%;max-height:360px;border-radius:0.6rem;border:1px solid var(--border-color);" />`
+      : '<div class="empty-state">بدون تصویر کاور</div>';
+
+    const galleryHTML = (Array.isArray(p.images) && p.images.length > 0)
+      ? p.images.map(u => `<img src="${resolveImageURL(u)}" style="width:80px;height:80px;object-fit:cover;border-radius:0.4rem;border:1px solid var(--border-color);margin:0.2rem;cursor:zoom-in;" onclick="openImageInNewTab('${esc(resolveImageURL(u))}')">`).join('')
+      : '<div class="empty-state">بدون گالری</div>';
+
+    const rejectionHTML = (p.status === 'rejected' && p.rejection_note)
+      ? `<div style="background:var(--error-bg);border:1px solid #b91c1c;color:#fecaca;padding:0.8rem 1rem;border-radius:0.6rem;margin-bottom:1rem;font-size:0.85rem;">
+            <strong>❌ دلیل رد:</strong> ${esc(p.rejection_note)}
+         </div>` : '';
+
+    const tagsHTML = (Array.isArray(p.tags) && p.tags.length > 0)
+      ? p.tags.map(t => `<span class="chip">#${esc(t)}</span>`).join(' ') : '';
+
+    const ratingChip = (p.rating && p.review_count > 0)
+      ? `<span class="chip" style="background:var(--warning-bg);border-color:#b45309;color:#fde68a;">⭐ ${Number(p.rating).toFixed(1)} (${p.review_count} نظر)</span>`
+      : '<span class="chip">⭐ بدون امتیاز</span>';
+
+    const contentHTML = canSeeContent && p.content
+      ? `<div id="previewContent" style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;font-family:monospace;direction:ltr;text-align:left;">${esc(p.content)}</div>`
+      : `<div id="previewContent" style="background:var(--bg-primary);border:1px dashed var(--border-color);padding:1.5rem;border-radius:0.5rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">
+           🔒 برای مشاهده‌ی محتوای کامل، آن را خریداری کنید.
+         </div>`;
+
+    const instructionsHTML = canSeeContent && p.instructions
+      ? `<div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.instructions)}</div>`
+      : `<div style="background:var(--bg-primary);border:1px dashed var(--border-color);padding:1.5rem;border-radius:0.5rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">
+           🔒 راهنمای استفاده پس از خرید نمایش داده می‌شود.
+         </div>`;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'previewOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 99999; display: flex; justify-content: center; align-items: flex-start;
+      padding: 2rem 1rem; overflow-y: auto;
+    `;
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = `
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:1rem;max-width:900px;width:100%;padding:1.5rem 2rem;color:var(--text-primary);box-shadow:var(--shadow-lg);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:1rem;">
+          <h2 style="margin:0;font-size:1.3rem;">${esc(p.title)}</h2>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span class="status-badge">${esc(statusLabel)}</span>
+            <button class="btn btn-sm btn-outline" onclick="document.getElementById('previewOverlay').remove()">✕ بستن</button>
+          </div>
+        </div>
+
+        ${rejectionHTML}
+        <div style="margin-bottom:1rem;">${coverHTML}</div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;">
+          ${p.category ? `<span class="chip">📁 ${esc(p.category)}</span>` : ''}
+          ${p.difficulty ? `<span class="chip">📊 ${esc(p.difficulty)}</span>` : ''}
+          ${p.language ? `<span class="chip">🌐 ${esc(p.language)}</span>` : ''}
+          ${p.price ? `<span class="chip">💰 ${Number(p.price).toLocaleString('fa-IR')} تومان</span>` : '<span class="chip">🆓 رایگان</span>'}
+          ${ratingChip}
+        </div>
+
+        ${actionHTML ? `<div style="margin-bottom:1rem;">${actionHTML}</div>` : ''}
+
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📝 توضیحات</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.description || '—')}</div>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📄 محتوای پرامپت</h4>
+          ${contentHTML}
+        </div>
+
+        ${p.demo_output ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🎯 خروجی نمونه</h4>
+          <div style="background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;font-size:0.85rem;white-space:pre-wrap;">${esc(p.demo_output)}</div>
+        </div>` : ''}
+
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">📖 راهنمای استفاده</h4>
+          ${instructionsHTML}
+        </div>
+
+        ${(Array.isArray(p.images) && p.images.length > 0) ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🖼️ گالری تصاویر</h4>
+          <div>${galleryHTML}</div>
+        </div>` : ''}
+
+        ${tagsHTML ? `
+        <div style="margin-bottom:1rem;">
+          <h4 style="margin-bottom:0.3rem;">🏷️ تگ‌ها</h4>
+          <div>${tagsHTML}</div>
+        </div>` : ''}
+
+        <div style="margin-top:1.5rem;border-top:1px solid var(--border-color);padding-top:1rem;">
+          <h4 style="margin-bottom:0.8rem;">⭐ نظرات کاربران <span id="previewReviewCount" style="color:var(--text-muted);font-size:0.8rem;"></span></h4>
+
+          <div id="reviewFormWrap" style="display:none;background:var(--bg-primary);padding:0.8rem;border-radius:0.5rem;margin-bottom:1rem;">
+            <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;">امتیاز خود را انتخاب کنید:</div>
+            <div id="reviewStars" class="star-input">
+              <span data-star="1">☆</span>
+              <span data-star="2">☆</span>
+              <span data-star="3">☆</span>
+              <span data-star="4">☆</span>
+              <span data-star="5">☆</span>
+            </div>
+            <textarea id="reviewComment" maxlength="250" rows="3"
+                      placeholder="نظر خود را بنویسید (حداکثر ۲۵۰ کاراکتر)..."
+                      style="width:100%;margin-top:0.6rem;padding:0.5rem;border:1px solid var(--border-color);border-radius:0.4rem;background:var(--bg-secondary);color:var(--text-primary);font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.4rem;">
+              <span id="reviewCharCount" style="font-size:0.7rem;color:var(--text-muted);">0 / 250</span>
+              <button class="btn btn-sm" style="width:auto;" onclick="submitReview('${esc(p.id)}')">📤 ثبت نظر</button>
+            </div>
+            <div id="reviewFormMsg" style="font-size:0.75rem;margin-top:0.4rem;"></div>
+          </div>
+
+          <div id="previewReviewsList"><div class="empty-state">⏳ در حال بارگذاری نظرات...</div></div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    loadPreviewReviews(p.id);
+    setupReviewForm(p);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  REVIEWS
+  // ═══════════════════════════════════════════════
+  let currentRating = 0;
+
+  async function loadPreviewReviews(promptId) {
+    const wrap = document.getElementById('previewReviewsList');
+    if (!wrap) return;
+    try {
+      const res = await fetch(API_BASE + `/prompts/${promptId}/reviews?page=1&limit=20`);
+      const d = await res.json();
+      if (!res.ok) {
+        wrap.innerHTML = `<div class="empty-state">❌ ${esc(d.error || 'خطا')}</div>`; return;
+      }
+      const list = d.data || [];
+      const countEl = document.getElementById('previewReviewCount');
+      if (countEl) countEl.textContent = list.length > 0 ? `(${d.pagination?.total || list.length} نظر)` : '';
+      if (list.length === 0) { wrap.innerHTML = '<div class="empty-state">هنوز نظری ثبت نشده</div>'; return; }
+      wrap.innerHTML = list.map(r => `
+        <div style="background:var(--bg-primary);padding:0.7rem 0.9rem;border-radius:0.5rem;margin-bottom:0.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+            <span style="font-weight:600;font-size:0.85rem;">${esc(r.user?.full_name || 'کاربر')}</span>
+            <span style="color:#fbbf24;font-size:0.85rem;">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+          </div>
+          <div style="font-size:0.82rem;color:var(--text-secondary);white-space:pre-wrap;line-height:1.5;">${esc(r.comment)}</div>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.3rem;">${r.created_at ? new Date(r.created_at).toLocaleDateString('fa-IR') : ''}</div>
+        </div>
+      `).join('');
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">❌ ${esc(e.message)}</div>`;
+    }
+  }
+
+  function setupReviewForm(prompt) {
+    const wrap = document.getElementById('reviewFormWrap');
+    if (!wrap) return;
+    if (!accessToken || prompt.status !== 'approved') { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    currentRating = 0;
+    document.querySelectorAll('#reviewStars span').forEach(el => {
+      el.onclick = () => {
+        currentRating = parseInt(el.dataset.star);
+        document.querySelectorAll('#reviewStars span').forEach(s => {
+          const n = parseInt(s.dataset.star);
+          if (n <= currentRating) { s.textContent = '★'; s.classList.add('active'); }
+          else { s.textContent = '☆'; s.classList.remove('active'); }
+        });
+      };
+    });
+    const ta = document.getElementById('reviewComment');
+    const counter = document.getElementById('reviewCharCount');
+    ta.oninput = () => { counter.textContent = `${ta.value.length} / 250`; };
+  }
+
+  async function submitReview(promptId) {
+    const msg = document.getElementById('reviewFormMsg');
+    const comment = document.getElementById('reviewComment').value.trim();
+    if (!currentRating || currentRating < 1 || currentRating > 5) {
+      msg.innerHTML = '<span style="color:var(--error);">❌ لطفاً امتیاز را انتخاب کنید</span>'; return;
+    }
+    if (!comment) { msg.innerHTML = '<span style="color:var(--error);">❌ متن نظر الزامی است</span>'; return; }
+    if (comment.length > 250) { msg.innerHTML = '<span style="color:var(--error);">❌ حداکثر ۲۵۰ کاراکتر</span>'; return; }
+
+    msg.innerHTML = '<span style="color:var(--info);">⏳ در حال ارسال...</span>';
+    try {
+      const res = await fetch(API_BASE + `/prompts/${promptId}/reviews`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ rating: currentRating, comment }),
+      });
+      const d = await res.json();
+      if (!res.ok) { msg.innerHTML = `<span style="color:var(--error);">❌ ${esc(d.error || 'خطا')}</span>`; return; }
+      msg.innerHTML = '<span style="color:var(--success);">✅ نظر شما ثبت شد و پس از تایید ادمین نمایش داده می‌شود</span>';
+      document.getElementById('reviewComment').value = '';
+      document.getElementById('reviewCharCount').textContent = '0 / 250';
+      currentRating = 0;
+      document.querySelectorAll('#reviewStars span').forEach(s => { s.textContent = '☆'; s.classList.remove('active'); });
+    } catch (e) { msg.innerHTML = `<span style="color:var(--error);">❌ ${esc(e.message)}</span>`; }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  AUTHOR APPLICATION
+  // ═══════════════════════════════════════════════
+  function sendPhoneOtp() {
+    if (!accessToken) { renderAuthorOutput(errorCard('ابتدا وارد شوید')); return; }
+    const phone = document.getElementById('authorPhone').value;
+    if (!phone) { renderAuthorOutput(errorCard('شماره موبایل را وارد کنید')); return; }
+    fetch(API_BASE + '/author-application/send-phone-otp', {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ phone }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.message === 'string' && !d.error) {
+          renderAuthorOutput(banner('ok', d.message || 'کد ارسال شد'));
+        } else { renderAuthorOutput(errorCard(fieldErrorMessage(d, 'ارسال کد ناموفق'))); }
+      }).catch(e => renderAuthorOutput(errorCard(e.message)));
+  }
+
+  function verifyPhoneOtp() {
+    if (!accessToken) { renderAuthorOutput(errorCard('ابتدا وارد شوید')); return; }
+    const code = document.getElementById('authorPhoneCode').value;
+    fetch(API_BASE + '/author-application/verify-phone', {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ code }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.message === 'string' && !d.error) {
+          renderAuthorOutput(banner('ok', d.message || 'شماره تایید شد'));
+        } else { renderAuthorOutput(errorCard(fieldErrorMessage(d, 'تایید ناموفق'))); }
+      }).catch(e => renderAuthorOutput(errorCard(e.message)));
+  }
+
+  function submitAuthorApplication() {
+    if (!accessToken) { renderAuthorOutput(errorCard('ابتدا وارد شوید')); return; }
+    const expertise = document.getElementById('authorExpertise').value;
+    const nationalId = document.getElementById('authorNationalId').value;
+    const file = document.getElementById('authorIdDocument').files[0];
+    if (!file) { renderAuthorOutput(errorCard('مدرک را انتخاب کنید')); return; }
+
+    const formData = new FormData();
+    formData.append('expertise', expertise);
+    formData.append('national_id', nationalId);
+    formData.append('id_document', file);
+
+    fetch(API_BASE + '/author-application', { method: 'POST', headers: authHeadersOnly(), body: formData })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.id) {
+          renderAuthorOutput(banner('ok', 'درخواست ارسال شد') +
+            dataCard([
+              ['شناسه', d.data.id, { mono: true }],
+              ['وضعیت', d.data.status, { chip: true }],
+              ['تخصص', d.data.expertise],
+            ]));
+        } else { renderAuthorOutput(errorCard(fieldErrorMessage(d, 'ارسال ناموفق'))); }
+      }).catch(e => renderAuthorOutput(errorCard(e.message)));
+  }
+
+  function getMyAuthorApplication() {
+    if (!accessToken) { renderAuthorOutput(errorCard('ابتدا وارد شوید')); return; }
+    fetch(API_BASE + '/author-application/me', { method: 'GET', headers: getHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { renderAuthorOutput(errorCard(d.error)); return; }
+        if (!d.data) { renderAuthorOutput(banner('info', d.message || 'هنوز درخواستی نیست')); return; }
+        const a = d.data;
+        const statusLabel = { pending: 'در انتظار', approved: 'تایید شده ✅', rejected: 'رد شده ❌' }[a.status] || a.status;
+        renderAuthorOutput(banner('info', 'وضعیت درخواست') +
+          dataCard([
+            ['شناسه', a.id, { mono: true }],
+            ['وضعیت', statusLabel, { chip: true }],
+            ['تخصص', a.expertise],
+            ['دلیل رد', a.rejection_reason],
+            ['تاریخ ارسال', a.created_at],
+          ]));
+      }).catch(e => renderAuthorOutput(errorCard(e.message)));
   }
 
   // ═══════════════════════════════════════════════
@@ -645,7 +1793,8 @@
   // ═══════════════════════════════════════════════
   applyTheme(theme);
   updateTokenDisplay();
-  checkHealth();
+  setupImagePreviews();
+  loadCartSummary();
 </script>
 
 </body>
